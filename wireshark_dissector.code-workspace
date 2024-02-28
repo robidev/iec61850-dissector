@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"C_Cpp.default.includePath": [
+			"/usr/include/wireshark",
+			"/usr/include/glib-2.0"
+		],
+		"files.associations": {
+			"packet.h": "c",
+			"packet-ber.h": "c"
+		}
+	}
+}
