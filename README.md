@@ -25,7 +25,7 @@ dependencies
 `$ sudo apt install git build-essential cmake` 
 
 clone source
-`$ git clone --branch release-3.6 https://github.com/wireshark/wireshark.git`
+`$ git clone --branch 4.3 https://github.com/wireshark/wireshark.git`
 
 install dependencies
 `$ tools/debian-setup.sh` 
