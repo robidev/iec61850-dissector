@@ -512,7 +512,6 @@ int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, pro
 
 int Unconfirmed_RPT(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
 {// Report,
-//Report: The variableListName ObjectName shall contain the VMD-SPECIFIC value “RPT”
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);

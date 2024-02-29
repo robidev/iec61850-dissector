@@ -48,908 +48,908 @@ void proto_reg_handoff_iec61850(void);
 static int proto_iec61850 = -1;
 static int proto_mms = -1;
 
-static int hf_iec61850_confirmed_RequestPDU;      /* Confirmed_RequestPDU */
-static int hf_iec61850_confirmed_ResponsePDU;     /* Confirmed_ResponsePDU */
-static int hf_iec61850_confirmed_ErrorPDU;        /* Confirmed_ErrorPDU */
-static int hf_iec61850_unconfirmed_PDU;           /* Unconfirmed_PDU */
-static int hf_iec61850_rejectPDU;                 /* RejectPDU */
-static int hf_iec61850_cancel_RequestPDU;         /* Cancel_RequestPDU */
-static int hf_iec61850_cancel_ResponsePDU;        /* Cancel_ResponsePDU */
-static int hf_iec61850_cancel_ErrorPDU;           /* Cancel_ErrorPDU */
-static int hf_iec61850_initiate_RequestPDU;       /* Initiate_RequestPDU */
-static int hf_iec61850_initiate_ResponsePDU;      /* Initiate_ResponsePDU */
-static int hf_iec61850_initiate_ErrorPDU;         /* Initiate_ErrorPDU */
-static int hf_iec61850_conclude_RequestPDU;       /* Conclude_RequestPDU */
-static int hf_iec61850_conclude_ResponsePDU;      /* Conclude_ResponsePDU */
-static int hf_iec61850_conclude_ErrorPDU;         /* Conclude_ErrorPDU */
-static int hf_iec61850_invokeID;                  /* Unsigned32 */
-static int hf_iec61850_listOfModifier;            /* SEQUENCE_OF_Modifier */
-static int hf_iec61850_listOfModifier_item;       /* Modifier */
-static int hf_iec61850_confirmedServiceRequest;   /* ConfirmedServiceRequest */
-static int hf_iec61850_cs_request_detail;         /* CS_Request_Detail */
-static int hf_iec61850_unconfirmedService;        /* UnconfirmedService */
-static int hf_iec61850_confirmedServiceResponse;  /* ConfirmedServiceResponse */
-static int hf_iec61850_modifierPosition;          /* Unsigned32 */
-static int hf_iec61850_serviceError;              /* ServiceError */
-static int hf_iec61850_informationReport;         /* InformationReport */
-static int hf_iec61850_unsolicitedStatus;         /* UnsolicitedStatus */
-static int hf_iec61850_eventNotification;         /* EventNotification */
-static int hf_iec61850_attach_To_Event_Condition;  /* AttachToEventCondition */
-static int hf_iec61850_attach_To_Semaphore;       /* AttachToSemaphore */
-static int hf_iec61850_status;                    /* Status_Request */
-static int hf_iec61850_getNameList;               /* GetNameList_Request */
-static int hf_iec61850_identify;                  /* Identify_Request */
-static int hf_iec61850_rename;                    /* Rename_Request */
-static int hf_iec61850_read;                      /* Read_Request */
-static int hf_iec61850_write;                     /* Write_Request */
-static int hf_iec61850_getVariableAccessAttributes;  /* GetVariableAccessAttributes_Request */
-static int hf_iec61850_defineNamedVariable;       /* DefineNamedVariable_Request */
-static int hf_iec61850_defineScatteredAccess;     /* DefineScatteredAccess_Request */
-static int hf_iec61850_getScatteredAccessAttributes;  /* GetScatteredAccessAttributes_Request */
-static int hf_iec61850_deleteVariableAccess;      /* DeleteVariableAccess_Request */
-static int hf_iec61850_defineNamedVariableList;   /* DefineNamedVariableList_Request */
-static int hf_iec61850_getNamedVariableListAttributes;  /* GetNamedVariableListAttributes_Request */
-static int hf_iec61850_deleteNamedVariableList;   /* DeleteNamedVariableList_Request */
-static int hf_iec61850_defineNamedType;           /* DefineNamedType_Request */
-static int hf_iec61850_getNamedTypeAttributes;    /* GetNamedTypeAttributes_Request */
-static int hf_iec61850_deleteNamedType;           /* DeleteNamedType_Request */
-static int hf_iec61850_input;                     /* Input_Request */
-static int hf_iec61850_output;                    /* Output_Request */
-static int hf_iec61850_takeControl;               /* TakeControl_Request */
-static int hf_iec61850_relinquishControl;         /* RelinquishControl_Request */
-static int hf_iec61850_defineSemaphore;           /* DefineSemaphore_Request */
-static int hf_iec61850_deleteSemaphore;           /* DeleteSemaphore_Request */
-static int hf_iec61850_reportSemaphoreStatus;     /* ReportSemaphoreStatus_Request */
-static int hf_iec61850_reportPoolSemaphoreStatus;  /* ReportPoolSemaphoreStatus_Request */
-static int hf_iec61850_reportSemaphoreEntryStatus;  /* ReportSemaphoreEntryStatus_Request */
-static int hf_iec61850_initiateDownloadSequence;  /* InitiateDownloadSequence_Request */
-static int hf_iec61850_downloadSegment;           /* DownloadSegment_Request */
-static int hf_iec61850_terminateDownloadSequence;  /* TerminateDownloadSequence_Request */
-static int hf_iec61850_initiateUploadSequence;    /* InitiateUploadSequence_Request */
-static int hf_iec61850_uploadSegment;             /* UploadSegment_Request */
-static int hf_iec61850_terminateUploadSequence;   /* TerminateUploadSequence_Request */
-static int hf_iec61850_requestDomainDownload;     /* RequestDomainDownload_Request */
-static int hf_iec61850_requestDomainUpload;       /* RequestDomainUpload_Request */
-static int hf_iec61850_loadDomainContent;         /* LoadDomainContent_Request */
-static int hf_iec61850_storeDomainContent;        /* StoreDomainContent_Request */
-static int hf_iec61850_deleteDomain;              /* DeleteDomain_Request */
-static int hf_iec61850_getDomainAttributes;       /* GetDomainAttributes_Request */
-static int hf_iec61850_createProgramInvocation;   /* CreateProgramInvocation_Request */
-static int hf_iec61850_deleteProgramInvocation;   /* DeleteProgramInvocation_Request */
-static int hf_iec61850_start;                     /* Start_Request */
-static int hf_iec61850_stop;                      /* Stop_Request */
-static int hf_iec61850_resume;                    /* Resume_Request */
-static int hf_iec61850_reset;                     /* Reset_Request */
-static int hf_iec61850_kill;                      /* Kill_Request */
-static int hf_iec61850_getProgramInvocationAttributes;  /* GetProgramInvocationAttributes_Request */
-static int hf_iec61850_obtainFile;                /* ObtainFile_Request */
-static int hf_iec61850_defineEventCondition;      /* DefineEventCondition_Request */
-static int hf_iec61850_confirmedServiceRequest_deleteEventCondition;  /* DeleteEventCondition_Request */
-static int hf_iec61850_getEventConditionAttributes;  /* GetEventConditionAttributes_Request */
-static int hf_iec61850_reportEventConditionStatus;  /* ReportEventConditionStatus_Request */
-static int hf_iec61850_alterEventConditionMonitoring;  /* AlterEventConditionMonitoring_Request */
-static int hf_iec61850_triggerEvent;              /* TriggerEvent_Request */
-static int hf_iec61850_defineEventAction;         /* DefineEventAction_Request */
-static int hf_iec61850_confirmedServiceRequest_deleteEventAction;  /* DeleteEventAction_Request */
-static int hf_iec61850_getEventActionAttributes;  /* GetEventActionAttributes_Request */
-static int hf_iec61850_reportEventActionStatus;   /* ReportEventActionStatus_Request */
-static int hf_iec61850_defineEventEnrollment;     /* DefineEventEnrollment_Request */
-static int hf_iec61850_confirmedServiceRequest_deleteEventEnrollment;  /* DeleteEventEnrollment_Request */
-static int hf_iec61850_alterEventEnrollment;      /* AlterEventEnrollment_Request */
-static int hf_iec61850_reportEventEnrollmentStatus;  /* ReportEventEnrollmentStatus_Request */
-static int hf_iec61850_getEventEnrollmentAttributes;  /* GetEventEnrollmentAttributes_Request */
-static int hf_iec61850_acknowledgeEventNotification;  /* AcknowledgeEventNotification_Request */
-static int hf_iec61850_getAlarmSummary;           /* GetAlarmSummary_Request */
-static int hf_iec61850_getAlarmEnrollmentSummary;  /* GetAlarmEnrollmentSummary_Request */
-static int hf_iec61850_readJournal;               /* ReadJournal_Request */
-static int hf_iec61850_writeJournal;              /* WriteJournal_Request */
-static int hf_iec61850_initializeJournal;         /* InitializeJournal_Request */
-static int hf_iec61850_reportJournalStatus;       /* ReportJournalStatus_Request */
-static int hf_iec61850_createJournal;             /* CreateJournal_Request */
-static int hf_iec61850_deleteJournal;             /* DeleteJournal_Request */
-static int hf_iec61850_getCapabilityList;         /* GetCapabilityList_Request */
-static int hf_iec61850_fileOpen;                  /* FileOpen_Request */
-static int hf_iec61850_fileRead;                  /* FileRead_Request */
-static int hf_iec61850_fileClose;                 /* FileClose_Request */
-static int hf_iec61850_fileRename;                /* FileRename_Request */
-static int hf_iec61850_fileDelete;                /* FileDelete_Request */
-static int hf_iec61850_fileDirectory;             /* FileDirectory_Request */
-static int hf_iec61850_foo;                       /* INTEGER */
-static int hf_iec61850_status_01;                 /* Status_Response */
-static int hf_iec61850_getNameList_01;            /* GetNameList_Response */
-static int hf_iec61850_identify_01;               /* Identify_Response */
-static int hf_iec61850_rename_01;                 /* Rename_Response */
-static int hf_iec61850_read_01;                   /* Read_Response */
-static int hf_iec61850_write_01;                  /* Write_Response */
-static int hf_iec61850_getVariableAccessAttributes_01;  /* GetVariableAccessAttributes_Response */
-static int hf_iec61850_defineNamedVariable_01;    /* DefineNamedVariable_Response */
-static int hf_iec61850_defineScatteredAccess_01;  /* DefineScatteredAccess_Response */
-static int hf_iec61850_getScatteredAccessAttributes_01;  /* GetScatteredAccessAttributes_Response */
-static int hf_iec61850_deleteVariableAccess_01;   /* DeleteVariableAccess_Response */
-static int hf_iec61850_defineNamedVariableList_01;  /* DefineNamedVariableList_Response */
-static int hf_iec61850_getNamedVariableListAttributes_01;  /* GetNamedVariableListAttributes_Response */
-static int hf_iec61850_deleteNamedVariableList_01;  /* DeleteNamedVariableList_Response */
-static int hf_iec61850_defineNamedType_01;        /* DefineNamedType_Response */
-static int hf_iec61850_getNamedTypeAttributes_01;  /* GetNamedTypeAttributes_Response */
-static int hf_iec61850_deleteNamedType_01;        /* DeleteNamedType_Response */
-static int hf_iec61850_input_01;                  /* Input_Response */
-static int hf_iec61850_output_01;                 /* Output_Response */
-static int hf_iec61850_takeControl_01;            /* TakeControl_Response */
-static int hf_iec61850_relinquishControl_01;      /* RelinquishControl_Response */
-static int hf_iec61850_defineSemaphore_01;        /* DefineSemaphore_Response */
-static int hf_iec61850_deleteSemaphore_01;        /* DeleteSemaphore_Response */
-static int hf_iec61850_reportSemaphoreStatus_01;  /* ReportSemaphoreStatus_Response */
-static int hf_iec61850_reportPoolSemaphoreStatus_01;  /* ReportPoolSemaphoreStatus_Response */
-static int hf_iec61850_reportSemaphoreEntryStatus_01;  /* ReportSemaphoreEntryStatus_Response */
-static int hf_iec61850_initiateDownloadSequence_01;  /* InitiateDownloadSequence_Response */
-static int hf_iec61850_downloadSegment_01;        /* DownloadSegment_Response */
-static int hf_iec61850_terminateDownloadSequence_01;  /* TerminateDownloadSequence_Response */
-static int hf_iec61850_initiateUploadSequence_01;  /* InitiateUploadSequence_Response */
-static int hf_iec61850_uploadSegment_01;          /* UploadSegment_Response */
-static int hf_iec61850_terminateUploadSequence_01;  /* TerminateUploadSequence_Response */
-static int hf_iec61850_requestDomainDownLoad;     /* RequestDomainDownload_Response */
-static int hf_iec61850_requestDomainUpload_01;    /* RequestDomainUpload_Response */
-static int hf_iec61850_loadDomainContent_01;      /* LoadDomainContent_Response */
-static int hf_iec61850_storeDomainContent_01;     /* StoreDomainContent_Response */
-static int hf_iec61850_deleteDomain_01;           /* DeleteDomain_Response */
-static int hf_iec61850_getDomainAttributes_01;    /* GetDomainAttributes_Response */
-static int hf_iec61850_createProgramInvocation_01;  /* CreateProgramInvocation_Response */
-static int hf_iec61850_deleteProgramInvocation_01;  /* DeleteProgramInvocation_Response */
-static int hf_iec61850_start_01;                  /* Start_Response */
-static int hf_iec61850_stop_01;                   /* Stop_Response */
-static int hf_iec61850_resume_01;                 /* Resume_Response */
-static int hf_iec61850_reset_01;                  /* Reset_Response */
-static int hf_iec61850_kill_01;                   /* Kill_Response */
-static int hf_iec61850_getProgramInvocationAttributes_01;  /* GetProgramInvocationAttributes_Response */
-static int hf_iec61850_obtainFile_01;             /* ObtainFile_Response */
-static int hf_iec61850_fileOpen_01;               /* FileOpen_Response */
-static int hf_iec61850_defineEventCondition_01;   /* DefineEventCondition_Response */
-static int hf_iec61850_confirmedServiceResponse_deleteEventCondition;  /* DeleteEventCondition_Response */
-static int hf_iec61850_getEventConditionAttributes_01;  /* GetEventConditionAttributes_Response */
-static int hf_iec61850_reportEventConditionStatus_01;  /* ReportEventConditionStatus_Response */
-static int hf_iec61850_alterEventConditionMonitoring_01;  /* AlterEventConditionMonitoring_Response */
-static int hf_iec61850_triggerEvent_01;           /* TriggerEvent_Response */
-static int hf_iec61850_defineEventAction_01;      /* DefineEventAction_Response */
-static int hf_iec61850_deleteEventAction;         /* DeleteEventAction_Response */
-static int hf_iec61850_getEventActionAttributes_01;  /* GetEventActionAttributes_Response */
-static int hf_iec61850_reportActionStatus;        /* ReportEventActionStatus_Response */
-static int hf_iec61850_defineEventEnrollment_01;  /* DefineEventEnrollment_Response */
-static int hf_iec61850_confirmedServiceResponse_deleteEventEnrollment;  /* DeleteEventEnrollment_Response */
-static int hf_iec61850_alterEventEnrollment_01;   /* AlterEventEnrollment_Response */
-static int hf_iec61850_reportEventEnrollmentStatus_01;  /* ReportEventEnrollmentStatus_Response */
-static int hf_iec61850_getEventEnrollmentAttributes_01;  /* GetEventEnrollmentAttributes_Response */
-static int hf_iec61850_acknowledgeEventNotification_01;  /* AcknowledgeEventNotification_Response */
-static int hf_iec61850_getAlarmSummary_01;        /* GetAlarmSummary_Response */
-static int hf_iec61850_getAlarmEnrollmentSummary_01;  /* GetAlarmEnrollmentSummary_Response */
-static int hf_iec61850_readJournal_01;            /* ReadJournal_Response */
-static int hf_iec61850_writeJournal_01;           /* WriteJournal_Response */
-static int hf_iec61850_initializeJournal_01;      /* InitializeJournal_Response */
-static int hf_iec61850_reportJournalStatus_01;    /* ReportJournalStatus_Response */
-static int hf_iec61850_createJournal_01;          /* CreateJournal_Response */
-static int hf_iec61850_deleteJournal_01;          /* DeleteJournal_Response */
-static int hf_iec61850_getCapabilityList_01;      /* GetCapabilityList_Response */
-static int hf_iec61850_fileRead_01;               /* FileRead_Response */
-static int hf_iec61850_fileClose_01;              /* FileClose_Response */
-static int hf_iec61850_fileRename_01;             /* FileRename_Response */
-static int hf_iec61850_fileDelete_01;             /* FileDelete_Response */
-static int hf_iec61850_fileDirectory_01;          /* FileDirectory_Response */
-static int hf_iec61850_FileName_item;             /* GraphicString */
-static int hf_iec61850_vmd_specific;              /* Identifier */
-static int hf_iec61850_domain_specific;           /* T_domain_specific */
-static int hf_iec61850_domainId;                  /* Identifier */
-static int hf_iec61850_itemId;                    /* Identifier */
-static int hf_iec61850_aa_specific;               /* Identifier */
-static int hf_iec61850_ap_title;                  /* T_ap_title */
-static int hf_iec61850_ap_invocation_id;          /* T_ap_invocation_id */
-static int hf_iec61850_ae_qualifier;              /* T_ae_qualifier */
-static int hf_iec61850_ae_invocation_id;          /* T_ae_invocation_id */
-static int hf_iec61850_localDetailCalling;        /* Integer32 */
-static int hf_iec61850_proposedMaxServOutstandingCalling;  /* Integer16 */
-static int hf_iec61850_proposedMaxServOutstandingCalled;  /* Integer16 */
-static int hf_iec61850_proposedDataStructureNestingLevel;  /* Integer8 */
-static int hf_iec61850_mmsInitRequestDetail;      /* InitRequestDetail */
-static int hf_iec61850_proposedVersionNumber;     /* Integer16 */
-static int hf_iec61850_proposedParameterCBB;      /* ParameterSupportOptions */
-static int hf_iec61850_servicesSupportedCalling;  /* ServiceSupportOptions */
-static int hf_iec61850_localDetailCalled;         /* Integer32 */
-static int hf_iec61850_negociatedMaxServOutstandingCalling;  /* Integer16 */
-static int hf_iec61850_negociatedMaxServOutstandingCalled;  /* Integer16 */
-static int hf_iec61850_negociatedDataStructureNestingLevel;  /* Integer8 */
-static int hf_iec61850_mmsInitResponseDetail;     /* InitResponseDetail */
-static int hf_iec61850_negociatedVersionNumber;   /* Integer16 */
-static int hf_iec61850_negociatedParameterCBB;    /* ParameterSupportOptions */
-static int hf_iec61850_servicesSupportedCalled;   /* ServiceSupportOptions */
-static int hf_iec61850_originalInvokeID;          /* Unsigned32 */
-static int hf_iec61850_errorClass;                /* T_errorClass */
-static int hf_iec61850_vmd_state;                 /* T_vmd_state */
-static int hf_iec61850_application_reference;     /* T_application_reference */
-static int hf_iec61850_definition;                /* T_definition */
-static int hf_iec61850_resource;                  /* T_resource */
-static int hf_iec61850_service;                   /* T_service */
-static int hf_iec61850_service_preempt;           /* T_service_preempt */
-static int hf_iec61850_time_resolution;           /* T_time_resolution */
-static int hf_iec61850_access;                    /* T_access */
-static int hf_iec61850_initiate;                  /* T_initiate */
-static int hf_iec61850_conclude;                  /* T_conclude */
-static int hf_iec61850_cancel;                    /* T_cancel */
-static int hf_iec61850_file;                      /* T_file */
-static int hf_iec61850_others;                    /* INTEGER */
-static int hf_iec61850_additionalCode;            /* INTEGER */
-static int hf_iec61850_additionalDescription;     /* VisibleString */
-static int hf_iec61850_serviceSpecificInformation;  /* T_serviceSpecificInformation */
-static int hf_iec61850_obtainFile_02;             /* ObtainFile_Error */
-static int hf_iec61850_start_02;                  /* Start_Error */
-static int hf_iec61850_stop_02;                   /* Stop_Error */
-static int hf_iec61850_resume_02;                 /* Resume_Error */
-static int hf_iec61850_reset_02;                  /* Reset_Error */
-static int hf_iec61850_deleteVariableAccess_02;   /* DeleteVariableAccess_Error */
-static int hf_iec61850_deleteNamedVariableList_02;  /* DeleteNamedVariableList_Error */
-static int hf_iec61850_deleteNamedType_02;        /* DeleteNamedType_Error */
-static int hf_iec61850_defineEventEnrollment_Error;  /* DefineEventEnrollment_Error */
-static int hf_iec61850_fileRename_02;             /* FileRename_Error */
-static int hf_iec61850_additionalService;         /* AdditionalService_Error */
-static int hf_iec61850_changeAccessControl;       /* ChangeAccessControl_Error */
-static int hf_iec61850_defineEcl;                 /* DefineEventConditionList_Error */
-static int hf_iec61850_addECLReference;           /* AddEventConditionListReference_Error */
-static int hf_iec61850_removeECLReference;        /* RemoveEventConditionListReference_Error */
-static int hf_iec61850_initiateUC;                /* InitiateUnitControl_Error */
-static int hf_iec61850_startUC;                   /* StartUnitControl_Error */
-static int hf_iec61850_stopUC;                    /* StopUnitControl_Error */
-static int hf_iec61850_deleteUC;                  /* DeleteUnitControl_Error */
-static int hf_iec61850_loadUCFromFile;            /* LoadUnitControlFromFile_Error */
-static int hf_iec61850_eventCondition;            /* ObjectName */
-static int hf_iec61850_eventConditionList;        /* ObjectName */
-static int hf_iec61850_domain;                    /* Identifier */
-static int hf_iec61850_programInvocation;         /* Identifier */
-static int hf_iec61850_programInvocationName;     /* Identifier */
-static int hf_iec61850_programInvocationState;    /* ProgramInvocationState */
-static int hf_iec61850_none;                      /* NULL */
-static int hf_iec61850_rejectReason;              /* T_rejectReason */
-static int hf_iec61850_confirmed_requestPDU;      /* T_confirmed_requestPDU */
-static int hf_iec61850_confirmed_responsePDU;     /* T_confirmed_responsePDU */
-static int hf_iec61850_confirmed_errorPDU;        /* T_confirmed_errorPDU */
-static int hf_iec61850_unconfirmedPDU;            /* T_unconfirmedPDU */
-static int hf_iec61850_pdu_error;                 /* T_pdu_error */
-static int hf_iec61850_cancel_requestPDU;         /* T_cancel_requestPDU */
-static int hf_iec61850_cancel_responsePDU;        /* T_cancel_responsePDU */
-static int hf_iec61850_cancel_errorPDU;           /* T_cancel_errorPDU */
-static int hf_iec61850_conclude_requestPDU;       /* T_conclude_requestPDU */
-static int hf_iec61850_conclude_responsePDU;      /* T_conclude_responsePDU */
-static int hf_iec61850_conclude_errorPDU;         /* T_conclude_errorPDU */
-static int hf_iec61850_vmdLogicalStatus;          /* T_vmdLogicalStatus */
-static int hf_iec61850_vmdPhysicalStatus;         /* T_vmdPhysicalStatus */
-static int hf_iec61850_localDetail;               /* BIT_STRING_SIZE_0_128 */
-static int hf_iec61850_extendedObjectClass;       /* T_extendedObjectClass */
-static int hf_iec61850_objectClass;               /* T_objectClass */
-static int hf_iec61850_objectScope;               /* T_objectScope */
-static int hf_iec61850_vmdSpecific;               /* NULL */
-static int hf_iec61850_domainSpecific;            /* Identifier */
-static int hf_iec61850_aaSpecific;                /* NULL */
-static int hf_iec61850_getNameList_Request_continueAfter;  /* Identifier */
-static int hf_iec61850_listOfIdentifier;          /* SEQUENCE_OF_Identifier */
-static int hf_iec61850_listOfIdentifier_item;     /* Identifier */
-static int hf_iec61850_moreFollows;               /* BOOLEAN */
-static int hf_iec61850_vendorName;                /* VisibleString */
-static int hf_iec61850_modelName;                 /* VisibleString */
-static int hf_iec61850_revision;                  /* VisibleString */
-static int hf_iec61850_listOfAbstractSyntaxes;    /* T_listOfAbstractSyntaxes */
-static int hf_iec61850_listOfAbstractSyntaxes_item;  /* OBJECT_IDENTIFIER */
-static int hf_iec61850_extendedObjectClass_01;    /* T_extendedObjectClass_01 */
-static int hf_iec61850_objectClass_01;            /* T_objectClass_01 */
-static int hf_iec61850_currentName;               /* ObjectName */
-static int hf_iec61850_newIdentifier;             /* Identifier */
-static int hf_iec61850_getCapabilityList_Request_continueAfter;  /* VisibleString */
-static int hf_iec61850_listOfCapabilities;        /* T_listOfCapabilities */
-static int hf_iec61850_listOfCapabilities_item;   /* VisibleString */
-static int hf_iec61850_domainName;                /* Identifier */
-static int hf_iec61850_listOfCapabilities_01;     /* T_listOfCapabilities_01 */
-static int hf_iec61850_sharable;                  /* BOOLEAN */
-static int hf_iec61850_loadData;                  /* T_loadData */
-static int hf_iec61850_non_coded;                 /* OCTET_STRING */
-static int hf_iec61850_coded;                     /* EXTERNALt */
-static int hf_iec61850_discard;                   /* ServiceError */
-static int hf_iec61850_ulsmID;                    /* Integer32 */
-static int hf_iec61850_listOfCapabilities_02;     /* T_listOfCapabilities_02 */
-static int hf_iec61850_loadData_01;               /* T_loadData_01 */
-static int hf_iec61850_listOfCapabilities_03;     /* T_listOfCapabilities_03 */
-static int hf_iec61850_fileName;                  /* FileName */
-static int hf_iec61850_listOfCapabilities_04;     /* T_listOfCapabilities_04 */
-static int hf_iec61850_thirdParty;                /* ApplicationReference */
-static int hf_iec61850_filenName;                 /* FileName */
-static int hf_iec61850_listOfCapabilities_05;     /* T_listOfCapabilities_05 */
-static int hf_iec61850_getDomainAttributes_Response_state;  /* DomainState */
-static int hf_iec61850_mmsDeletable;              /* BOOLEAN */
-static int hf_iec61850_listOfProgramInvocations;  /* SEQUENCE_OF_Identifier */
-static int hf_iec61850_listOfProgramInvocations_item;  /* Identifier */
-static int hf_iec61850_uploadInProgress;          /* Integer8 */
-static int hf_iec61850_listOfDomainName;          /* SEQUENCE_OF_Identifier */
-static int hf_iec61850_listOfDomainName_item;     /* Identifier */
-static int hf_iec61850_reusable;                  /* BOOLEAN */
-static int hf_iec61850_monitorType;               /* BOOLEAN */
-static int hf_iec61850_executionArgument;         /* T_executionArgument */
-static int hf_iec61850_simpleString;              /* VisibleString */
-static int hf_iec61850_encodedString;             /* EXTERNALt */
-static int hf_iec61850_executionArgument_01;      /* T_executionArgument_01 */
-static int hf_iec61850_getProgramInvocationAttributes_Response_state;  /* ProgramInvocationState */
-static int hf_iec61850_listOfDomainNames;         /* SEQUENCE_OF_Identifier */
-static int hf_iec61850_listOfDomainNames_item;    /* Identifier */
-static int hf_iec61850_monitor;                   /* BOOLEAN */
-static int hf_iec61850_startArgument;             /* VisibleString */
-static int hf_iec61850_executionArgument_02;      /* T_executionArgument_02 */
-static int hf_iec61850_typeName;                  /* ObjectName */
-static int hf_iec61850_array;                     /* T_array */
-static int hf_iec61850_packed;                    /* BOOLEAN */
-static int hf_iec61850_numberOfElements;          /* Unsigned32 */
-static int hf_iec61850_elementType;               /* TypeSpecification */
-static int hf_iec61850_structure;                 /* T_structure */
-static int hf_iec61850_components;                /* T_components */
-static int hf_iec61850_components_item;           /* T_components_item */
-static int hf_iec61850_componentName;             /* Identifier */
-static int hf_iec61850_componentType;             /* TypeSpecification */
-static int hf_iec61850_boolean;                   /* NULL */
-static int hf_iec61850_typeSpecification_bit_string;  /* Integer32 */
-static int hf_iec61850_integer;                   /* Unsigned8 */
-static int hf_iec61850_unsigned;                  /* Unsigned8 */
-static int hf_iec61850_typeSpecification_octet_string;  /* Integer32 */
-static int hf_iec61850_typeSpecification_visible_string;  /* Integer32 */
-static int hf_iec61850_generalized_time;          /* NULL */
-static int hf_iec61850_typeSpecification_binary_time;  /* BOOLEAN */
-static int hf_iec61850_bcd;                       /* Unsigned8 */
-static int hf_iec61850_objId;                     /* NULL */
-static int hf_iec61850_AlternateAccess_item;      /* AlternateAccess_item */
-static int hf_iec61850_unnamed;                   /* AlternateAccessSelection */
-static int hf_iec61850_named;                     /* T_named */
-static int hf_iec61850_accesst;                   /* AlternateAccessSelection */
-static int hf_iec61850_selectAlternateAccess;     /* T_selectAlternateAccess */
-static int hf_iec61850_accessSelection;           /* T_accessSelection */
-static int hf_iec61850_component;                 /* Identifier */
-static int hf_iec61850_index;                     /* Unsigned32 */
-static int hf_iec61850_indexRange;                /* T_indexRange */
-static int hf_iec61850_lowIndex;                  /* Unsigned32 */
-static int hf_iec61850_allElements;               /* NULL */
-static int hf_iec61850_alternateAccess;           /* AlternateAccess */
-static int hf_iec61850_selectAccess;              /* T_selectAccess */
-static int hf_iec61850_indexRange_01;             /* T_indexRange_01 */
-static int hf_iec61850_nmberOfElements;           /* Unsigned32 */
-static int hf_iec61850_specificationWithResult;   /* BOOLEAN */
-static int hf_iec61850_variableAccessSpecificatn;  /* VariableAccessSpecification */
-static int hf_iec61850_listOfAccessResult;        /* SEQUENCE_OF_AccessResult */
-static int hf_iec61850_listOfAccessResult_item;   /* AccessResult */
-static int hf_iec61850_listOfData;                /* SEQUENCE_OF_Data */
-static int hf_iec61850_listOfData_item;           /* Data */
-static int hf_iec61850_Write_Response_item;       /* Write_Response_item */
-static int hf_iec61850_failure;                   /* DataAccessError */
-static int hf_iec61850_success;                   /* NULL */
-static int hf_iec61850_variableAccessSpecification;  /* VariableAccessSpecification */
-static int hf_iec61850_name;                      /* ObjectName */
-static int hf_iec61850_address;                   /* Address */
-static int hf_iec61850_typeSpecification;         /* TypeSpecification */
-static int hf_iec61850_variableName;              /* ObjectName */
-static int hf_iec61850_scatteredAccessName;       /* ObjectName */
-static int hf_iec61850_scatteredAccessDescription;  /* ScatteredAccessDescription */
-static int hf_iec61850_scopeOfDelete;             /* T_scopeOfDelete */
-static int hf_iec61850_listOfName;                /* SEQUENCE_OF_ObjectName */
-static int hf_iec61850_listOfName_item;           /* ObjectName */
-static int hf_iec61850_numberMatched;             /* Unsigned32 */
-static int hf_iec61850_numberDeleted;             /* Unsigned32 */
-static int hf_iec61850_variableListName;          /* ObjectName */
-static int hf_iec61850_listOfVariable;            /* T_listOfVariable */
-static int hf_iec61850_listOfVariable_item;       /* T_listOfVariable_item */
-static int hf_iec61850_variableSpecification;     /* VariableSpecification */
-static int hf_iec61850_listOfVariable_01;         /* T_listOfVariable_01 */
-static int hf_iec61850_listOfVariable_item_01;    /* T_listOfVariable_item_01 */
-static int hf_iec61850_scopeOfDelete_01;          /* T_scopeOfDelete_01 */
-static int hf_iec61850_listOfVariableListName;    /* SEQUENCE_OF_ObjectName */
-static int hf_iec61850_listOfVariableListName_item;  /* ObjectName */
-static int hf_iec61850_scopeOfDelete_02;          /* T_scopeOfDelete_02 */
-static int hf_iec61850_listOfTypeName;            /* SEQUENCE_OF_ObjectName */
-static int hf_iec61850_listOfTypeName_item;       /* ObjectName */
-static int hf_iec61850_success_01;                /* Data */
-static int hf_iec61850_array_01;                  /* SEQUENCE_OF_Data */
-static int hf_iec61850_array_item;                /* Data */
-static int hf_iec61850_structure_01;              /* SEQUENCE_OF_Data */
-static int hf_iec61850_structure_item;            /* Data */
-static int hf_iec61850_boolean_01;                /* BOOLEAN */
-static int hf_iec61850_data_bit_string;           /* BIT_STRING */
-static int hf_iec61850_integer_01;                /* INTEGER */
-static int hf_iec61850_unsigned_01;               /* INTEGER */
-static int hf_iec61850_floating_point;            /* FloatingPoint */
-static int hf_iec61850_data_octet_string;         /* OCTET_STRING */
-static int hf_iec61850_data_visible_string;       /* VisibleString */
-static int hf_iec61850_data_binary_time;          /* TimeOfDay */
-static int hf_iec61850_bcd_01;                    /* INTEGER */
-static int hf_iec61850_booleanArray;              /* BIT_STRING */
-static int hf_iec61850_objId_01;                  /* OBJECT_IDENTIFIER */
-static int hf_iec61850_mMSString;                 /* MMSString */
-static int hf_iec61850_utc_time;                  /* UtcTime */
-static int hf_iec61850_listOfVariable_02;         /* T_listOfVariable_02 */
-static int hf_iec61850_listOfVariable_item_02;    /* T_listOfVariable_item_02 */
-static int hf_iec61850_ScatteredAccessDescription_item;  /* ScatteredAccessDescription_item */
-static int hf_iec61850_variableDescription;       /* T_variableDescription */
-static int hf_iec61850_invalidated;               /* NULL */
-static int hf_iec61850_numericAddress;            /* Unsigned32 */
-static int hf_iec61850_symbolicAddress;           /* VisibleString */
-static int hf_iec61850_unconstrainedAddress;      /* OCTET_STRING */
-static int hf_iec61850_semaphoreName;             /* ObjectName */
-static int hf_iec61850_namedToken;                /* Identifier */
-static int hf_iec61850_priority;                  /* Priority */
-static int hf_iec61850_acceptableDelay;           /* Unsigned32 */
-static int hf_iec61850_controlTimeOut;            /* Unsigned32 */
-static int hf_iec61850_abortOnTimeOut;            /* BOOLEAN */
-static int hf_iec61850_relinquishIfConnectionLost;  /* BOOLEAN */
-static int hf_iec61850_applicationToPreempt;      /* ApplicationReference */
-static int hf_iec61850_noResult;                  /* NULL */
-static int hf_iec61850_numbersOfTokens;           /* Unsigned16 */
-static int hf_iec61850_class;                     /* T_class */
-static int hf_iec61850_numberOfTokens;            /* Unsigned16 */
-static int hf_iec61850_numberOfOwnedTokens;       /* Unsigned16 */
-static int hf_iec61850_numberOfHungTokens;        /* Unsigned16 */
-static int hf_iec61850_nameToStartAfter;          /* Identifier */
-static int hf_iec61850_listOfNamedTokens;         /* T_listOfNamedTokens */
-static int hf_iec61850_listOfNamedTokens_item;    /* T_listOfNamedTokens_item */
-static int hf_iec61850_freeNamedToken;            /* Identifier */
-static int hf_iec61850_ownedNamedToken;           /* Identifier */
-static int hf_iec61850_hungNamedToken;            /* Identifier */
-static int hf_iec61850_reportSemaphoreEntryStatus_Request_state;  /* T_reportSemaphoreEntryStatus_Request_state */
-static int hf_iec61850_entryIdToStartAfter;       /* OCTET_STRING */
-static int hf_iec61850_listOfSemaphoreEntry;      /* SEQUENCE_OF_SemaphoreEntry */
-static int hf_iec61850_listOfSemaphoreEntry_item;  /* SemaphoreEntry */
-static int hf_iec61850_entryId;                   /* OCTET_STRING */
-static int hf_iec61850_entryClass;                /* T_entryClass */
-static int hf_iec61850_applicationReference;      /* ApplicationReference */
-static int hf_iec61850_remainingTimeOut;          /* Unsigned32 */
-static int hf_iec61850_operatorStationName;       /* Identifier */
-static int hf_iec61850_echo;                      /* BOOLEAN */
-static int hf_iec61850_listOfPromptData;          /* T_listOfPromptData */
-static int hf_iec61850_listOfPromptData_item;     /* VisibleString */
-static int hf_iec61850_inputTimeOut;              /* Unsigned32 */
-static int hf_iec61850_listOfOutputData;          /* T_listOfOutputData */
-static int hf_iec61850_listOfOutputData_item;     /* VisibleString */
-static int hf_iec61850_eventConditionName;        /* ObjectName */
-static int hf_iec61850_class_01;                  /* EC_Class */
-static int hf_iec61850_prio_rity;                 /* Priority */
-static int hf_iec61850_severity;                  /* Unsigned8 */
-static int hf_iec61850_alarmSummaryReports;       /* BOOLEAN */
-static int hf_iec61850_monitoredVariable;         /* VariableSpecification */
-static int hf_iec61850_evaluationInterval;        /* Unsigned32 */
-static int hf_iec61850_specific;                  /* SEQUENCE_OF_ObjectName */
-static int hf_iec61850_specific_item;             /* ObjectName */
-static int hf_iec61850_aa_specific_01;            /* NULL */
-static int hf_iec61850_vmd;                       /* NULL */
-static int hf_iec61850_monitoredVariable_01;      /* T_monitoredVariable */
-static int hf_iec61850_variableReference;         /* VariableSpecification */
-static int hf_iec61850_undefined;                 /* NULL */
-static int hf_iec61850_currentState;              /* EC_State */
-static int hf_iec61850_numberOfEventEnrollments;  /* Unsigned32 */
-static int hf_iec61850_enabled;                   /* BOOLEAN */
-static int hf_iec61850_timeOfLastTransitionToActive;  /* EventTime */
-static int hf_iec61850_timeOfLastTransitionToIdle;  /* EventTime */
-static int hf_iec61850_eventActionName;           /* ObjectName */
-static int hf_iec61850_eventEnrollmentName;       /* ObjectName */
-static int hf_iec61850_eventConditionTransition;  /* Transitions */
-static int hf_iec61850_alarmAcknowledgementRule;  /* AlarmAckRule */
-static int hf_iec61850_clientApplication;         /* ApplicationReference */
-static int hf_iec61850_ec;                        /* ObjectName */
-static int hf_iec61850_ea;                        /* ObjectName */
-static int hf_iec61850_scopeOfRequest;            /* T_scopeOfRequest */
-static int hf_iec61850_eventEnrollmentNames;      /* SEQUENCE_OF_ObjectName */
-static int hf_iec61850_eventEnrollmentNames_item;  /* ObjectName */
-static int hf_iec61850_getEventEnrollmentAttributes_Request_continueAfter;  /* ObjectName */
-static int hf_iec61850_eventConditionName_01;     /* T_eventConditionName */
-static int hf_iec61850_eventActionName_01;        /* T_eventActionName */
-static int hf_iec61850_eventAction;               /* ObjectName */
-static int hf_iec61850_enrollmentClass;           /* EE_Class */
-static int hf_iec61850_duration;                  /* EE_Duration */
-static int hf_iec61850_remainingAcceptableDelay;  /* Unsigned32 */
-static int hf_iec61850_listOfEventEnrollment;     /* SEQUENCE_OF_EventEnrollment */
-static int hf_iec61850_listOfEventEnrollment_item;  /* EventEnrollment */
-static int hf_iec61850_eventConditionTransitions;  /* Transitions */
-static int hf_iec61850_notificationLost;          /* BOOLEAN */
-static int hf_iec61850_alarmAcknowledgmentRule;   /* AlarmAckRule */
-static int hf_iec61850_currentState_01;           /* EE_State */
-static int hf_iec61850_currentState_02;           /* T_currentState */
-static int hf_iec61850_alterEventEnrollment_Response_currentState_state;  /* EE_State */
-static int hf_iec61850_transitionTime;            /* EventTime */
-static int hf_iec61850_acknowledgedState;         /* EC_State */
-static int hf_iec61850_timeOfAcknowledgedTransition;  /* EventTime */
-static int hf_iec61850_enrollmentsOnly;           /* BOOLEAN */
-static int hf_iec61850_activeAlarmsOnly;          /* BOOLEAN */
-static int hf_iec61850_acknowledgmentFilter;      /* T_acknowledgmentFilter */
-static int hf_iec61850_severityFilter;            /* T_severityFilter */
-static int hf_iec61850_mostSevere;                /* Unsigned8 */
-static int hf_iec61850_leastSevere;               /* Unsigned8 */
-static int hf_iec61850_continueAfter;             /* ObjectName */
-static int hf_iec61850_listOfAlarmSummary;        /* SEQUENCE_OF_AlarmSummary */
-static int hf_iec61850_listOfAlarmSummary_item;   /* AlarmSummary */
-static int hf_iec61850_unacknowledgedState;       /* T_unacknowledgedState */
-static int hf_iec61850_acknowledgmentFilter_01;   /* T_acknowledgmentFilter_01 */
-static int hf_iec61850_severityFilter_01;         /* T_severityFilter_01 */
-static int hf_iec61850_getAlarmEnrollmentSummary_Request_continueAfter;  /* ObjectName */
-static int hf_iec61850_listOfAlarmEnrollmentSummary;  /* SEQUENCE_OF_AlarmEnrollmentSummary */
-static int hf_iec61850_listOfAlarmEnrollmentSummary_item;  /* AlarmEnrollmentSummary */
-static int hf_iec61850_enrollementState;          /* EE_State */
-static int hf_iec61850_timeActiveAcknowledged;    /* EventTime */
-static int hf_iec61850_timeIdleAcknowledged;      /* EventTime */
-static int hf_iec61850_eventConditionName_02;     /* T_eventConditionName_01 */
-static int hf_iec61850_actionResult;              /* T_actionResult */
-static int hf_iec61850_eventActioName;            /* ObjectName */
-static int hf_iec61850_eventActionResult;         /* T_eventActionResult */
-static int hf_iec61850_success_02;                /* ConfirmedServiceResponse */
-static int hf_iec61850_failure_01;                /* ServiceError */
-static int hf_iec61850_causingTransitions;        /* Transitions */
-static int hf_iec61850_timeOfDayT;                /* TimeOfDay */
-static int hf_iec61850_timeSequenceIdentifier;    /* Unsigned32 */
-static int hf_iec61850_journalName;               /* ObjectName */
-static int hf_iec61850_rangeStartSpecification;   /* T_rangeStartSpecification */
-static int hf_iec61850_startingTime;              /* TimeOfDay */
-static int hf_iec61850_startingEntry;             /* OCTET_STRING */
-static int hf_iec61850_rangeStopSpecification;    /* T_rangeStopSpecification */
-static int hf_iec61850_endingTime;                /* TimeOfDay */
-static int hf_iec61850_numberOfEntries;           /* Integer32 */
-static int hf_iec61850_listOfVariables;           /* T_listOfVariables */
-static int hf_iec61850_listOfVariables_item;      /* VisibleString */
-static int hf_iec61850_entryToStartAfter;         /* T_entryToStartAfter */
-static int hf_iec61850_timeSpecification;         /* TimeOfDay */
-static int hf_iec61850_entrySpecification;        /* OCTET_STRING */
-static int hf_iec61850_listOfJournalEntry;        /* SEQUENCE_OF_JournalEntry */
-static int hf_iec61850_listOfJournalEntry_item;   /* JournalEntry */
-static int hf_iec61850_entryIdentifier;           /* OCTET_STRING */
-static int hf_iec61850_originatingApplication;    /* ApplicationReference */
-static int hf_iec61850_entryContent;              /* EntryContent */
-static int hf_iec61850_listOfJournalEntry_01;     /* SEQUENCE_OF_EntryContent */
-static int hf_iec61850_listOfJournalEntry_item_01;  /* EntryContent */
-static int hf_iec61850_limitSpecification;        /* T_limitSpecification */
-static int hf_iec61850_limitingTime;              /* TimeOfDay */
-static int hf_iec61850_limitingEntry;             /* OCTET_STRING */
-static int hf_iec61850_currentEntries;            /* Unsigned32 */
-static int hf_iec61850_occurenceTime;             /* TimeOfDay */
-static int hf_iec61850_additionalDetail;          /* JOU_Additional_Detail */
-static int hf_iec61850_entryForm;                 /* T_entryForm */
-static int hf_iec61850_data;                      /* T_data */
-static int hf_iec61850_event;                     /* T_event */
-static int hf_iec61850_listOfVariables_01;        /* T_listOfVariables_01 */
-static int hf_iec61850_listOfVariables_item_01;   /* T_listOfVariables_item */
-static int hf_iec61850_variableTag;               /* VisibleString */
-static int hf_iec61850_valueSpecification;        /* Data */
-static int hf_iec61850_annotation;                /* VisibleString */
-static int hf_iec61850_sourceFileServer;          /* ApplicationReference */
-static int hf_iec61850_sourceFile;                /* FileName */
-static int hf_iec61850_destinationFile;           /* FileName */
-static int hf_iec61850_initialPosition;           /* Unsigned32 */
-static int hf_iec61850_frsmID;                    /* Integer32 */
-static int hf_iec61850_fileAttributes;            /* FileAttributes */
-static int hf_iec61850_fileData;                  /* OCTET_STRING */
-static int hf_iec61850_currentFileName;           /* FileName */
-static int hf_iec61850_newFileName;               /* FileName */
-static int hf_iec61850_fileSpecification;         /* FileName */
-static int hf_iec61850_fileDirectory_Request_continueAfter;  /* FileName */
-static int hf_iec61850_listOfDirectoryEntry;      /* SEQUENCE_OF_DirectoryEntry */
-static int hf_iec61850_listOfDirectoryEntry_item;  /* DirectoryEntry */
-static int hf_iec61850_filename;                  /* FileName */
-static int hf_iec61850_sizeOfFile;                /* Unsigned32 */
-static int hf_iec61850_lastModified;              /* GeneralizedTime */
+static int hf_iec61850_confirmed_RequestPDU = -1;  /* Confirmed_RequestPDU */
+static int hf_iec61850_confirmed_ResponsePDU = -1;  /* Confirmed_ResponsePDU */
+static int hf_iec61850_confirmed_ErrorPDU = -1;   /* Confirmed_ErrorPDU */
+static int hf_iec61850_unconfirmed_PDU = -1;      /* Unconfirmed_PDU */
+static int hf_iec61850_rejectPDU = -1;            /* RejectPDU */
+static int hf_iec61850_cancel_RequestPDU = -1;    /* Cancel_RequestPDU */
+static int hf_iec61850_cancel_ResponsePDU = -1;   /* Cancel_ResponsePDU */
+static int hf_iec61850_cancel_ErrorPDU = -1;      /* Cancel_ErrorPDU */
+static int hf_iec61850_initiate_RequestPDU = -1;  /* Initiate_RequestPDU */
+static int hf_iec61850_initiate_ResponsePDU = -1;  /* Initiate_ResponsePDU */
+static int hf_iec61850_initiate_ErrorPDU = -1;    /* Initiate_ErrorPDU */
+static int hf_iec61850_conclude_RequestPDU = -1;  /* Conclude_RequestPDU */
+static int hf_iec61850_conclude_ResponsePDU = -1;  /* Conclude_ResponsePDU */
+static int hf_iec61850_conclude_ErrorPDU = -1;    /* Conclude_ErrorPDU */
+static int hf_iec61850_invokeID = -1;             /* Unsigned32 */
+static int hf_iec61850_listOfModifier = -1;       /* SEQUENCE_OF_Modifier */
+static int hf_iec61850_listOfModifier_item = -1;  /* Modifier */
+static int hf_iec61850_confirmedServiceRequest = -1;  /* ConfirmedServiceRequest */
+static int hf_iec61850_cs_request_detail = -1;    /* CS_Request_Detail */
+static int hf_iec61850_unconfirmedService = -1;   /* UnconfirmedService */
+static int hf_iec61850_confirmedServiceResponse = -1;  /* ConfirmedServiceResponse */
+static int hf_iec61850_modifierPosition = -1;     /* Unsigned32 */
+static int hf_iec61850_serviceError = -1;         /* ServiceError */
+static int hf_iec61850_informationReport = -1;    /* InformationReport */
+static int hf_iec61850_unsolicitedStatus = -1;    /* UnsolicitedStatus */
+static int hf_iec61850_eventNotification = -1;    /* EventNotification */
+static int hf_iec61850_attach_To_Event_Condition = -1;  /* AttachToEventCondition */
+static int hf_iec61850_attach_To_Semaphore = -1;  /* AttachToSemaphore */
+static int hf_iec61850_status = -1;               /* Status_Request */
+static int hf_iec61850_getNameList = -1;          /* GetNameList_Request */
+static int hf_iec61850_identify = -1;             /* Identify_Request */
+static int hf_iec61850_rename = -1;               /* Rename_Request */
+static int hf_iec61850_read = -1;                 /* Read_Request */
+static int hf_iec61850_write = -1;                /* Write_Request */
+static int hf_iec61850_getVariableAccessAttributes = -1;  /* GetVariableAccessAttributes_Request */
+static int hf_iec61850_defineNamedVariable = -1;  /* DefineNamedVariable_Request */
+static int hf_iec61850_defineScatteredAccess = -1;  /* DefineScatteredAccess_Request */
+static int hf_iec61850_getScatteredAccessAttributes = -1;  /* GetScatteredAccessAttributes_Request */
+static int hf_iec61850_deleteVariableAccess = -1;  /* DeleteVariableAccess_Request */
+static int hf_iec61850_defineNamedVariableList = -1;  /* DefineNamedVariableList_Request */
+static int hf_iec61850_getNamedVariableListAttributes = -1;  /* GetNamedVariableListAttributes_Request */
+static int hf_iec61850_deleteNamedVariableList = -1;  /* DeleteNamedVariableList_Request */
+static int hf_iec61850_defineNamedType = -1;      /* DefineNamedType_Request */
+static int hf_iec61850_getNamedTypeAttributes = -1;  /* GetNamedTypeAttributes_Request */
+static int hf_iec61850_deleteNamedType = -1;      /* DeleteNamedType_Request */
+static int hf_iec61850_input = -1;                /* Input_Request */
+static int hf_iec61850_output = -1;               /* Output_Request */
+static int hf_iec61850_takeControl = -1;          /* TakeControl_Request */
+static int hf_iec61850_relinquishControl = -1;    /* RelinquishControl_Request */
+static int hf_iec61850_defineSemaphore = -1;      /* DefineSemaphore_Request */
+static int hf_iec61850_deleteSemaphore = -1;      /* DeleteSemaphore_Request */
+static int hf_iec61850_reportSemaphoreStatus = -1;  /* ReportSemaphoreStatus_Request */
+static int hf_iec61850_reportPoolSemaphoreStatus = -1;  /* ReportPoolSemaphoreStatus_Request */
+static int hf_iec61850_reportSemaphoreEntryStatus = -1;  /* ReportSemaphoreEntryStatus_Request */
+static int hf_iec61850_initiateDownloadSequence = -1;  /* InitiateDownloadSequence_Request */
+static int hf_iec61850_downloadSegment = -1;      /* DownloadSegment_Request */
+static int hf_iec61850_terminateDownloadSequence = -1;  /* TerminateDownloadSequence_Request */
+static int hf_iec61850_initiateUploadSequence = -1;  /* InitiateUploadSequence_Request */
+static int hf_iec61850_uploadSegment = -1;        /* UploadSegment_Request */
+static int hf_iec61850_terminateUploadSequence = -1;  /* TerminateUploadSequence_Request */
+static int hf_iec61850_requestDomainDownload = -1;  /* RequestDomainDownload_Request */
+static int hf_iec61850_requestDomainUpload = -1;  /* RequestDomainUpload_Request */
+static int hf_iec61850_loadDomainContent = -1;    /* LoadDomainContent_Request */
+static int hf_iec61850_storeDomainContent = -1;   /* StoreDomainContent_Request */
+static int hf_iec61850_deleteDomain = -1;         /* DeleteDomain_Request */
+static int hf_iec61850_getDomainAttributes = -1;  /* GetDomainAttributes_Request */
+static int hf_iec61850_createProgramInvocation = -1;  /* CreateProgramInvocation_Request */
+static int hf_iec61850_deleteProgramInvocation = -1;  /* DeleteProgramInvocation_Request */
+static int hf_iec61850_start = -1;                /* Start_Request */
+static int hf_iec61850_stop = -1;                 /* Stop_Request */
+static int hf_iec61850_resume = -1;               /* Resume_Request */
+static int hf_iec61850_reset = -1;                /* Reset_Request */
+static int hf_iec61850_kill = -1;                 /* Kill_Request */
+static int hf_iec61850_getProgramInvocationAttributes = -1;  /* GetProgramInvocationAttributes_Request */
+static int hf_iec61850_obtainFile = -1;           /* ObtainFile_Request */
+static int hf_iec61850_defineEventCondition = -1;  /* DefineEventCondition_Request */
+static int hf_iec61850_confirmedServiceRequest_deleteEventCondition = -1;  /* DeleteEventCondition_Request */
+static int hf_iec61850_getEventConditionAttributes = -1;  /* GetEventConditionAttributes_Request */
+static int hf_iec61850_reportEventConditionStatus = -1;  /* ReportEventConditionStatus_Request */
+static int hf_iec61850_alterEventConditionMonitoring = -1;  /* AlterEventConditionMonitoring_Request */
+static int hf_iec61850_triggerEvent = -1;         /* TriggerEvent_Request */
+static int hf_iec61850_defineEventAction = -1;    /* DefineEventAction_Request */
+static int hf_iec61850_confirmedServiceRequest_deleteEventAction = -1;  /* DeleteEventAction_Request */
+static int hf_iec61850_getEventActionAttributes = -1;  /* GetEventActionAttributes_Request */
+static int hf_iec61850_reportEventActionStatus = -1;  /* ReportEventActionStatus_Request */
+static int hf_iec61850_defineEventEnrollment = -1;  /* DefineEventEnrollment_Request */
+static int hf_iec61850_confirmedServiceRequest_deleteEventEnrollment = -1;  /* DeleteEventEnrollment_Request */
+static int hf_iec61850_alterEventEnrollment = -1;  /* AlterEventEnrollment_Request */
+static int hf_iec61850_reportEventEnrollmentStatus = -1;  /* ReportEventEnrollmentStatus_Request */
+static int hf_iec61850_getEventEnrollmentAttributes = -1;  /* GetEventEnrollmentAttributes_Request */
+static int hf_iec61850_acknowledgeEventNotification = -1;  /* AcknowledgeEventNotification_Request */
+static int hf_iec61850_getAlarmSummary = -1;      /* GetAlarmSummary_Request */
+static int hf_iec61850_getAlarmEnrollmentSummary = -1;  /* GetAlarmEnrollmentSummary_Request */
+static int hf_iec61850_readJournal = -1;          /* ReadJournal_Request */
+static int hf_iec61850_writeJournal = -1;         /* WriteJournal_Request */
+static int hf_iec61850_initializeJournal = -1;    /* InitializeJournal_Request */
+static int hf_iec61850_reportJournalStatus = -1;  /* ReportJournalStatus_Request */
+static int hf_iec61850_createJournal = -1;        /* CreateJournal_Request */
+static int hf_iec61850_deleteJournal = -1;        /* DeleteJournal_Request */
+static int hf_iec61850_getCapabilityList = -1;    /* GetCapabilityList_Request */
+static int hf_iec61850_fileOpen = -1;             /* FileOpen_Request */
+static int hf_iec61850_fileRead = -1;             /* FileRead_Request */
+static int hf_iec61850_fileClose = -1;            /* FileClose_Request */
+static int hf_iec61850_fileRename = -1;           /* FileRename_Request */
+static int hf_iec61850_fileDelete = -1;           /* FileDelete_Request */
+static int hf_iec61850_fileDirectory = -1;        /* FileDirectory_Request */
+static int hf_iec61850_foo = -1;                  /* INTEGER */
+static int hf_iec61850_status_01 = -1;            /* Status_Response */
+static int hf_iec61850_getNameList_01 = -1;       /* GetNameList_Response */
+static int hf_iec61850_identify_01 = -1;          /* Identify_Response */
+static int hf_iec61850_rename_01 = -1;            /* Rename_Response */
+static int hf_iec61850_read_01 = -1;              /* Read_Response */
+static int hf_iec61850_write_01 = -1;             /* Write_Response */
+static int hf_iec61850_getVariableAccessAttributes_01 = -1;  /* GetVariableAccessAttributes_Response */
+static int hf_iec61850_defineNamedVariable_01 = -1;  /* DefineNamedVariable_Response */
+static int hf_iec61850_defineScatteredAccess_01 = -1;  /* DefineScatteredAccess_Response */
+static int hf_iec61850_getScatteredAccessAttributes_01 = -1;  /* GetScatteredAccessAttributes_Response */
+static int hf_iec61850_deleteVariableAccess_01 = -1;  /* DeleteVariableAccess_Response */
+static int hf_iec61850_defineNamedVariableList_01 = -1;  /* DefineNamedVariableList_Response */
+static int hf_iec61850_getNamedVariableListAttributes_01 = -1;  /* GetNamedVariableListAttributes_Response */
+static int hf_iec61850_deleteNamedVariableList_01 = -1;  /* DeleteNamedVariableList_Response */
+static int hf_iec61850_defineNamedType_01 = -1;   /* DefineNamedType_Response */
+static int hf_iec61850_getNamedTypeAttributes_01 = -1;  /* GetNamedTypeAttributes_Response */
+static int hf_iec61850_deleteNamedType_01 = -1;   /* DeleteNamedType_Response */
+static int hf_iec61850_input_01 = -1;             /* Input_Response */
+static int hf_iec61850_output_01 = -1;            /* Output_Response */
+static int hf_iec61850_takeControl_01 = -1;       /* TakeControl_Response */
+static int hf_iec61850_relinquishControl_01 = -1;  /* RelinquishControl_Response */
+static int hf_iec61850_defineSemaphore_01 = -1;   /* DefineSemaphore_Response */
+static int hf_iec61850_deleteSemaphore_01 = -1;   /* DeleteSemaphore_Response */
+static int hf_iec61850_reportSemaphoreStatus_01 = -1;  /* ReportSemaphoreStatus_Response */
+static int hf_iec61850_reportPoolSemaphoreStatus_01 = -1;  /* ReportPoolSemaphoreStatus_Response */
+static int hf_iec61850_reportSemaphoreEntryStatus_01 = -1;  /* ReportSemaphoreEntryStatus_Response */
+static int hf_iec61850_initiateDownloadSequence_01 = -1;  /* InitiateDownloadSequence_Response */
+static int hf_iec61850_downloadSegment_01 = -1;   /* DownloadSegment_Response */
+static int hf_iec61850_terminateDownloadSequence_01 = -1;  /* TerminateDownloadSequence_Response */
+static int hf_iec61850_initiateUploadSequence_01 = -1;  /* InitiateUploadSequence_Response */
+static int hf_iec61850_uploadSegment_01 = -1;     /* UploadSegment_Response */
+static int hf_iec61850_terminateUploadSequence_01 = -1;  /* TerminateUploadSequence_Response */
+static int hf_iec61850_requestDomainDownLoad = -1;  /* RequestDomainDownload_Response */
+static int hf_iec61850_requestDomainUpload_01 = -1;  /* RequestDomainUpload_Response */
+static int hf_iec61850_loadDomainContent_01 = -1;  /* LoadDomainContent_Response */
+static int hf_iec61850_storeDomainContent_01 = -1;  /* StoreDomainContent_Response */
+static int hf_iec61850_deleteDomain_01 = -1;      /* DeleteDomain_Response */
+static int hf_iec61850_getDomainAttributes_01 = -1;  /* GetDomainAttributes_Response */
+static int hf_iec61850_createProgramInvocation_01 = -1;  /* CreateProgramInvocation_Response */
+static int hf_iec61850_deleteProgramInvocation_01 = -1;  /* DeleteProgramInvocation_Response */
+static int hf_iec61850_start_01 = -1;             /* Start_Response */
+static int hf_iec61850_stop_01 = -1;              /* Stop_Response */
+static int hf_iec61850_resume_01 = -1;            /* Resume_Response */
+static int hf_iec61850_reset_01 = -1;             /* Reset_Response */
+static int hf_iec61850_kill_01 = -1;              /* Kill_Response */
+static int hf_iec61850_getProgramInvocationAttributes_01 = -1;  /* GetProgramInvocationAttributes_Response */
+static int hf_iec61850_obtainFile_01 = -1;        /* ObtainFile_Response */
+static int hf_iec61850_fileOpen_01 = -1;          /* FileOpen_Response */
+static int hf_iec61850_defineEventCondition_01 = -1;  /* DefineEventCondition_Response */
+static int hf_iec61850_confirmedServiceResponse_deleteEventCondition = -1;  /* DeleteEventCondition_Response */
+static int hf_iec61850_getEventConditionAttributes_01 = -1;  /* GetEventConditionAttributes_Response */
+static int hf_iec61850_reportEventConditionStatus_01 = -1;  /* ReportEventConditionStatus_Response */
+static int hf_iec61850_alterEventConditionMonitoring_01 = -1;  /* AlterEventConditionMonitoring_Response */
+static int hf_iec61850_triggerEvent_01 = -1;      /* TriggerEvent_Response */
+static int hf_iec61850_defineEventAction_01 = -1;  /* DefineEventAction_Response */
+static int hf_iec61850_deleteEventAction = -1;    /* DeleteEventAction_Response */
+static int hf_iec61850_getEventActionAttributes_01 = -1;  /* GetEventActionAttributes_Response */
+static int hf_iec61850_reportActionStatus = -1;   /* ReportEventActionStatus_Response */
+static int hf_iec61850_defineEventEnrollment_01 = -1;  /* DefineEventEnrollment_Response */
+static int hf_iec61850_confirmedServiceResponse_deleteEventEnrollment = -1;  /* DeleteEventEnrollment_Response */
+static int hf_iec61850_alterEventEnrollment_01 = -1;  /* AlterEventEnrollment_Response */
+static int hf_iec61850_reportEventEnrollmentStatus_01 = -1;  /* ReportEventEnrollmentStatus_Response */
+static int hf_iec61850_getEventEnrollmentAttributes_01 = -1;  /* GetEventEnrollmentAttributes_Response */
+static int hf_iec61850_acknowledgeEventNotification_01 = -1;  /* AcknowledgeEventNotification_Response */
+static int hf_iec61850_getAlarmSummary_01 = -1;   /* GetAlarmSummary_Response */
+static int hf_iec61850_getAlarmEnrollmentSummary_01 = -1;  /* GetAlarmEnrollmentSummary_Response */
+static int hf_iec61850_readJournal_01 = -1;       /* ReadJournal_Response */
+static int hf_iec61850_writeJournal_01 = -1;      /* WriteJournal_Response */
+static int hf_iec61850_initializeJournal_01 = -1;  /* InitializeJournal_Response */
+static int hf_iec61850_reportJournalStatus_01 = -1;  /* ReportJournalStatus_Response */
+static int hf_iec61850_createJournal_01 = -1;     /* CreateJournal_Response */
+static int hf_iec61850_deleteJournal_01 = -1;     /* DeleteJournal_Response */
+static int hf_iec61850_getCapabilityList_01 = -1;  /* GetCapabilityList_Response */
+static int hf_iec61850_fileRead_01 = -1;          /* FileRead_Response */
+static int hf_iec61850_fileClose_01 = -1;         /* FileClose_Response */
+static int hf_iec61850_fileRename_01 = -1;        /* FileRename_Response */
+static int hf_iec61850_fileDelete_01 = -1;        /* FileDelete_Response */
+static int hf_iec61850_fileDirectory_01 = -1;     /* FileDirectory_Response */
+static int hf_iec61850_FileName_item = -1;        /* GraphicString */
+static int hf_iec61850_vmd_specific = -1;         /* Identifier */
+static int hf_iec61850_domain_specific = -1;      /* T_domain_specific */
+static int hf_iec61850_domainId = -1;             /* Identifier */
+static int hf_iec61850_itemId = -1;               /* Identifier */
+static int hf_iec61850_aa_specific = -1;          /* Identifier */
+static int hf_iec61850_ap_title = -1;             /* T_ap_title */
+static int hf_iec61850_ap_invocation_id = -1;     /* T_ap_invocation_id */
+static int hf_iec61850_ae_qualifier = -1;         /* T_ae_qualifier */
+static int hf_iec61850_ae_invocation_id = -1;     /* T_ae_invocation_id */
+static int hf_iec61850_localDetailCalling = -1;   /* Integer32 */
+static int hf_iec61850_proposedMaxServOutstandingCalling = -1;  /* Integer16 */
+static int hf_iec61850_proposedMaxServOutstandingCalled = -1;  /* Integer16 */
+static int hf_iec61850_proposedDataStructureNestingLevel = -1;  /* Integer8 */
+static int hf_iec61850_mmsInitRequestDetail = -1;  /* InitRequestDetail */
+static int hf_iec61850_proposedVersionNumber = -1;  /* Integer16 */
+static int hf_iec61850_proposedParameterCBB = -1;  /* ParameterSupportOptions */
+static int hf_iec61850_servicesSupportedCalling = -1;  /* ServiceSupportOptions */
+static int hf_iec61850_localDetailCalled = -1;    /* Integer32 */
+static int hf_iec61850_negociatedMaxServOutstandingCalling = -1;  /* Integer16 */
+static int hf_iec61850_negociatedMaxServOutstandingCalled = -1;  /* Integer16 */
+static int hf_iec61850_negociatedDataStructureNestingLevel = -1;  /* Integer8 */
+static int hf_iec61850_mmsInitResponseDetail = -1;  /* InitResponseDetail */
+static int hf_iec61850_negociatedVersionNumber = -1;  /* Integer16 */
+static int hf_iec61850_negociatedParameterCBB = -1;  /* ParameterSupportOptions */
+static int hf_iec61850_servicesSupportedCalled = -1;  /* ServiceSupportOptions */
+static int hf_iec61850_originalInvokeID = -1;     /* Unsigned32 */
+static int hf_iec61850_errorClass = -1;           /* T_errorClass */
+static int hf_iec61850_vmd_state = -1;            /* T_vmd_state */
+static int hf_iec61850_application_reference = -1;  /* T_application_reference */
+static int hf_iec61850_definition = -1;           /* T_definition */
+static int hf_iec61850_resource = -1;             /* T_resource */
+static int hf_iec61850_service = -1;              /* T_service */
+static int hf_iec61850_service_preempt = -1;      /* T_service_preempt */
+static int hf_iec61850_time_resolution = -1;      /* T_time_resolution */
+static int hf_iec61850_access = -1;               /* T_access */
+static int hf_iec61850_initiate = -1;             /* T_initiate */
+static int hf_iec61850_conclude = -1;             /* T_conclude */
+static int hf_iec61850_cancel = -1;               /* T_cancel */
+static int hf_iec61850_file = -1;                 /* T_file */
+static int hf_iec61850_others = -1;               /* INTEGER */
+static int hf_iec61850_additionalCode = -1;       /* INTEGER */
+static int hf_iec61850_additionalDescription = -1;  /* VisibleString */
+static int hf_iec61850_serviceSpecificInformation = -1;  /* T_serviceSpecificInformation */
+static int hf_iec61850_obtainFile_02 = -1;        /* ObtainFile_Error */
+static int hf_iec61850_start_02 = -1;             /* Start_Error */
+static int hf_iec61850_stop_02 = -1;              /* Stop_Error */
+static int hf_iec61850_resume_02 = -1;            /* Resume_Error */
+static int hf_iec61850_reset_02 = -1;             /* Reset_Error */
+static int hf_iec61850_deleteVariableAccess_02 = -1;  /* DeleteVariableAccess_Error */
+static int hf_iec61850_deleteNamedVariableList_02 = -1;  /* DeleteNamedVariableList_Error */
+static int hf_iec61850_deleteNamedType_02 = -1;   /* DeleteNamedType_Error */
+static int hf_iec61850_defineEventEnrollment_Error = -1;  /* DefineEventEnrollment_Error */
+static int hf_iec61850_fileRename_02 = -1;        /* FileRename_Error */
+static int hf_iec61850_additionalService = -1;    /* AdditionalService_Error */
+static int hf_iec61850_changeAccessControl = -1;  /* ChangeAccessControl_Error */
+static int hf_iec61850_defineEcl = -1;            /* DefineEventConditionList_Error */
+static int hf_iec61850_addECLReference = -1;      /* AddEventConditionListReference_Error */
+static int hf_iec61850_removeECLReference = -1;   /* RemoveEventConditionListReference_Error */
+static int hf_iec61850_initiateUC = -1;           /* InitiateUnitControl_Error */
+static int hf_iec61850_startUC = -1;              /* StartUnitControl_Error */
+static int hf_iec61850_stopUC = -1;               /* StopUnitControl_Error */
+static int hf_iec61850_deleteUC = -1;             /* DeleteUnitControl_Error */
+static int hf_iec61850_loadUCFromFile = -1;       /* LoadUnitControlFromFile_Error */
+static int hf_iec61850_eventCondition = -1;       /* ObjectName */
+static int hf_iec61850_eventConditionList = -1;   /* ObjectName */
+static int hf_iec61850_domain = -1;               /* Identifier */
+static int hf_iec61850_programInvocation = -1;    /* Identifier */
+static int hf_iec61850_programInvocationName = -1;  /* Identifier */
+static int hf_iec61850_programInvocationState = -1;  /* ProgramInvocationState */
+static int hf_iec61850_none = -1;                 /* NULL */
+static int hf_iec61850_rejectReason = -1;         /* T_rejectReason */
+static int hf_iec61850_confirmed_requestPDU = -1;  /* T_confirmed_requestPDU */
+static int hf_iec61850_confirmed_responsePDU = -1;  /* T_confirmed_responsePDU */
+static int hf_iec61850_confirmed_errorPDU = -1;   /* T_confirmed_errorPDU */
+static int hf_iec61850_unconfirmedPDU = -1;       /* T_unconfirmedPDU */
+static int hf_iec61850_pdu_error = -1;            /* T_pdu_error */
+static int hf_iec61850_cancel_requestPDU = -1;    /* T_cancel_requestPDU */
+static int hf_iec61850_cancel_responsePDU = -1;   /* T_cancel_responsePDU */
+static int hf_iec61850_cancel_errorPDU = -1;      /* T_cancel_errorPDU */
+static int hf_iec61850_conclude_requestPDU = -1;  /* T_conclude_requestPDU */
+static int hf_iec61850_conclude_responsePDU = -1;  /* T_conclude_responsePDU */
+static int hf_iec61850_conclude_errorPDU = -1;    /* T_conclude_errorPDU */
+static int hf_iec61850_vmdLogicalStatus = -1;     /* T_vmdLogicalStatus */
+static int hf_iec61850_vmdPhysicalStatus = -1;    /* T_vmdPhysicalStatus */
+static int hf_iec61850_localDetail = -1;          /* BIT_STRING_SIZE_0_128 */
+static int hf_iec61850_extendedObjectClass = -1;  /* T_extendedObjectClass */
+static int hf_iec61850_objectClass = -1;          /* T_objectClass */
+static int hf_iec61850_objectScope = -1;          /* T_objectScope */
+static int hf_iec61850_vmdSpecific = -1;          /* NULL */
+static int hf_iec61850_domainSpecific = -1;       /* Identifier */
+static int hf_iec61850_aaSpecific = -1;           /* NULL */
+static int hf_iec61850_getNameList_Request_continueAfter = -1;  /* Identifier */
+static int hf_iec61850_listOfIdentifier = -1;     /* SEQUENCE_OF_Identifier */
+static int hf_iec61850_listOfIdentifier_item = -1;  /* Identifier */
+static int hf_iec61850_moreFollows = -1;          /* BOOLEAN */
+static int hf_iec61850_vendorName = -1;           /* VisibleString */
+static int hf_iec61850_modelName = -1;            /* VisibleString */
+static int hf_iec61850_revision = -1;             /* VisibleString */
+static int hf_iec61850_listOfAbstractSyntaxes = -1;  /* T_listOfAbstractSyntaxes */
+static int hf_iec61850_listOfAbstractSyntaxes_item = -1;  /* OBJECT_IDENTIFIER */
+static int hf_iec61850_extendedObjectClass_01 = -1;  /* T_extendedObjectClass_01 */
+static int hf_iec61850_objectClass_01 = -1;       /* T_objectClass_01 */
+static int hf_iec61850_currentName = -1;          /* ObjectName */
+static int hf_iec61850_newIdentifier = -1;        /* Identifier */
+static int hf_iec61850_getCapabilityList_Request_continueAfter = -1;  /* VisibleString */
+static int hf_iec61850_listOfCapabilities = -1;   /* T_listOfCapabilities */
+static int hf_iec61850_listOfCapabilities_item = -1;  /* VisibleString */
+static int hf_iec61850_domainName = -1;           /* Identifier */
+static int hf_iec61850_listOfCapabilities_01 = -1;  /* T_listOfCapabilities_01 */
+static int hf_iec61850_sharable = -1;             /* BOOLEAN */
+static int hf_iec61850_loadData = -1;             /* T_loadData */
+static int hf_iec61850_non_coded = -1;            /* OCTET_STRING */
+static int hf_iec61850_coded = -1;                /* EXTERNALt */
+static int hf_iec61850_discard = -1;              /* ServiceError */
+static int hf_iec61850_ulsmID = -1;               /* Integer32 */
+static int hf_iec61850_listOfCapabilities_02 = -1;  /* T_listOfCapabilities_02 */
+static int hf_iec61850_loadData_01 = -1;          /* T_loadData_01 */
+static int hf_iec61850_listOfCapabilities_03 = -1;  /* T_listOfCapabilities_03 */
+static int hf_iec61850_fileName = -1;             /* FileName */
+static int hf_iec61850_listOfCapabilities_04 = -1;  /* T_listOfCapabilities_04 */
+static int hf_iec61850_thirdParty = -1;           /* ApplicationReference */
+static int hf_iec61850_filenName = -1;            /* FileName */
+static int hf_iec61850_listOfCapabilities_05 = -1;  /* T_listOfCapabilities_05 */
+static int hf_iec61850_getDomainAttributes_Response_state = -1;  /* DomainState */
+static int hf_iec61850_mmsDeletable = -1;         /* BOOLEAN */
+static int hf_iec61850_listOfProgramInvocations = -1;  /* SEQUENCE_OF_Identifier */
+static int hf_iec61850_listOfProgramInvocations_item = -1;  /* Identifier */
+static int hf_iec61850_uploadInProgress = -1;     /* Integer8 */
+static int hf_iec61850_listOfDomainName = -1;     /* SEQUENCE_OF_Identifier */
+static int hf_iec61850_listOfDomainName_item = -1;  /* Identifier */
+static int hf_iec61850_reusable = -1;             /* BOOLEAN */
+static int hf_iec61850_monitorType = -1;          /* BOOLEAN */
+static int hf_iec61850_executionArgument = -1;    /* T_executionArgument */
+static int hf_iec61850_simpleString = -1;         /* VisibleString */
+static int hf_iec61850_encodedString = -1;        /* EXTERNALt */
+static int hf_iec61850_executionArgument_01 = -1;  /* T_executionArgument_01 */
+static int hf_iec61850_getProgramInvocationAttributes_Response_state = -1;  /* ProgramInvocationState */
+static int hf_iec61850_listOfDomainNames = -1;    /* SEQUENCE_OF_Identifier */
+static int hf_iec61850_listOfDomainNames_item = -1;  /* Identifier */
+static int hf_iec61850_monitor = -1;              /* BOOLEAN */
+static int hf_iec61850_startArgument = -1;        /* VisibleString */
+static int hf_iec61850_executionArgument_02 = -1;  /* T_executionArgument_02 */
+static int hf_iec61850_typeName = -1;             /* ObjectName */
+static int hf_iec61850_array = -1;                /* T_array */
+static int hf_iec61850_packed = -1;               /* BOOLEAN */
+static int hf_iec61850_numberOfElements = -1;     /* Unsigned32 */
+static int hf_iec61850_elementType = -1;          /* TypeSpecification */
+static int hf_iec61850_structure = -1;            /* T_structure */
+static int hf_iec61850_components = -1;           /* T_components */
+static int hf_iec61850_components_item = -1;      /* T_components_item */
+static int hf_iec61850_componentName = -1;        /* Identifier */
+static int hf_iec61850_componentType = -1;        /* TypeSpecification */
+static int hf_iec61850_boolean = -1;              /* NULL */
+static int hf_iec61850_typeSpecification_bit_string = -1;  /* Integer32 */
+static int hf_iec61850_integer = -1;              /* Unsigned8 */
+static int hf_iec61850_unsigned = -1;             /* Unsigned8 */
+static int hf_iec61850_typeSpecification_octet_string = -1;  /* Integer32 */
+static int hf_iec61850_typeSpecification_visible_string = -1;  /* Integer32 */
+static int hf_iec61850_generalized_time = -1;     /* NULL */
+static int hf_iec61850_typeSpecification_binary_time = -1;  /* BOOLEAN */
+static int hf_iec61850_bcd = -1;                  /* Unsigned8 */
+static int hf_iec61850_objId = -1;                /* NULL */
+static int hf_iec61850_AlternateAccess_item = -1;  /* AlternateAccess_item */
+static int hf_iec61850_unnamed = -1;              /* AlternateAccessSelection */
+static int hf_iec61850_named = -1;                /* T_named */
+static int hf_iec61850_accesst = -1;              /* AlternateAccessSelection */
+static int hf_iec61850_selectAlternateAccess = -1;  /* T_selectAlternateAccess */
+static int hf_iec61850_accessSelection = -1;      /* T_accessSelection */
+static int hf_iec61850_component = -1;            /* Identifier */
+static int hf_iec61850_index = -1;                /* Unsigned32 */
+static int hf_iec61850_indexRange = -1;           /* T_indexRange */
+static int hf_iec61850_lowIndex = -1;             /* Unsigned32 */
+static int hf_iec61850_allElements = -1;          /* NULL */
+static int hf_iec61850_alternateAccess = -1;      /* AlternateAccess */
+static int hf_iec61850_selectAccess = -1;         /* T_selectAccess */
+static int hf_iec61850_indexRange_01 = -1;        /* T_indexRange_01 */
+static int hf_iec61850_nmberOfElements = -1;      /* Unsigned32 */
+static int hf_iec61850_specificationWithResult = -1;  /* BOOLEAN */
+static int hf_iec61850_variableAccessSpecificatn = -1;  /* VariableAccessSpecification */
+static int hf_iec61850_listOfAccessResult = -1;   /* SEQUENCE_OF_AccessResult */
+static int hf_iec61850_listOfAccessResult_item = -1;  /* AccessResult */
+static int hf_iec61850_listOfData = -1;           /* SEQUENCE_OF_Data */
+static int hf_iec61850_listOfData_item = -1;      /* Data */
+static int hf_iec61850_Write_Response_item = -1;  /* Write_Response_item */
+static int hf_iec61850_failure = -1;              /* DataAccessError */
+static int hf_iec61850_success = -1;              /* NULL */
+static int hf_iec61850_variableAccessSpecification = -1;  /* VariableAccessSpecification */
+static int hf_iec61850_name = -1;                 /* ObjectName */
+static int hf_iec61850_address = -1;              /* Address */
+static int hf_iec61850_typeSpecification = -1;    /* TypeSpecification */
+static int hf_iec61850_variableName = -1;         /* ObjectName */
+static int hf_iec61850_scatteredAccessName = -1;  /* ObjectName */
+static int hf_iec61850_scatteredAccessDescription = -1;  /* ScatteredAccessDescription */
+static int hf_iec61850_scopeOfDelete = -1;        /* T_scopeOfDelete */
+static int hf_iec61850_listOfName = -1;           /* SEQUENCE_OF_ObjectName */
+static int hf_iec61850_listOfName_item = -1;      /* ObjectName */
+static int hf_iec61850_numberMatched = -1;        /* Unsigned32 */
+static int hf_iec61850_numberDeleted = -1;        /* Unsigned32 */
+static int hf_iec61850_variableListName = -1;     /* ObjectName */
+static int hf_iec61850_listOfVariable = -1;       /* T_listOfVariable */
+static int hf_iec61850_listOfVariable_item = -1;  /* T_listOfVariable_item */
+static int hf_iec61850_variableSpecification = -1;  /* VariableSpecification */
+static int hf_iec61850_listOfVariable_01 = -1;    /* T_listOfVariable_01 */
+static int hf_iec61850_listOfVariable_item_01 = -1;  /* T_listOfVariable_item_01 */
+static int hf_iec61850_scopeOfDelete_01 = -1;     /* T_scopeOfDelete_01 */
+static int hf_iec61850_listOfVariableListName = -1;  /* SEQUENCE_OF_ObjectName */
+static int hf_iec61850_listOfVariableListName_item = -1;  /* ObjectName */
+static int hf_iec61850_scopeOfDelete_02 = -1;     /* T_scopeOfDelete_02 */
+static int hf_iec61850_listOfTypeName = -1;       /* SEQUENCE_OF_ObjectName */
+static int hf_iec61850_listOfTypeName_item = -1;  /* ObjectName */
+static int hf_iec61850_success_01 = -1;           /* Data */
+static int hf_iec61850_array_01 = -1;             /* SEQUENCE_OF_Data */
+static int hf_iec61850_array_item = -1;           /* Data */
+static int hf_iec61850_structure_01 = -1;         /* SEQUENCE_OF_Data */
+static int hf_iec61850_structure_item = -1;       /* Data */
+static int hf_iec61850_boolean_01 = -1;           /* BOOLEAN */
+static int hf_iec61850_data_bit_string = -1;      /* BIT_STRING */
+static int hf_iec61850_integer_01 = -1;           /* INTEGER */
+static int hf_iec61850_unsigned_01 = -1;          /* INTEGER */
+static int hf_iec61850_floating_point = -1;       /* FloatingPoint */
+static int hf_iec61850_data_octet_string = -1;    /* OCTET_STRING */
+static int hf_iec61850_data_visible_string = -1;  /* VisibleString */
+static int hf_iec61850_data_binary_time = -1;     /* TimeOfDay */
+static int hf_iec61850_bcd_01 = -1;               /* INTEGER */
+static int hf_iec61850_booleanArray = -1;         /* BIT_STRING */
+static int hf_iec61850_objId_01 = -1;             /* OBJECT_IDENTIFIER */
+static int hf_iec61850_mMSString = -1;            /* MMSString */
+static int hf_iec61850_utc_time = -1;             /* UtcTime */
+static int hf_iec61850_listOfVariable_02 = -1;    /* T_listOfVariable_02 */
+static int hf_iec61850_listOfVariable_item_02 = -1;  /* T_listOfVariable_item_02 */
+static int hf_iec61850_ScatteredAccessDescription_item = -1;  /* ScatteredAccessDescription_item */
+static int hf_iec61850_variableDescription = -1;  /* T_variableDescription */
+static int hf_iec61850_invalidated = -1;          /* NULL */
+static int hf_iec61850_numericAddress = -1;       /* Unsigned32 */
+static int hf_iec61850_symbolicAddress = -1;      /* VisibleString */
+static int hf_iec61850_unconstrainedAddress = -1;  /* OCTET_STRING */
+static int hf_iec61850_semaphoreName = -1;        /* ObjectName */
+static int hf_iec61850_namedToken = -1;           /* Identifier */
+static int hf_iec61850_priority = -1;             /* Priority */
+static int hf_iec61850_acceptableDelay = -1;      /* Unsigned32 */
+static int hf_iec61850_controlTimeOut = -1;       /* Unsigned32 */
+static int hf_iec61850_abortOnTimeOut = -1;       /* BOOLEAN */
+static int hf_iec61850_relinquishIfConnectionLost = -1;  /* BOOLEAN */
+static int hf_iec61850_applicationToPreempt = -1;  /* ApplicationReference */
+static int hf_iec61850_noResult = -1;             /* NULL */
+static int hf_iec61850_numbersOfTokens = -1;      /* Unsigned16 */
+static int hf_iec61850_class = -1;                /* T_class */
+static int hf_iec61850_numberOfTokens = -1;       /* Unsigned16 */
+static int hf_iec61850_numberOfOwnedTokens = -1;  /* Unsigned16 */
+static int hf_iec61850_numberOfHungTokens = -1;   /* Unsigned16 */
+static int hf_iec61850_nameToStartAfter = -1;     /* Identifier */
+static int hf_iec61850_listOfNamedTokens = -1;    /* T_listOfNamedTokens */
+static int hf_iec61850_listOfNamedTokens_item = -1;  /* T_listOfNamedTokens_item */
+static int hf_iec61850_freeNamedToken = -1;       /* Identifier */
+static int hf_iec61850_ownedNamedToken = -1;      /* Identifier */
+static int hf_iec61850_hungNamedToken = -1;       /* Identifier */
+static int hf_iec61850_reportSemaphoreEntryStatus_Request_state = -1;  /* T_reportSemaphoreEntryStatus_Request_state */
+static int hf_iec61850_entryIdToStartAfter = -1;  /* OCTET_STRING */
+static int hf_iec61850_listOfSemaphoreEntry = -1;  /* SEQUENCE_OF_SemaphoreEntry */
+static int hf_iec61850_listOfSemaphoreEntry_item = -1;  /* SemaphoreEntry */
+static int hf_iec61850_entryId = -1;              /* OCTET_STRING */
+static int hf_iec61850_entryClass = -1;           /* T_entryClass */
+static int hf_iec61850_applicationReference = -1;  /* ApplicationReference */
+static int hf_iec61850_remainingTimeOut = -1;     /* Unsigned32 */
+static int hf_iec61850_operatorStationName = -1;  /* Identifier */
+static int hf_iec61850_echo = -1;                 /* BOOLEAN */
+static int hf_iec61850_listOfPromptData = -1;     /* T_listOfPromptData */
+static int hf_iec61850_listOfPromptData_item = -1;  /* VisibleString */
+static int hf_iec61850_inputTimeOut = -1;         /* Unsigned32 */
+static int hf_iec61850_listOfOutputData = -1;     /* T_listOfOutputData */
+static int hf_iec61850_listOfOutputData_item = -1;  /* VisibleString */
+static int hf_iec61850_eventConditionName = -1;   /* ObjectName */
+static int hf_iec61850_class_01 = -1;             /* EC_Class */
+static int hf_iec61850_prio_rity = -1;            /* Priority */
+static int hf_iec61850_severity = -1;             /* Unsigned8 */
+static int hf_iec61850_alarmSummaryReports = -1;  /* BOOLEAN */
+static int hf_iec61850_monitoredVariable = -1;    /* VariableSpecification */
+static int hf_iec61850_evaluationInterval = -1;   /* Unsigned32 */
+static int hf_iec61850_specific = -1;             /* SEQUENCE_OF_ObjectName */
+static int hf_iec61850_specific_item = -1;        /* ObjectName */
+static int hf_iec61850_aa_specific_01 = -1;       /* NULL */
+static int hf_iec61850_vmd = -1;                  /* NULL */
+static int hf_iec61850_monitoredVariable_01 = -1;  /* T_monitoredVariable */
+static int hf_iec61850_variableReference = -1;    /* VariableSpecification */
+static int hf_iec61850_undefined = -1;            /* NULL */
+static int hf_iec61850_currentState = -1;         /* EC_State */
+static int hf_iec61850_numberOfEventEnrollments = -1;  /* Unsigned32 */
+static int hf_iec61850_enabled = -1;              /* BOOLEAN */
+static int hf_iec61850_timeOfLastTransitionToActive = -1;  /* EventTime */
+static int hf_iec61850_timeOfLastTransitionToIdle = -1;  /* EventTime */
+static int hf_iec61850_eventActionName = -1;      /* ObjectName */
+static int hf_iec61850_eventEnrollmentName = -1;  /* ObjectName */
+static int hf_iec61850_eventConditionTransition = -1;  /* Transitions */
+static int hf_iec61850_alarmAcknowledgementRule = -1;  /* AlarmAckRule */
+static int hf_iec61850_clientApplication = -1;    /* ApplicationReference */
+static int hf_iec61850_ec = -1;                   /* ObjectName */
+static int hf_iec61850_ea = -1;                   /* ObjectName */
+static int hf_iec61850_scopeOfRequest = -1;       /* T_scopeOfRequest */
+static int hf_iec61850_eventEnrollmentNames = -1;  /* SEQUENCE_OF_ObjectName */
+static int hf_iec61850_eventEnrollmentNames_item = -1;  /* ObjectName */
+static int hf_iec61850_getEventEnrollmentAttributes_Request_continueAfter = -1;  /* ObjectName */
+static int hf_iec61850_eventConditionName_01 = -1;  /* T_eventConditionName */
+static int hf_iec61850_eventActionName_01 = -1;   /* T_eventActionName */
+static int hf_iec61850_eventAction = -1;          /* ObjectName */
+static int hf_iec61850_enrollmentClass = -1;      /* EE_Class */
+static int hf_iec61850_duration = -1;             /* EE_Duration */
+static int hf_iec61850_remainingAcceptableDelay = -1;  /* Unsigned32 */
+static int hf_iec61850_listOfEventEnrollment = -1;  /* SEQUENCE_OF_EventEnrollment */
+static int hf_iec61850_listOfEventEnrollment_item = -1;  /* EventEnrollment */
+static int hf_iec61850_eventConditionTransitions = -1;  /* Transitions */
+static int hf_iec61850_notificationLost = -1;     /* BOOLEAN */
+static int hf_iec61850_alarmAcknowledgmentRule = -1;  /* AlarmAckRule */
+static int hf_iec61850_currentState_01 = -1;      /* EE_State */
+static int hf_iec61850_currentState_02 = -1;      /* T_currentState */
+static int hf_iec61850_alterEventEnrollment_Response_currentState_state = -1;  /* EE_State */
+static int hf_iec61850_transitionTime = -1;       /* EventTime */
+static int hf_iec61850_acknowledgedState = -1;    /* EC_State */
+static int hf_iec61850_timeOfAcknowledgedTransition = -1;  /* EventTime */
+static int hf_iec61850_enrollmentsOnly = -1;      /* BOOLEAN */
+static int hf_iec61850_activeAlarmsOnly = -1;     /* BOOLEAN */
+static int hf_iec61850_acknowledgmentFilter = -1;  /* T_acknowledgmentFilter */
+static int hf_iec61850_severityFilter = -1;       /* T_severityFilter */
+static int hf_iec61850_mostSevere = -1;           /* Unsigned8 */
+static int hf_iec61850_leastSevere = -1;          /* Unsigned8 */
+static int hf_iec61850_continueAfter = -1;        /* ObjectName */
+static int hf_iec61850_listOfAlarmSummary = -1;   /* SEQUENCE_OF_AlarmSummary */
+static int hf_iec61850_listOfAlarmSummary_item = -1;  /* AlarmSummary */
+static int hf_iec61850_unacknowledgedState = -1;  /* T_unacknowledgedState */
+static int hf_iec61850_acknowledgmentFilter_01 = -1;  /* T_acknowledgmentFilter_01 */
+static int hf_iec61850_severityFilter_01 = -1;    /* T_severityFilter_01 */
+static int hf_iec61850_getAlarmEnrollmentSummary_Request_continueAfter = -1;  /* ObjectName */
+static int hf_iec61850_listOfAlarmEnrollmentSummary = -1;  /* SEQUENCE_OF_AlarmEnrollmentSummary */
+static int hf_iec61850_listOfAlarmEnrollmentSummary_item = -1;  /* AlarmEnrollmentSummary */
+static int hf_iec61850_enrollementState = -1;     /* EE_State */
+static int hf_iec61850_timeActiveAcknowledged = -1;  /* EventTime */
+static int hf_iec61850_timeIdleAcknowledged = -1;  /* EventTime */
+static int hf_iec61850_eventConditionName_02 = -1;  /* T_eventConditionName_01 */
+static int hf_iec61850_actionResult = -1;         /* T_actionResult */
+static int hf_iec61850_eventActioName = -1;       /* ObjectName */
+static int hf_iec61850_eventActionResult = -1;    /* T_eventActionResult */
+static int hf_iec61850_success_02 = -1;           /* ConfirmedServiceResponse */
+static int hf_iec61850_failure_01 = -1;           /* ServiceError */
+static int hf_iec61850_causingTransitions = -1;   /* Transitions */
+static int hf_iec61850_timeOfDayT = -1;           /* TimeOfDay */
+static int hf_iec61850_timeSequenceIdentifier = -1;  /* Unsigned32 */
+static int hf_iec61850_journalName = -1;          /* ObjectName */
+static int hf_iec61850_rangeStartSpecification = -1;  /* T_rangeStartSpecification */
+static int hf_iec61850_startingTime = -1;         /* TimeOfDay */
+static int hf_iec61850_startingEntry = -1;        /* OCTET_STRING */
+static int hf_iec61850_rangeStopSpecification = -1;  /* T_rangeStopSpecification */
+static int hf_iec61850_endingTime = -1;           /* TimeOfDay */
+static int hf_iec61850_numberOfEntries = -1;      /* Integer32 */
+static int hf_iec61850_listOfVariables = -1;      /* T_listOfVariables */
+static int hf_iec61850_listOfVariables_item = -1;  /* VisibleString */
+static int hf_iec61850_entryToStartAfter = -1;    /* T_entryToStartAfter */
+static int hf_iec61850_timeSpecification = -1;    /* TimeOfDay */
+static int hf_iec61850_entrySpecification = -1;   /* OCTET_STRING */
+static int hf_iec61850_listOfJournalEntry = -1;   /* SEQUENCE_OF_JournalEntry */
+static int hf_iec61850_listOfJournalEntry_item = -1;  /* JournalEntry */
+static int hf_iec61850_entryIdentifier = -1;      /* OCTET_STRING */
+static int hf_iec61850_originatingApplication = -1;  /* ApplicationReference */
+static int hf_iec61850_entryContent = -1;         /* EntryContent */
+static int hf_iec61850_listOfJournalEntry_01 = -1;  /* SEQUENCE_OF_EntryContent */
+static int hf_iec61850_listOfJournalEntry_item_01 = -1;  /* EntryContent */
+static int hf_iec61850_limitSpecification = -1;   /* T_limitSpecification */
+static int hf_iec61850_limitingTime = -1;         /* TimeOfDay */
+static int hf_iec61850_limitingEntry = -1;        /* OCTET_STRING */
+static int hf_iec61850_currentEntries = -1;       /* Unsigned32 */
+static int hf_iec61850_occurenceTime = -1;        /* TimeOfDay */
+static int hf_iec61850_additionalDetail = -1;     /* JOU_Additional_Detail */
+static int hf_iec61850_entryForm = -1;            /* T_entryForm */
+static int hf_iec61850_data = -1;                 /* T_data */
+static int hf_iec61850_event = -1;                /* T_event */
+static int hf_iec61850_listOfVariables_01 = -1;   /* T_listOfVariables_01 */
+static int hf_iec61850_listOfVariables_item_01 = -1;  /* T_listOfVariables_item */
+static int hf_iec61850_variableTag = -1;          /* VisibleString */
+static int hf_iec61850_valueSpecification = -1;   /* Data */
+static int hf_iec61850_annotation = -1;           /* VisibleString */
+static int hf_iec61850_sourceFileServer = -1;     /* ApplicationReference */
+static int hf_iec61850_sourceFile = -1;           /* FileName */
+static int hf_iec61850_destinationFile = -1;      /* FileName */
+static int hf_iec61850_initialPosition = -1;      /* Unsigned32 */
+static int hf_iec61850_frsmID = -1;               /* Integer32 */
+static int hf_iec61850_fileAttributes = -1;       /* FileAttributes */
+static int hf_iec61850_fileData = -1;             /* OCTET_STRING */
+static int hf_iec61850_currentFileName = -1;      /* FileName */
+static int hf_iec61850_newFileName = -1;          /* FileName */
+static int hf_iec61850_fileSpecification = -1;    /* FileName */
+static int hf_iec61850_fileDirectory_Request_continueAfter = -1;  /* FileName */
+static int hf_iec61850_listOfDirectoryEntry = -1;  /* SEQUENCE_OF_DirectoryEntry */
+static int hf_iec61850_listOfDirectoryEntry_item = -1;  /* DirectoryEntry */
+static int hf_iec61850_filename = -1;             /* FileName */
+static int hf_iec61850_sizeOfFile = -1;           /* Unsigned32 */
+static int hf_iec61850_lastModified = -1;         /* GeneralizedTime */
 /* named bits */
-static int hf_iec61850_ParameterSupportOptions_str1;
-static int hf_iec61850_ParameterSupportOptions_str2;
-static int hf_iec61850_ParameterSupportOptions_vnam;
-static int hf_iec61850_ParameterSupportOptions_valt;
-static int hf_iec61850_ParameterSupportOptions_vadr;
-static int hf_iec61850_ParameterSupportOptions_vsca;
-static int hf_iec61850_ParameterSupportOptions_tpy;
-static int hf_iec61850_ParameterSupportOptions_vlis;
-static int hf_iec61850_ParameterSupportOptions_real;
-static int hf_iec61850_ParameterSupportOptions_spare_bit9;
-static int hf_iec61850_ParameterSupportOptions_cei;
-static int hf_iec61850_ServiceSupportOptions_status;
-static int hf_iec61850_ServiceSupportOptions_getNameList;
-static int hf_iec61850_ServiceSupportOptions_identify;
-static int hf_iec61850_ServiceSupportOptions_rename;
-static int hf_iec61850_ServiceSupportOptions_read;
-static int hf_iec61850_ServiceSupportOptions_write;
-static int hf_iec61850_ServiceSupportOptions_getVariableAccessAttributes;
-static int hf_iec61850_ServiceSupportOptions_defineNamedVariable;
-static int hf_iec61850_ServiceSupportOptions_defineScatteredAccess;
-static int hf_iec61850_ServiceSupportOptions_getScatteredAccessAttributes;
-static int hf_iec61850_ServiceSupportOptions_deleteVariableAccess;
-static int hf_iec61850_ServiceSupportOptions_defineNamedVariableList;
-static int hf_iec61850_ServiceSupportOptions_getNamedVariableListAttributes;
-static int hf_iec61850_ServiceSupportOptions_deleteNamedVariableList;
-static int hf_iec61850_ServiceSupportOptions_defineNamedType;
-static int hf_iec61850_ServiceSupportOptions_getNamedTypeAttributes;
-static int hf_iec61850_ServiceSupportOptions_deleteNamedType;
-static int hf_iec61850_ServiceSupportOptions_input;
-static int hf_iec61850_ServiceSupportOptions_output;
-static int hf_iec61850_ServiceSupportOptions_takeControl;
-static int hf_iec61850_ServiceSupportOptions_relinquishControl;
-static int hf_iec61850_ServiceSupportOptions_defineSemaphore;
-static int hf_iec61850_ServiceSupportOptions_deleteSemaphore;
-static int hf_iec61850_ServiceSupportOptions_reportSemaphoreStatus;
-static int hf_iec61850_ServiceSupportOptions_reportPoolSemaphoreStatus;
-static int hf_iec61850_ServiceSupportOptions_reportSemaphoreEntryStatus;
-static int hf_iec61850_ServiceSupportOptions_initiateDownloadSequence;
-static int hf_iec61850_ServiceSupportOptions_downloadSegment;
-static int hf_iec61850_ServiceSupportOptions_terminateDownloadSequence;
-static int hf_iec61850_ServiceSupportOptions_initiateUploadSequence;
-static int hf_iec61850_ServiceSupportOptions_uploadSegment;
-static int hf_iec61850_ServiceSupportOptions_terminateUploadSequence;
-static int hf_iec61850_ServiceSupportOptions_requestDomainDownload;
-static int hf_iec61850_ServiceSupportOptions_requestDomainUpload;
-static int hf_iec61850_ServiceSupportOptions_loadDomainContent;
-static int hf_iec61850_ServiceSupportOptions_storeDomainContent;
-static int hf_iec61850_ServiceSupportOptions_deleteDomain;
-static int hf_iec61850_ServiceSupportOptions_getDomainAttributes;
-static int hf_iec61850_ServiceSupportOptions_createProgramInvocation;
-static int hf_iec61850_ServiceSupportOptions_deleteProgramInvocation;
-static int hf_iec61850_ServiceSupportOptions_start;
-static int hf_iec61850_ServiceSupportOptions_stop;
-static int hf_iec61850_ServiceSupportOptions_resume;
-static int hf_iec61850_ServiceSupportOptions_reset;
-static int hf_iec61850_ServiceSupportOptions_kill;
-static int hf_iec61850_ServiceSupportOptions_getProgramInvocationAttributes;
-static int hf_iec61850_ServiceSupportOptions_obtainFile;
-static int hf_iec61850_ServiceSupportOptions_defineEventCondition;
-static int hf_iec61850_ServiceSupportOptions_deleteEventCondition;
-static int hf_iec61850_ServiceSupportOptions_getEventConditionAttributes;
-static int hf_iec61850_ServiceSupportOptions_reportEventConditionStatus;
-static int hf_iec61850_ServiceSupportOptions_alterEventConditionMonitoring;
-static int hf_iec61850_ServiceSupportOptions_triggerEvent;
-static int hf_iec61850_ServiceSupportOptions_defineEventAction;
-static int hf_iec61850_ServiceSupportOptions_deleteEventAction;
-static int hf_iec61850_ServiceSupportOptions_getEventActionAttributes;
-static int hf_iec61850_ServiceSupportOptions_reportActionStatus;
-static int hf_iec61850_ServiceSupportOptions_defineEventEnrollment;
-static int hf_iec61850_ServiceSupportOptions_deleteEventEnrollment;
-static int hf_iec61850_ServiceSupportOptions_alterEventEnrollment;
-static int hf_iec61850_ServiceSupportOptions_reportEventEnrollmentStatus;
-static int hf_iec61850_ServiceSupportOptions_getEventEnrollmentAttributes;
-static int hf_iec61850_ServiceSupportOptions_acknowledgeEventNotification;
-static int hf_iec61850_ServiceSupportOptions_getAlarmSummary;
-static int hf_iec61850_ServiceSupportOptions_getAlarmEnrollmentSummary;
-static int hf_iec61850_ServiceSupportOptions_readJournal;
-static int hf_iec61850_ServiceSupportOptions_writeJournal;
-static int hf_iec61850_ServiceSupportOptions_initializeJournal;
-static int hf_iec61850_ServiceSupportOptions_reportJournalStatus;
-static int hf_iec61850_ServiceSupportOptions_createJournal;
-static int hf_iec61850_ServiceSupportOptions_deleteJournal;
-static int hf_iec61850_ServiceSupportOptions_getCapabilityList;
-static int hf_iec61850_ServiceSupportOptions_fileOpen;
-static int hf_iec61850_ServiceSupportOptions_fileRead;
-static int hf_iec61850_ServiceSupportOptions_fileClose;
-static int hf_iec61850_ServiceSupportOptions_fileRename;
-static int hf_iec61850_ServiceSupportOptions_fileDelete;
-static int hf_iec61850_ServiceSupportOptions_fileDirectory;
-static int hf_iec61850_ServiceSupportOptions_unsolicitedStatus;
-static int hf_iec61850_ServiceSupportOptions_informationReport;
-static int hf_iec61850_ServiceSupportOptions_eventNotification;
-static int hf_iec61850_ServiceSupportOptions_attachToEventCondition;
-static int hf_iec61850_ServiceSupportOptions_attachToSemaphore;
-static int hf_iec61850_ServiceSupportOptions_conclude;
-static int hf_iec61850_ServiceSupportOptions_cancel;
-static int hf_iec61850_Transitions_idle_to_disabled;
-static int hf_iec61850_Transitions_active_to_disabled;
-static int hf_iec61850_Transitions_disabled_to_idle;
-static int hf_iec61850_Transitions_active_to_idle;
-static int hf_iec61850_Transitions_disabled_to_active;
-static int hf_iec61850_Transitions_idle_to_active;
-static int hf_iec61850_Transitions_any_to_deleted;
+static int hf_iec61850_ParameterSupportOptions_str1 = -1;
+static int hf_iec61850_ParameterSupportOptions_str2 = -1;
+static int hf_iec61850_ParameterSupportOptions_vnam = -1;
+static int hf_iec61850_ParameterSupportOptions_valt = -1;
+static int hf_iec61850_ParameterSupportOptions_vadr = -1;
+static int hf_iec61850_ParameterSupportOptions_vsca = -1;
+static int hf_iec61850_ParameterSupportOptions_tpy = -1;
+static int hf_iec61850_ParameterSupportOptions_vlis = -1;
+static int hf_iec61850_ParameterSupportOptions_real = -1;
+static int hf_iec61850_ParameterSupportOptions_spare_bit9 = -1;
+static int hf_iec61850_ParameterSupportOptions_cei = -1;
+static int hf_iec61850_ServiceSupportOptions_status = -1;
+static int hf_iec61850_ServiceSupportOptions_getNameList = -1;
+static int hf_iec61850_ServiceSupportOptions_identify = -1;
+static int hf_iec61850_ServiceSupportOptions_rename = -1;
+static int hf_iec61850_ServiceSupportOptions_read = -1;
+static int hf_iec61850_ServiceSupportOptions_write = -1;
+static int hf_iec61850_ServiceSupportOptions_getVariableAccessAttributes = -1;
+static int hf_iec61850_ServiceSupportOptions_defineNamedVariable = -1;
+static int hf_iec61850_ServiceSupportOptions_defineScatteredAccess = -1;
+static int hf_iec61850_ServiceSupportOptions_getScatteredAccessAttributes = -1;
+static int hf_iec61850_ServiceSupportOptions_deleteVariableAccess = -1;
+static int hf_iec61850_ServiceSupportOptions_defineNamedVariableList = -1;
+static int hf_iec61850_ServiceSupportOptions_getNamedVariableListAttributes = -1;
+static int hf_iec61850_ServiceSupportOptions_deleteNamedVariableList = -1;
+static int hf_iec61850_ServiceSupportOptions_defineNamedType = -1;
+static int hf_iec61850_ServiceSupportOptions_getNamedTypeAttributes = -1;
+static int hf_iec61850_ServiceSupportOptions_deleteNamedType = -1;
+static int hf_iec61850_ServiceSupportOptions_input = -1;
+static int hf_iec61850_ServiceSupportOptions_output = -1;
+static int hf_iec61850_ServiceSupportOptions_takeControl = -1;
+static int hf_iec61850_ServiceSupportOptions_relinquishControl = -1;
+static int hf_iec61850_ServiceSupportOptions_defineSemaphore = -1;
+static int hf_iec61850_ServiceSupportOptions_deleteSemaphore = -1;
+static int hf_iec61850_ServiceSupportOptions_reportSemaphoreStatus = -1;
+static int hf_iec61850_ServiceSupportOptions_reportPoolSemaphoreStatus = -1;
+static int hf_iec61850_ServiceSupportOptions_reportSemaphoreEntryStatus = -1;
+static int hf_iec61850_ServiceSupportOptions_initiateDownloadSequence = -1;
+static int hf_iec61850_ServiceSupportOptions_downloadSegment = -1;
+static int hf_iec61850_ServiceSupportOptions_terminateDownloadSequence = -1;
+static int hf_iec61850_ServiceSupportOptions_initiateUploadSequence = -1;
+static int hf_iec61850_ServiceSupportOptions_uploadSegment = -1;
+static int hf_iec61850_ServiceSupportOptions_terminateUploadSequence = -1;
+static int hf_iec61850_ServiceSupportOptions_requestDomainDownload = -1;
+static int hf_iec61850_ServiceSupportOptions_requestDomainUpload = -1;
+static int hf_iec61850_ServiceSupportOptions_loadDomainContent = -1;
+static int hf_iec61850_ServiceSupportOptions_storeDomainContent = -1;
+static int hf_iec61850_ServiceSupportOptions_deleteDomain = -1;
+static int hf_iec61850_ServiceSupportOptions_getDomainAttributes = -1;
+static int hf_iec61850_ServiceSupportOptions_createProgramInvocation = -1;
+static int hf_iec61850_ServiceSupportOptions_deleteProgramInvocation = -1;
+static int hf_iec61850_ServiceSupportOptions_start = -1;
+static int hf_iec61850_ServiceSupportOptions_stop = -1;
+static int hf_iec61850_ServiceSupportOptions_resume = -1;
+static int hf_iec61850_ServiceSupportOptions_reset = -1;
+static int hf_iec61850_ServiceSupportOptions_kill = -1;
+static int hf_iec61850_ServiceSupportOptions_getProgramInvocationAttributes = -1;
+static int hf_iec61850_ServiceSupportOptions_obtainFile = -1;
+static int hf_iec61850_ServiceSupportOptions_defineEventCondition = -1;
+static int hf_iec61850_ServiceSupportOptions_deleteEventCondition = -1;
+static int hf_iec61850_ServiceSupportOptions_getEventConditionAttributes = -1;
+static int hf_iec61850_ServiceSupportOptions_reportEventConditionStatus = -1;
+static int hf_iec61850_ServiceSupportOptions_alterEventConditionMonitoring = -1;
+static int hf_iec61850_ServiceSupportOptions_triggerEvent = -1;
+static int hf_iec61850_ServiceSupportOptions_defineEventAction = -1;
+static int hf_iec61850_ServiceSupportOptions_deleteEventAction = -1;
+static int hf_iec61850_ServiceSupportOptions_getEventActionAttributes = -1;
+static int hf_iec61850_ServiceSupportOptions_reportActionStatus = -1;
+static int hf_iec61850_ServiceSupportOptions_defineEventEnrollment = -1;
+static int hf_iec61850_ServiceSupportOptions_deleteEventEnrollment = -1;
+static int hf_iec61850_ServiceSupportOptions_alterEventEnrollment = -1;
+static int hf_iec61850_ServiceSupportOptions_reportEventEnrollmentStatus = -1;
+static int hf_iec61850_ServiceSupportOptions_getEventEnrollmentAttributes = -1;
+static int hf_iec61850_ServiceSupportOptions_acknowledgeEventNotification = -1;
+static int hf_iec61850_ServiceSupportOptions_getAlarmSummary = -1;
+static int hf_iec61850_ServiceSupportOptions_getAlarmEnrollmentSummary = -1;
+static int hf_iec61850_ServiceSupportOptions_readJournal = -1;
+static int hf_iec61850_ServiceSupportOptions_writeJournal = -1;
+static int hf_iec61850_ServiceSupportOptions_initializeJournal = -1;
+static int hf_iec61850_ServiceSupportOptions_reportJournalStatus = -1;
+static int hf_iec61850_ServiceSupportOptions_createJournal = -1;
+static int hf_iec61850_ServiceSupportOptions_deleteJournal = -1;
+static int hf_iec61850_ServiceSupportOptions_getCapabilityList = -1;
+static int hf_iec61850_ServiceSupportOptions_fileOpen = -1;
+static int hf_iec61850_ServiceSupportOptions_fileRead = -1;
+static int hf_iec61850_ServiceSupportOptions_fileClose = -1;
+static int hf_iec61850_ServiceSupportOptions_fileRename = -1;
+static int hf_iec61850_ServiceSupportOptions_fileDelete = -1;
+static int hf_iec61850_ServiceSupportOptions_fileDirectory = -1;
+static int hf_iec61850_ServiceSupportOptions_unsolicitedStatus = -1;
+static int hf_iec61850_ServiceSupportOptions_informationReport = -1;
+static int hf_iec61850_ServiceSupportOptions_eventNotification = -1;
+static int hf_iec61850_ServiceSupportOptions_attachToEventCondition = -1;
+static int hf_iec61850_ServiceSupportOptions_attachToSemaphore = -1;
+static int hf_iec61850_ServiceSupportOptions_conclude = -1;
+static int hf_iec61850_ServiceSupportOptions_cancel = -1;
+static int hf_iec61850_Transitions_idle_to_disabled = -1;
+static int hf_iec61850_Transitions_active_to_disabled = -1;
+static int hf_iec61850_Transitions_disabled_to_idle = -1;
+static int hf_iec61850_Transitions_active_to_idle = -1;
+static int hf_iec61850_Transitions_disabled_to_active = -1;
+static int hf_iec61850_Transitions_idle_to_active = -1;
+static int hf_iec61850_Transitions_any_to_deleted = -1;
 
 /* Initialize the subtree pointers */
 static gint ettmms = -1;
-static gint ett_iec61850_MMSpdu;
-static gint ett_iec61850_Confirmed_RequestPDU;
-static gint ett_iec61850_SEQUENCE_OF_Modifier;
-static gint ett_iec61850_Unconfirmed_PDU;
-static gint ett_iec61850_Confirmed_ResponsePDU;
-static gint ett_iec61850_Confirmed_ErrorPDU;
-static gint ett_iec61850_UnconfirmedService;
-static gint ett_iec61850_Modifier;
-static gint ett_iec61850_ConfirmedServiceRequest;
-static gint ett_iec61850_CS_Request_Detail;
-static gint ett_iec61850_ConfirmedServiceResponse;
-static gint ett_iec61850_FileName;
-static gint ett_iec61850_ObjectName;
-static gint ett_iec61850_T_domain_specific;
-static gint ett_iec61850_ApplicationReference;
-static gint ett_iec61850_Initiate_RequestPDU;
-static gint ett_iec61850_InitRequestDetail;
-static gint ett_iec61850_Initiate_ResponsePDU;
-static gint ett_iec61850_InitResponseDetail;
-static gint ett_iec61850_ParameterSupportOptions;
-static gint ett_iec61850_ServiceSupportOptions;
-static gint ett_iec61850_Cancel_ErrorPDU;
-static gint ett_iec61850_ServiceError;
-static gint ett_iec61850_T_errorClass;
-static gint ett_iec61850_T_serviceSpecificInformation;
-static gint ett_iec61850_AdditionalService_Error;
-static gint ett_iec61850_RemoveEventConditionListReference_Error;
-static gint ett_iec61850_InitiateUnitControl_Error;
-static gint ett_iec61850_StartUnitControl_Error;
-static gint ett_iec61850_StopUnitControl_Error;
-static gint ett_iec61850_DeleteUnitControl_Error;
-static gint ett_iec61850_LoadUnitControlFromFile_Error;
-static gint ett_iec61850_RejectPDU;
-static gint ett_iec61850_T_rejectReason;
-static gint ett_iec61850_Status_Response;
-static gint ett_iec61850_GetNameList_Request;
-static gint ett_iec61850_T_extendedObjectClass;
-static gint ett_iec61850_T_objectScope;
-static gint ett_iec61850_GetNameList_Response;
-static gint ett_iec61850_SEQUENCE_OF_Identifier;
-static gint ett_iec61850_Identify_Response;
-static gint ett_iec61850_T_listOfAbstractSyntaxes;
-static gint ett_iec61850_Rename_Request;
-static gint ett_iec61850_T_extendedObjectClass_01;
-static gint ett_iec61850_GetCapabilityList_Request;
-static gint ett_iec61850_GetCapabilityList_Response;
-static gint ett_iec61850_T_listOfCapabilities;
-static gint ett_iec61850_InitiateDownloadSequence_Request;
-static gint ett_iec61850_T_listOfCapabilities_01;
-static gint ett_iec61850_DownloadSegment_Response;
-static gint ett_iec61850_T_loadData;
-static gint ett_iec61850_TerminateDownloadSequence_Request;
-static gint ett_iec61850_InitiateUploadSequence_Response;
-static gint ett_iec61850_T_listOfCapabilities_02;
-static gint ett_iec61850_UploadSegment_Response;
-static gint ett_iec61850_T_loadData_01;
-static gint ett_iec61850_RequestDomainDownload_Request;
-static gint ett_iec61850_T_listOfCapabilities_03;
-static gint ett_iec61850_RequestDomainUpload_Request;
-static gint ett_iec61850_LoadDomainContent_Request;
-static gint ett_iec61850_T_listOfCapabilities_04;
-static gint ett_iec61850_StoreDomainContent_Request;
-static gint ett_iec61850_GetDomainAttributes_Response;
-static gint ett_iec61850_T_listOfCapabilities_05;
-static gint ett_iec61850_CreateProgramInvocation_Request;
-static gint ett_iec61850_Start_Request;
-static gint ett_iec61850_T_executionArgument;
-static gint ett_iec61850_Stop_Request;
-static gint ett_iec61850_Resume_Request;
-static gint ett_iec61850_T_executionArgument_01;
-static gint ett_iec61850_Reset_Request;
-static gint ett_iec61850_Kill_Request;
-static gint ett_iec61850_GetProgramInvocationAttributes_Response;
-static gint ett_iec61850_T_executionArgument_02;
-static gint ett_iec61850_TypeSpecification;
-static gint ett_iec61850_T_array;
-static gint ett_iec61850_T_structure;
-static gint ett_iec61850_T_components;
-static gint ett_iec61850_T_components_item;
-static gint ett_iec61850_AlternateAccess;
-static gint ett_iec61850_AlternateAccess_item;
-static gint ett_iec61850_T_named;
-static gint ett_iec61850_AlternateAccessSelection;
-static gint ett_iec61850_T_selectAlternateAccess;
-static gint ett_iec61850_T_accessSelection;
-static gint ett_iec61850_T_indexRange;
-static gint ett_iec61850_T_selectAccess;
-static gint ett_iec61850_T_indexRange_01;
-static gint ett_iec61850_Read_Request;
-static gint ett_iec61850_Read_Response;
-static gint ett_iec61850_SEQUENCE_OF_AccessResult;
-static gint ett_iec61850_Write_Request;
-static gint ett_iec61850_SEQUENCE_OF_Data;
-static gint ett_iec61850_Write_Response;
-static gint ett_iec61850_Write_Response_item;
-static gint ett_iec61850_InformationReport;
-static gint ett_iec61850_GetVariableAccessAttributes_Request;
-static gint ett_iec61850_GetVariableAccessAttributes_Response;
-static gint ett_iec61850_DefineNamedVariable_Request;
-static gint ett_iec61850_DefineScatteredAccess_Request;
-static gint ett_iec61850_GetScatteredAccessAttributes_Response;
-static gint ett_iec61850_DeleteVariableAccess_Request;
-static gint ett_iec61850_SEQUENCE_OF_ObjectName;
-static gint ett_iec61850_DeleteVariableAccess_Response;
-static gint ett_iec61850_DefineNamedVariableList_Request;
-static gint ett_iec61850_T_listOfVariable;
-static gint ett_iec61850_T_listOfVariable_item;
-static gint ett_iec61850_GetNamedVariableListAttributes_Response;
-static gint ett_iec61850_T_listOfVariable_01;
-static gint ett_iec61850_T_listOfVariable_item_01;
-static gint ett_iec61850_DeleteNamedVariableList_Request;
-static gint ett_iec61850_DeleteNamedVariableList_Response;
-static gint ett_iec61850_DefineNamedType_Request;
-static gint ett_iec61850_GetNamedTypeAttributes_Response;
-static gint ett_iec61850_DeleteNamedType_Request;
-static gint ett_iec61850_DeleteNamedType_Response;
-static gint ett_iec61850_AccessResult;
-static gint ett_iec61850_Data;
-static gint ett_iec61850_VariableAccessSpecification;
-static gint ett_iec61850_T_listOfVariable_02;
-static gint ett_iec61850_T_listOfVariable_item_02;
-static gint ett_iec61850_ScatteredAccessDescription;
-static gint ett_iec61850_ScatteredAccessDescription_item;
-static gint ett_iec61850_VariableSpecification;
-static gint ett_iec61850_T_variableDescription;
-static gint ett_iec61850_Address;
-static gint ett_iec61850_TakeControl_Request;
-static gint ett_iec61850_TakeControl_Response;
-static gint ett_iec61850_RelinquishControl_Request;
-static gint ett_iec61850_DefineSemaphore_Request;
-static gint ett_iec61850_ReportSemaphoreStatus_Response;
-static gint ett_iec61850_ReportPoolSemaphoreStatus_Request;
-static gint ett_iec61850_ReportPoolSemaphoreStatus_Response;
-static gint ett_iec61850_T_listOfNamedTokens;
-static gint ett_iec61850_T_listOfNamedTokens_item;
-static gint ett_iec61850_ReportSemaphoreEntryStatus_Request;
-static gint ett_iec61850_ReportSemaphoreEntryStatus_Response;
-static gint ett_iec61850_SEQUENCE_OF_SemaphoreEntry;
-static gint ett_iec61850_AttachToSemaphore;
-static gint ett_iec61850_SemaphoreEntry;
-static gint ett_iec61850_Input_Request;
-static gint ett_iec61850_T_listOfPromptData;
-static gint ett_iec61850_Output_Request;
-static gint ett_iec61850_T_listOfOutputData;
-static gint ett_iec61850_DefineEventCondition_Request;
-static gint ett_iec61850_DeleteEventCondition_Request;
-static gint ett_iec61850_GetEventConditionAttributes_Response;
-static gint ett_iec61850_T_monitoredVariable;
-static gint ett_iec61850_ReportEventConditionStatus_Response;
-static gint ett_iec61850_AlterEventConditionMonitoring_Request;
-static gint ett_iec61850_TriggerEvent_Request;
-static gint ett_iec61850_DefineEventAction_Request;
-static gint ett_iec61850_DeleteEventAction_Request;
-static gint ett_iec61850_GetEventActionAttributes_Response;
-static gint ett_iec61850_DefineEventEnrollment_Request;
-static gint ett_iec61850_DeleteEventEnrollment_Request;
-static gint ett_iec61850_GetEventEnrollmentAttributes_Request;
-static gint ett_iec61850_EventEnrollment;
-static gint ett_iec61850_T_eventConditionName;
-static gint ett_iec61850_T_eventActionName;
-static gint ett_iec61850_GetEventEnrollmentAttributes_Response;
-static gint ett_iec61850_SEQUENCE_OF_EventEnrollment;
-static gint ett_iec61850_ReportEventEnrollmentStatus_Response;
-static gint ett_iec61850_AlterEventEnrollment_Request;
-static gint ett_iec61850_AlterEventEnrollment_Response;
-static gint ett_iec61850_T_currentState;
-static gint ett_iec61850_AcknowledgeEventNotification_Request;
-static gint ett_iec61850_GetAlarmSummary_Request;
-static gint ett_iec61850_T_severityFilter;
-static gint ett_iec61850_GetAlarmSummary_Response;
-static gint ett_iec61850_SEQUENCE_OF_AlarmSummary;
-static gint ett_iec61850_AlarmSummary;
-static gint ett_iec61850_GetAlarmEnrollmentSummary_Request;
-static gint ett_iec61850_T_severityFilter_01;
-static gint ett_iec61850_GetAlarmEnrollmentSummary_Response;
-static gint ett_iec61850_SEQUENCE_OF_AlarmEnrollmentSummary;
-static gint ett_iec61850_AlarmEnrollmentSummary;
-static gint ett_iec61850_EventNotification;
-static gint ett_iec61850_T_eventConditionName_01;
-static gint ett_iec61850_T_actionResult;
-static gint ett_iec61850_T_eventActionResult;
-static gint ett_iec61850_AttachToEventCondition;
-static gint ett_iec61850_EventTime;
-static gint ett_iec61850_Transitions;
-static gint ett_iec61850_ReadJournal_Request;
-static gint ett_iec61850_T_rangeStartSpecification;
-static gint ett_iec61850_T_rangeStopSpecification;
-static gint ett_iec61850_T_listOfVariables;
-static gint ett_iec61850_T_entryToStartAfter;
-static gint ett_iec61850_ReadJournal_Response;
-static gint ett_iec61850_SEQUENCE_OF_JournalEntry;
-static gint ett_iec61850_JournalEntry;
-static gint ett_iec61850_WriteJournal_Request;
-static gint ett_iec61850_SEQUENCE_OF_EntryContent;
-static gint ett_iec61850_InitializeJournal_Request;
-static gint ett_iec61850_T_limitSpecification;
-static gint ett_iec61850_ReportJournalStatus_Response;
-static gint ett_iec61850_CreateJournal_Request;
-static gint ett_iec61850_DeleteJournal_Request;
-static gint ett_iec61850_EntryContent;
-static gint ett_iec61850_T_entryForm;
-static gint ett_iec61850_T_data;
-static gint ett_iec61850_T_event;
-static gint ett_iec61850_T_listOfVariables_01;
-static gint ett_iec61850_T_listOfVariables_item;
-static gint ett_iec61850_ObtainFile_Request;
-static gint ett_iec61850_FileOpen_Request;
-static gint ett_iec61850_FileOpen_Response;
-static gint ett_iec61850_FileRead_Response;
-static gint ett_iec61850_FileRename_Request;
-static gint ett_iec61850_FileDirectory_Request;
-static gint ett_iec61850_FileDirectory_Response;
-static gint ett_iec61850_SEQUENCE_OF_DirectoryEntry;
-static gint ett_iec61850_DirectoryEntry;
-static gint ett_iec61850_FileAttributes;
+static gint ett_iec61850_MMSpdu = -1;
+static gint ett_iec61850_Confirmed_RequestPDU = -1;
+static gint ett_iec61850_SEQUENCE_OF_Modifier = -1;
+static gint ett_iec61850_Unconfirmed_PDU = -1;
+static gint ett_iec61850_Confirmed_ResponsePDU = -1;
+static gint ett_iec61850_Confirmed_ErrorPDU = -1;
+static gint ett_iec61850_UnconfirmedService = -1;
+static gint ett_iec61850_Modifier = -1;
+static gint ett_iec61850_ConfirmedServiceRequest = -1;
+static gint ett_iec61850_CS_Request_Detail = -1;
+static gint ett_iec61850_ConfirmedServiceResponse = -1;
+static gint ett_iec61850_FileName = -1;
+static gint ett_iec61850_ObjectName = -1;
+static gint ett_iec61850_T_domain_specific = -1;
+static gint ett_iec61850_ApplicationReference = -1;
+static gint ett_iec61850_Initiate_RequestPDU = -1;
+static gint ett_iec61850_InitRequestDetail = -1;
+static gint ett_iec61850_Initiate_ResponsePDU = -1;
+static gint ett_iec61850_InitResponseDetail = -1;
+static gint ett_iec61850_ParameterSupportOptions = -1;
+static gint ett_iec61850_ServiceSupportOptions = -1;
+static gint ett_iec61850_Cancel_ErrorPDU = -1;
+static gint ett_iec61850_ServiceError = -1;
+static gint ett_iec61850_T_errorClass = -1;
+static gint ett_iec61850_T_serviceSpecificInformation = -1;
+static gint ett_iec61850_AdditionalService_Error = -1;
+static gint ett_iec61850_RemoveEventConditionListReference_Error = -1;
+static gint ett_iec61850_InitiateUnitControl_Error = -1;
+static gint ett_iec61850_StartUnitControl_Error = -1;
+static gint ett_iec61850_StopUnitControl_Error = -1;
+static gint ett_iec61850_DeleteUnitControl_Error = -1;
+static gint ett_iec61850_LoadUnitControlFromFile_Error = -1;
+static gint ett_iec61850_RejectPDU = -1;
+static gint ett_iec61850_T_rejectReason = -1;
+static gint ett_iec61850_Status_Response = -1;
+static gint ett_iec61850_GetNameList_Request = -1;
+static gint ett_iec61850_T_extendedObjectClass = -1;
+static gint ett_iec61850_T_objectScope = -1;
+static gint ett_iec61850_GetNameList_Response = -1;
+static gint ett_iec61850_SEQUENCE_OF_Identifier = -1;
+static gint ett_iec61850_Identify_Response = -1;
+static gint ett_iec61850_T_listOfAbstractSyntaxes = -1;
+static gint ett_iec61850_Rename_Request = -1;
+static gint ett_iec61850_T_extendedObjectClass_01 = -1;
+static gint ett_iec61850_GetCapabilityList_Request = -1;
+static gint ett_iec61850_GetCapabilityList_Response = -1;
+static gint ett_iec61850_T_listOfCapabilities = -1;
+static gint ett_iec61850_InitiateDownloadSequence_Request = -1;
+static gint ett_iec61850_T_listOfCapabilities_01 = -1;
+static gint ett_iec61850_DownloadSegment_Response = -1;
+static gint ett_iec61850_T_loadData = -1;
+static gint ett_iec61850_TerminateDownloadSequence_Request = -1;
+static gint ett_iec61850_InitiateUploadSequence_Response = -1;
+static gint ett_iec61850_T_listOfCapabilities_02 = -1;
+static gint ett_iec61850_UploadSegment_Response = -1;
+static gint ett_iec61850_T_loadData_01 = -1;
+static gint ett_iec61850_RequestDomainDownload_Request = -1;
+static gint ett_iec61850_T_listOfCapabilities_03 = -1;
+static gint ett_iec61850_RequestDomainUpload_Request = -1;
+static gint ett_iec61850_LoadDomainContent_Request = -1;
+static gint ett_iec61850_T_listOfCapabilities_04 = -1;
+static gint ett_iec61850_StoreDomainContent_Request = -1;
+static gint ett_iec61850_GetDomainAttributes_Response = -1;
+static gint ett_iec61850_T_listOfCapabilities_05 = -1;
+static gint ett_iec61850_CreateProgramInvocation_Request = -1;
+static gint ett_iec61850_Start_Request = -1;
+static gint ett_iec61850_T_executionArgument = -1;
+static gint ett_iec61850_Stop_Request = -1;
+static gint ett_iec61850_Resume_Request = -1;
+static gint ett_iec61850_T_executionArgument_01 = -1;
+static gint ett_iec61850_Reset_Request = -1;
+static gint ett_iec61850_Kill_Request = -1;
+static gint ett_iec61850_GetProgramInvocationAttributes_Response = -1;
+static gint ett_iec61850_T_executionArgument_02 = -1;
+static gint ett_iec61850_TypeSpecification = -1;
+static gint ett_iec61850_T_array = -1;
+static gint ett_iec61850_T_structure = -1;
+static gint ett_iec61850_T_components = -1;
+static gint ett_iec61850_T_components_item = -1;
+static gint ett_iec61850_AlternateAccess = -1;
+static gint ett_iec61850_AlternateAccess_item = -1;
+static gint ett_iec61850_T_named = -1;
+static gint ett_iec61850_AlternateAccessSelection = -1;
+static gint ett_iec61850_T_selectAlternateAccess = -1;
+static gint ett_iec61850_T_accessSelection = -1;
+static gint ett_iec61850_T_indexRange = -1;
+static gint ett_iec61850_T_selectAccess = -1;
+static gint ett_iec61850_T_indexRange_01 = -1;
+static gint ett_iec61850_Read_Request = -1;
+static gint ett_iec61850_Read_Response = -1;
+static gint ett_iec61850_SEQUENCE_OF_AccessResult = -1;
+static gint ett_iec61850_Write_Request = -1;
+static gint ett_iec61850_SEQUENCE_OF_Data = -1;
+static gint ett_iec61850_Write_Response = -1;
+static gint ett_iec61850_Write_Response_item = -1;
+static gint ett_iec61850_InformationReport = -1;
+static gint ett_iec61850_GetVariableAccessAttributes_Request = -1;
+static gint ett_iec61850_GetVariableAccessAttributes_Response = -1;
+static gint ett_iec61850_DefineNamedVariable_Request = -1;
+static gint ett_iec61850_DefineScatteredAccess_Request = -1;
+static gint ett_iec61850_GetScatteredAccessAttributes_Response = -1;
+static gint ett_iec61850_DeleteVariableAccess_Request = -1;
+static gint ett_iec61850_SEQUENCE_OF_ObjectName = -1;
+static gint ett_iec61850_DeleteVariableAccess_Response = -1;
+static gint ett_iec61850_DefineNamedVariableList_Request = -1;
+static gint ett_iec61850_T_listOfVariable = -1;
+static gint ett_iec61850_T_listOfVariable_item = -1;
+static gint ett_iec61850_GetNamedVariableListAttributes_Response = -1;
+static gint ett_iec61850_T_listOfVariable_01 = -1;
+static gint ett_iec61850_T_listOfVariable_item_01 = -1;
+static gint ett_iec61850_DeleteNamedVariableList_Request = -1;
+static gint ett_iec61850_DeleteNamedVariableList_Response = -1;
+static gint ett_iec61850_DefineNamedType_Request = -1;
+static gint ett_iec61850_GetNamedTypeAttributes_Response = -1;
+static gint ett_iec61850_DeleteNamedType_Request = -1;
+static gint ett_iec61850_DeleteNamedType_Response = -1;
+static gint ett_iec61850_AccessResult = -1;
+static gint ett_iec61850_Data = -1;
+static gint ett_iec61850_VariableAccessSpecification = -1;
+static gint ett_iec61850_T_listOfVariable_02 = -1;
+static gint ett_iec61850_T_listOfVariable_item_02 = -1;
+static gint ett_iec61850_ScatteredAccessDescription = -1;
+static gint ett_iec61850_ScatteredAccessDescription_item = -1;
+static gint ett_iec61850_VariableSpecification = -1;
+static gint ett_iec61850_T_variableDescription = -1;
+static gint ett_iec61850_Address = -1;
+static gint ett_iec61850_TakeControl_Request = -1;
+static gint ett_iec61850_TakeControl_Response = -1;
+static gint ett_iec61850_RelinquishControl_Request = -1;
+static gint ett_iec61850_DefineSemaphore_Request = -1;
+static gint ett_iec61850_ReportSemaphoreStatus_Response = -1;
+static gint ett_iec61850_ReportPoolSemaphoreStatus_Request = -1;
+static gint ett_iec61850_ReportPoolSemaphoreStatus_Response = -1;
+static gint ett_iec61850_T_listOfNamedTokens = -1;
+static gint ett_iec61850_T_listOfNamedTokens_item = -1;
+static gint ett_iec61850_ReportSemaphoreEntryStatus_Request = -1;
+static gint ett_iec61850_ReportSemaphoreEntryStatus_Response = -1;
+static gint ett_iec61850_SEQUENCE_OF_SemaphoreEntry = -1;
+static gint ett_iec61850_AttachToSemaphore = -1;
+static gint ett_iec61850_SemaphoreEntry = -1;
+static gint ett_iec61850_Input_Request = -1;
+static gint ett_iec61850_T_listOfPromptData = -1;
+static gint ett_iec61850_Output_Request = -1;
+static gint ett_iec61850_T_listOfOutputData = -1;
+static gint ett_iec61850_DefineEventCondition_Request = -1;
+static gint ett_iec61850_DeleteEventCondition_Request = -1;
+static gint ett_iec61850_GetEventConditionAttributes_Response = -1;
+static gint ett_iec61850_T_monitoredVariable = -1;
+static gint ett_iec61850_ReportEventConditionStatus_Response = -1;
+static gint ett_iec61850_AlterEventConditionMonitoring_Request = -1;
+static gint ett_iec61850_TriggerEvent_Request = -1;
+static gint ett_iec61850_DefineEventAction_Request = -1;
+static gint ett_iec61850_DeleteEventAction_Request = -1;
+static gint ett_iec61850_GetEventActionAttributes_Response = -1;
+static gint ett_iec61850_DefineEventEnrollment_Request = -1;
+static gint ett_iec61850_DeleteEventEnrollment_Request = -1;
+static gint ett_iec61850_GetEventEnrollmentAttributes_Request = -1;
+static gint ett_iec61850_EventEnrollment = -1;
+static gint ett_iec61850_T_eventConditionName = -1;
+static gint ett_iec61850_T_eventActionName = -1;
+static gint ett_iec61850_GetEventEnrollmentAttributes_Response = -1;
+static gint ett_iec61850_SEQUENCE_OF_EventEnrollment = -1;
+static gint ett_iec61850_ReportEventEnrollmentStatus_Response = -1;
+static gint ett_iec61850_AlterEventEnrollment_Request = -1;
+static gint ett_iec61850_AlterEventEnrollment_Response = -1;
+static gint ett_iec61850_T_currentState = -1;
+static gint ett_iec61850_AcknowledgeEventNotification_Request = -1;
+static gint ett_iec61850_GetAlarmSummary_Request = -1;
+static gint ett_iec61850_T_severityFilter = -1;
+static gint ett_iec61850_GetAlarmSummary_Response = -1;
+static gint ett_iec61850_SEQUENCE_OF_AlarmSummary = -1;
+static gint ett_iec61850_AlarmSummary = -1;
+static gint ett_iec61850_GetAlarmEnrollmentSummary_Request = -1;
+static gint ett_iec61850_T_severityFilter_01 = -1;
+static gint ett_iec61850_GetAlarmEnrollmentSummary_Response = -1;
+static gint ett_iec61850_SEQUENCE_OF_AlarmEnrollmentSummary = -1;
+static gint ett_iec61850_AlarmEnrollmentSummary = -1;
+static gint ett_iec61850_EventNotification = -1;
+static gint ett_iec61850_T_eventConditionName_01 = -1;
+static gint ett_iec61850_T_actionResult = -1;
+static gint ett_iec61850_T_eventActionResult = -1;
+static gint ett_iec61850_AttachToEventCondition = -1;
+static gint ett_iec61850_EventTime = -1;
+static gint ett_iec61850_Transitions = -1;
+static gint ett_iec61850_ReadJournal_Request = -1;
+static gint ett_iec61850_T_rangeStartSpecification = -1;
+static gint ett_iec61850_T_rangeStopSpecification = -1;
+static gint ett_iec61850_T_listOfVariables = -1;
+static gint ett_iec61850_T_entryToStartAfter = -1;
+static gint ett_iec61850_ReadJournal_Response = -1;
+static gint ett_iec61850_SEQUENCE_OF_JournalEntry = -1;
+static gint ett_iec61850_JournalEntry = -1;
+static gint ett_iec61850_WriteJournal_Request = -1;
+static gint ett_iec61850_SEQUENCE_OF_EntryContent = -1;
+static gint ett_iec61850_InitializeJournal_Request = -1;
+static gint ett_iec61850_T_limitSpecification = -1;
+static gint ett_iec61850_ReportJournalStatus_Response = -1;
+static gint ett_iec61850_CreateJournal_Request = -1;
+static gint ett_iec61850_DeleteJournal_Request = -1;
+static gint ett_iec61850_EntryContent = -1;
+static gint ett_iec61850_T_entryForm = -1;
+static gint ett_iec61850_T_data = -1;
+static gint ett_iec61850_T_event = -1;
+static gint ett_iec61850_T_listOfVariables_01 = -1;
+static gint ett_iec61850_T_listOfVariables_item = -1;
+static gint ett_iec61850_ObtainFile_Request = -1;
+static gint ett_iec61850_FileOpen_Request = -1;
+static gint ett_iec61850_FileOpen_Response = -1;
+static gint ett_iec61850_FileRead_Response = -1;
+static gint ett_iec61850_FileRename_Request = -1;
+static gint ett_iec61850_FileDirectory_Request = -1;
+static gint ett_iec61850_FileDirectory_Response = -1;
+static gint ett_iec61850_SEQUENCE_OF_DirectoryEntry = -1;
+static gint ett_iec61850_DirectoryEntry = -1;
+static gint ett_iec61850_FileAttributes = -1;
 
 static expert_field ei_iec61850_mal_timeofday_encoding = EI_INIT;
 static expert_field ei_iec61850_mal_utctime_encoding = EI_INIT;

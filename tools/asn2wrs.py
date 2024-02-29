@@ -1629,13 +1629,13 @@ class EthCtx:
         if not len(self.eth_hf_ord) and not len(self.eth_hfpdu_ord) and not len(self.named_bit): return
         fx = self.output.file_open('hf')
         for f in (self.eth_hfpdu_ord + self.eth_hf_ord):
-            fx.write("%-50s/* %s */\n" % ("static int %s;  " % (self.eth_hf[f]['fullname']), self.eth_hf[f]['ethtype']))
+            fx.write("%-50s/* %s */\n" % ("static int %s = -1;  " % (self.eth_hf[f]['fullname']), self.eth_hf[f]['ethtype']))
         if (self.named_bit):
             fx.write('/* named bits */\n')
         for nb in self.named_bit:
-            fx.write("static int %s;\n" % (nb['ethname']))
+            fx.write("static int %s = -1;\n" % (nb['ethname']))
         if (self.dummy_eag_field):
-            fx.write("static int %s; /* never registered */\n" % (self.dummy_eag_field))
+            fx.write("static int %s = -1; /* never registered */\n" % (self.dummy_eag_field))
         self.output.file_close(fx)
 
     #--- eth_output_hf_arr ------------------------------------------------------
@@ -1688,10 +1688,10 @@ class EthCtx:
     def eth_output_ett (self):
         fx = self.output.file_open('ett')
         fempty = True
-        #fx.write("static gint ett_%s;\n" % (self.eproto))
+        #fx.write("static gint ett_%s = -1;\n" % (self.eproto))
         for t in self.eth_type_ord:
             if self.eth_type[t]['tree']:
-                fx.write("static gint %s;\n" % (self.eth_type[t]['tree']))
+                fx.write("static gint %s = -1;\n" % (self.eth_type[t]['tree']))
                 fempty = False
         self.output.file_close(fx, discard=fempty)
 
@@ -5978,7 +5978,7 @@ def p_Reference_1 (t):
 
 def p_Reference_2 (t):
     '''Reference : LCASE_IDENT_ASSIGNED
-                 | identifier '''  # instead of valuereference which causes reduce/reduce conflict
+                 | identifier '''  # instead of valuereference wich causes reduce/reduce conflict
     t[0] = Value_Ref(val=t[1])
 
 def p_AssignmentList_1 (t):
@@ -6019,7 +6019,7 @@ def p_DefinedValue_1(t):
     t[0] = t[1]
 
 def p_DefinedValue_2(t):
-    '''DefinedValue : identifier '''  # instead of valuereference which causes reduce/reduce conflict
+    '''DefinedValue : identifier '''  # instead of valuereference wich causes reduce/reduce conflict
     t[0] = Value_Ref(val=t[1])
 
 # 13.6
@@ -6045,7 +6045,7 @@ def p_ValueAssignment (t):
     'ValueAssignment : LCASE_IDENT ValueType ASSIGNMENT Value'
     t[0] = ValueAssignment(ident = t[1], typ = t[2], val = t[4])
 
-# only "simple" types are supported to simplify grammar
+# only "simple" types are supported to simplify grammer
 def p_ValueType (t):
     '''ValueType : type_ref
                  | BooleanType
@@ -8117,7 +8117,7 @@ def eth_main():
         if o in ("-C",):
             ectx.constraints_check = True
         if o in ("-L",):
-            ectx.conform.suppress_line = True;
+            ectx.suppress_line = True
         if o in ("-X",):
             warnings.warn("Command line option -X is obsolete and can be removed")
         if o in ("-T",):
@@ -8202,7 +8202,7 @@ def eth_main():
 
     if ectx.dbg('o'):
         ectx.output.dbg_print()
-    ectx.output.make_single_file(ectx.conform.suppress_line)
+    ectx.output.make_single_file(ectx.suppress_line)
 
 
 # Python compiler
