@@ -325,7 +325,7 @@ void proto_tree_print_node(proto_node *node, gpointer data)
 
     g_assert(fi);
 	if(fi != NULL && fi->hfinfo != NULL && fi->hfinfo->name != NULL && fi->hfinfo->type == FT_STRING){
-		ws_message("l: %d [%s] %s", *level, fi->hfinfo->name, fi->value.value.string);
+		//ws_message("l: %d [%s] %s", *level, fi->hfinfo->name, fi->value.value.string);
 	}
     
 	if (node->first_child != NULL) {

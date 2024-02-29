@@ -11,16 +11,16 @@
 # GNU General Public License for more details.
 #
 
-cmake_minimum_required(VERSION 3.12)
-set(CMAKE_BACKWARDS_COMPATIBILITY 3.12)
+cmake_minimum_required(VERSION 3.13)
+set(CMAKE_BACKWARDS_COMPATIBILITY 3.13)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 project(iec61850-wireshark-plugin C CXX)
 
-find_package(Wireshark 3.6)
+find_package(Wireshark 4.3)
 
 if(Wireshark_FOUND)
-  MESSAGE(STATUS "Wireshark 3.6 libraries found in ${Wireshark_LIB_DIR}, performing a stand-alone plug-in build.")
+  MESSAGE(STATUS "Wireshark 4.3 libraries found in ${Wireshark_LIB_DIR}, performing a stand-alone plug-in build.")
 
   if(NOT CMAKE_INSTALL_LIBDIR )
     set(CMAKE_INSTALL_LIBDIR ~/.local/lib/wireshark/plugins/${Wireshark_VERSION_MAJOR}.${Wireshark_VERSION_MINOR}/epan)
@@ -30,7 +30,7 @@ if(Wireshark_FOUND)
   MESSAGE(STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
   INCLUDE(UseMakePluginReg)
 
-  set(GLIB2_MIN_VERSION 2.4.0)
+  set(GLIB2_MIN_VERSION 2.54.0)
 
   find_package(GLIB2)
   include_directories (${GLIB2_INCLUDE_DIRS})
@@ -46,7 +46,7 @@ if(Wireshark_FOUND)
 
 else(Wireshark_FOUND)
 
-  MESSAGE(STATUS "Wireshark 3.6 libraries not found, performing an in-tree Wireshark plug-in build.")
+  MESSAGE(STATUS "Wireshark 4.3 libraries not found, performing an in-tree Wireshark plug-in build.")
 
   include(WiresharkPlugin)
 
@@ -72,13 +72,14 @@ set(CLEAN_FILES
 set_source_files_properties(
 	${CLEAN_FILES}
 	PROPERTIES
-	COMPILE_FLAGS "${WERROR_COMMON_FLAGS}"
+	COMPILE_FLAGS "${WERROR_COMMON_FLAGS} -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable"
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 register_plugin_files(plugin.c
 	plugin
+	"iec61850 dissector"
 	${DISSECTOR_SRC}
 )
 
@@ -107,7 +108,7 @@ if(Wireshark_FOUND)
 
 else(Wireshark_FOUND)
 
-  add_plugin_library(iec61850 epan)
+  add_wireshark_epan_plugin_library(iec61850)
 
   target_link_libraries(iec61850 epan)
 
@@ -118,7 +119,9 @@ else(Wireshark_FOUND)
   	NAME
   	  iec61850
   	SWITCHES
-  	  -g abort -g termoutput
+  	  #-g abort -g termoutput
+	  --group dissectors-prohibited
+	  --group dissectors-restricted
   	SOURCES
   	  ${DISSECTOR_SRC}
   	  ${DISSECTOR_HEADERS}

@@ -19,9 +19,17 @@ srcdir = sys.argv[1]
 #
 registertype = sys.argv[2]
 #
+# The third argument is the plugin short description
+#
+plugin_blurb = sys.argv[3]
+#
+# The fourth argument is the plugin minimum api level
+#
+min_api_level = sys.argv[4]
+#
 # All subsequent arguments are the files to scan.
 #
-files = sys.argv[3:]
+files = sys.argv[5:]
 
 final_filename = "plugin.c"
 preamble = """\
@@ -58,23 +66,23 @@ regs = {
 
 # For those that don't know Python, r"" indicates a raw string,
 # devoid of Python escapes.
-proto_regex = r"\bproto_register_(?P<symbol>[_A-Za-z0-9]+)\s*\(\s*void\s*\)[^;]*$"
+proto_regex = r"\bproto_register_(?P<symbol>[\w]+)\s*\(\s*void\s*\)\s*{"
 
-handoff_regex = r"\bproto_reg_handoff_(?P<symbol>[_A-Za-z0-9]+)\s*\(\s*void\s*\)[^;]*$"
+handoff_regex = r"\bproto_reg_handoff_(?P<symbol>[\w]+)\s*\(\s*void\s*\)\s*{"
 
-wtap_reg_regex = r"\bwtap_register_(?P<symbol>[_A-Za-z0-9]+)\s*\([^;]+$"
+wtap_reg_regex = r"\bwtap_register_(?P<symbol>[\w]+)\s*\(\s*void\s*\)\s*{"
 
-codec_reg_regex = r"\bcodec_register_(?P<symbol>[_A-Za-z0-9]+)\s*\([^;]+$"
+codec_reg_regex = r"\bcodec_register_(?P<symbol>[\w]+)\s*\(\s*void\s*\)\s*{"
 
-tap_reg_regex = r"\bregister_tap_listener_(?P<symbol>[_A-Za-z0-9]+)\s*\([^;]+$"
+tap_reg_regex = r"\bregister_tap_listener_(?P<symbol>[\w]+)\s*\(\s*void\s*\)\s*{"
 
 # This table drives the pattern-matching and symbol-harvesting
 patterns = [
-        ( 'proto_reg', re.compile(proto_regex, re.MULTILINE) ),
-        ( 'handoff_reg', re.compile(handoff_regex, re.MULTILINE) ),
-        ( 'wtap_register', re.compile(wtap_reg_regex, re.MULTILINE) ),
-        ( 'codec_register', re.compile(codec_reg_regex, re.MULTILINE) ),
-        ( 'register_tap_listener', re.compile(tap_reg_regex, re.MULTILINE) ),
+        ( 'proto_reg', re.compile(proto_regex, re.MULTILINE | re.ASCII) ),
+        ( 'handoff_reg', re.compile(handoff_regex, re.MULTILINE | re.ASCII) ),
+        ( 'wtap_register', re.compile(wtap_reg_regex, re.MULTILINE | re.ASCII) ),
+        ( 'codec_register', re.compile(codec_reg_regex, re.MULTILINE | re.ASCII) ),
+        ( 'register_tap_listener', re.compile(tap_reg_regex, re.MULTILINE | re.ASCII) ),
         ]
 
 # Grep
@@ -116,6 +124,7 @@ reg_code += """
 /* plugins are DLLs on Windows */
 #define WS_BUILD_DLL
 #include "ws_symbol_export.h"
+#include <wsutil/plugins.h>
 
 """
 
@@ -140,13 +149,8 @@ for symbol in regs['register_tap_listener']:
     reg_code += "void register_tap_listener_%s(void);\n" % (symbol)
 
 reg_code += """
-WS_DLL_PUBLIC_DEF const gchar plugin_version[] = PLUGIN_VERSION;
-WS_DLL_PUBLIC_DEF const int plugin_want_major = VERSION_MAJOR;
-WS_DLL_PUBLIC_DEF const int plugin_want_minor = VERSION_MINOR;
-
-WS_DLL_PUBLIC void plugin_register(void);
-
-void plugin_register(void)
+static void
+plugin_register(void)
 {
 """
 
@@ -176,6 +180,33 @@ if registertype == "plugin_tap":
         reg_code += "    tap_register_plugin(&plug_%s);\n" % (symbol)
 
 reg_code += "}\n"
+
+DESCRIPTION_FLAG = {
+    'plugin': 'WS_PLUGIN_DESC_DISSECTOR',
+    'plugin_wtap': 'WS_PLUGIN_DESC_FILE_TYPE',
+    'plugin_codec': 'WS_PLUGIN_DESC_CODEC',
+    'plugin_tap': 'WS_PLUGIN_DESC_TAP_LISTENER'
+}
+
+PLUGIN_REGISTER = {
+    'plugin': 'WIRESHARK_PLUGIN_REGISTER_EPAN',
+    'plugin_wtap': 'WIRESHARK_PLUGIN_REGISTER_WIRETAP',
+    'plugin_codec': 'WIRESHARK_PLUGIN_REGISTER_CODEC',
+    'plugin_tap': 'WIRESHARK_PLUGIN_REGISTER_EPAN'
+}
+
+reg_code += """
+static struct ws_module module = {
+    .flags = %s,
+    .version = PLUGIN_VERSION,
+    .spdx_id = WS_PLUGIN_SPDX_GPLv2,
+    .home_url = WS_PLUGIN_GITLAB_URL,
+    .blurb = "%s",
+    .register_cb = &plugin_register,
+};
+
+%s(&module, %s)
+""" % (DESCRIPTION_FLAG[registertype], plugin_blurb, PLUGIN_REGISTER[registertype], min_api_level)
 
 try:
     fh = open(final_filename, 'w')

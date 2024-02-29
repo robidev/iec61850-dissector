@@ -3,9 +3,6 @@
 /* packet-iec61850.h                                                          */
 /* asn2wrs.py -b -L -p iec61850 -c ./iec61850.cnf -s ./packet-iec61850-template -D . -O ../src iec61850.asn */
 
-/* Input file: packet-iec61850-template.h */
-
-#line 1 "./wireshark_dissector/asn1/packet-iec61850-template.h"
 /* packet-iec61850.h
  * Routines for IEC61850 packet dissection
  *   Ronnie Sahlberg 2005
@@ -50,12 +47,6 @@ char* private_data_get_moreCinfo(asn1_ctx_t *actx);
 
 
 
-
-/*--- Included file: packet-iec61850-exp.h ---*/
-#line 1 "./wireshark_dissector/asn1/packet-iec61850-exp.h"
-
-/*--- End of included file: packet-iec61850-exp.h ---*/
-#line 46 "./wireshark_dissector/asn1/packet-iec61850-template.h"
 
 #endif  /* PACKET_IEC61850_H */
 

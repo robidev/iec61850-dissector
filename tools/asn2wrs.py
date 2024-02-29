@@ -304,6 +304,7 @@ reserved_words = {
     'SET'         : 'SET',
     'SIZE'        : 'SIZE',
     'STRING'      : 'STRING',
+    'SUCCESSORS'  : 'SUCCESSORS',
     'SYNTAX'      : 'SYNTAX',
     'TAGS'        : 'TAGS',
     'TRUE'        : 'TRUE',
@@ -815,7 +816,7 @@ class EthCtx:
 
     #--- eth_reg_assign ---------------------------------------------------------
     def eth_reg_assign(self, ident, val, virt=False):
-        #print "eth_reg_assign(ident='%s')" % (ident)
+        #print("eth_reg_assign(ident='%s')" % (ident), 'module=', self.Module())
         if ident in self.assign:
             raise DuplicateError("assignment", ident)
         self.assign[ident] = { 'val' : val , 'virt' : virt }
@@ -849,9 +850,9 @@ class EthCtx:
 
     #--- eth_import_type --------------------------------------------------------
     def eth_import_type(self, ident, mod, proto):
-        #print "eth_import_type(ident='%s', mod='%s', prot='%s')" % (ident, mod, proto)
+        #print ("eth_import_type(ident='%s', mod='%s', prot='%s')" % (ident, mod, proto))
         if ident in self.type:
-            #print "already defined '%s' import=%s, module=%s" % (ident, str(self.type[ident]['import']), self.type[ident].get('module', '-'))
+            #print ("already defined '%s' import=%s, module=%s" % (ident, str(self.type[ident]['import']), self.type[ident].get('module', '-')))
             if not self.type[ident]['import'] and (self.type[ident]['module'] == mod) :
                 return  # OK - already defined
             elif self.type[ident]['import'] and (self.type[ident]['import'] == mod) :
@@ -935,13 +936,14 @@ class EthCtx:
 
     #--- eth_reg_type -----------------------------------------------------------
     def eth_reg_type(self, ident, val, mod=None):
-        #print "eth_reg_type(ident='%s', type='%s')" % (ident, val.type)
+        #print("eth_reg_type(ident='%s', type='%s')" % (ident, val.type))
         if ident in self.type:
             if self.type[ident]['import'] and (self.type[ident]['import'] == self.Module()) :
                 # replace imported type
                 del self.type[ident]
                 self.type_imp.remove(ident)
             else:
+                #print('DuplicateError: import=', self.type[ident]['import'], 'module=', self.Module())
                 raise DuplicateError("type", ident)
         val.ident = ident
         self.type[ident] = { 'val' : val, 'import' : None }
@@ -1502,7 +1504,7 @@ class EthCtx:
             out += 'static '
         out += "int "
         if (self.Ber()):
-            out += "dissect_%s_%s(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_)" % (self.eth_type[tname]['proto'], tname)
+            out += "dissect_%s_%s(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_)" % (self.eth_type[tname]['proto'], tname)
         elif (self.Per() or self.Oer()):
             out += "dissect_%s_%s(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_)" % (self.eth_type[tname]['proto'], tname)
         out += ";\n"
@@ -1539,7 +1541,7 @@ class EthCtx:
             out += 'static '
         out += "int\n"
         if (self.Ber()):
-            out += "dissect_%s_%s(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {\n" % (self.eth_type[tname]['proto'], tname)
+            out += "dissect_%s_%s(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {\n" % (self.eth_type[tname]['proto'], tname)
         elif (self.Per() or self.Oer()):
             out += "dissect_%s_%s(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {\n" % (self.eth_type[tname]['proto'], tname)
         #if self.conform.get_fn_presence(tname):
@@ -1627,13 +1629,13 @@ class EthCtx:
         if not len(self.eth_hf_ord) and not len(self.eth_hfpdu_ord) and not len(self.named_bit): return
         fx = self.output.file_open('hf')
         for f in (self.eth_hfpdu_ord + self.eth_hf_ord):
-            fx.write("%-50s/* %s */\n" % ("static int %s = -1;  " % (self.eth_hf[f]['fullname']), self.eth_hf[f]['ethtype']))
+            fx.write("%-50s/* %s */\n" % ("static int %s;  " % (self.eth_hf[f]['fullname']), self.eth_hf[f]['ethtype']))
         if (self.named_bit):
             fx.write('/* named bits */\n')
         for nb in self.named_bit:
-            fx.write("static int %s = -1;\n" % (nb['ethname']))
+            fx.write("static int %s;\n" % (nb['ethname']))
         if (self.dummy_eag_field):
-            fx.write("static int %s = -1; /* never registered */\n" % (self.dummy_eag_field))
+            fx.write("static int %s; /* never registered */\n" % (self.dummy_eag_field))
         self.output.file_close(fx)
 
     #--- eth_output_hf_arr ------------------------------------------------------
@@ -1686,10 +1688,10 @@ class EthCtx:
     def eth_output_ett (self):
         fx = self.output.file_open('ett')
         fempty = True
-        #fx.write("static gint ett_%s = -1;\n" % (self.eproto))
+        #fx.write("static gint ett_%s;\n" % (self.eproto))
         for t in self.eth_type_ord:
             if self.eth_type[t]['tree']:
-                fx.write("static gint %s = -1;\n" % (self.eth_type[t]['tree']))
+                fx.write("static gint %s;\n" % (self.eth_type[t]['tree']))
                 fempty = False
         self.output.file_close(fx, discard=fempty)
 
@@ -3032,22 +3034,22 @@ class EthOut:
         print("\n")
 
     #--- make_single_file -------------------------------------------------------
-    def make_single_file(self):
+    def make_single_file(self, suppress_line):
         if (not self.single_file): return
         in_nm = self.single_file + '.c'
         out_nm = os.path.join(self.outdir, self.output_fname(''))
-        self.do_include(out_nm, in_nm)
+        self.do_include(out_nm, in_nm, suppress_line)
         in_nm = self.single_file + '.h'
         if (os.path.exists(in_nm)):
             out_nm = os.path.join(self.outdir, self.output_fname('', ext='h'))
-            self.do_include(out_nm, in_nm)
+            self.do_include(out_nm, in_nm, suppress_line)
         if (not self.keep):
             for fn in self.created_files_ord:
                 if not self.created_files[fn]:
                     os.unlink(fn)
 
     #--- do_include -------------------------------------------------------
-    def do_include(self, out_nm, in_nm):
+    def do_include(self, out_nm, in_nm, suppress_line):
         def check_file(fn, fnlist):
             fnfull = os.path.normcase(os.path.abspath(fn))
             if (fnfull in fnlist and os.path.exists(fnfull)):
@@ -3056,9 +3058,10 @@ class EthOut:
         fin = open(in_nm, "r")
         fout = open(out_nm, "w")
         fout.write(self.fhdr(out_nm))
-        fout.write('/* Input file: ' + os.path.basename(in_nm) +' */\n')
-        fout.write('\n')
-        fout.write('#line %u "%s"\n' % (1, rel_dissector_path(in_nm)))
+        if (not suppress_line):
+            fout.write('/* Input file: ' + os.path.basename(in_nm) +' */\n')
+            fout.write('\n')
+            fout.write('#line %u "%s"\n' % (1, rel_dissector_path(in_nm)))
 
         include = re.compile(r'^\s*#\s*include\s+[<"](?P<fname>[^>"]+)[>"]', re.IGNORECASE)
 
@@ -3078,14 +3081,16 @@ class EthOut:
                 if (not ifile):
                     ifile = check_file(result.group('fname'), self.created_files)
             if (ifile):
-                fout.write('\n')
-                fout.write('/*--- Included file: ' + ifile + ' ---*/\n')
-                fout.write('#line %u "%s"\n' % (1, rel_dissector_path(ifile)))
+                if (not suppress_line):
+                    fout.write('\n')
+                    fout.write('/*--- Included file: ' + ifile + ' ---*/\n')
+                    fout.write('#line %u "%s"\n' % (1, rel_dissector_path(ifile)))
                 finc = open(ifile, "r")
                 fout.write(finc.read())
-                fout.write('\n')
-                fout.write('/*--- End of included file: ' + ifile + ' ---*/\n')
-                fout.write('#line %u "%s"\n' % (cont_linenum+1, rel_dissector_path(in_nm)) )
+                if (not suppress_line):
+                    fout.write('\n')
+                    fout.write('/*--- End of included file: ' + ifile + ' ---*/\n')
+                    fout.write('#line %u "%s"\n' % (cont_linenum+1, rel_dissector_path(in_nm)) )
                 finc.close()
             else:
                 fout.write(line)
@@ -3426,8 +3431,8 @@ class Type (Node):
     def eth_type_default_table(self, ectx, tname):
         return ''
 
-    def eth_type_default_body(self, ectx):
-        print("#Unhandled  eth_type_default_body() in %s" % (self.type))
+    def eth_type_default_body(self, ectx, tname):
+        print("#Unhandled  eth_type_default_body('%s') in %s" % (tname, self.type))
         print(self.str_depth(1))
         return ''
 
@@ -3713,7 +3718,8 @@ class Constraint (Node):
     def Needs64b(self, ectx):
         (minv, maxv, ext) = self.GetValue(ectx)
         if ((str(minv).isdigit() or ((str(minv)[0] == "-") and str(minv)[1:].isdigit())) \
-        and str(maxv).isdigit() and (abs(int(maxv) - int(minv)) >= 2**32)) \
+        and (str(maxv).isdigit() or ((str(maxv)[0] == "-") and str(maxv)[1:].isdigit())) \
+        and ((abs(int(maxv) - int(minv)) >= 2**32) or (int(minv) < -2**31) or (int(maxv) >= 2**32))) \
         or (maxv == 'MAX') or (minv == 'MIN'):
             return True
         return False
@@ -3993,7 +3999,7 @@ class TaggedType (Type):
                                     par=(('%(IMPLICIT_TAG)s', '%(ACTX)s', '%(TREE)s', '%(TVB)s', '%(OFFSET)s'),
                                          ('%(HF_INDEX)s', '%(TAG_CLS)s', '%(TAG_TAG)s', '%(TAG_IMPL)s', '%(TYPE_REF_FN)s',),))
         else:
-            body = '#error Can not decode %s' % (tname)
+            body = '#error Can not decode tagged_type %s' % (tname)
         return body
 
 #--- SqType -----------------------------------------------------------
@@ -4247,7 +4253,7 @@ class SequenceOfType (SeqOfType):
                                          ('%(ETT_INDEX)s', '%(TABLE)s',),
                                          ('%(MIN_VAL)s', '%(MAX_VAL)s','%(EXT)s'),))
         else:
-            body = '#error Can not decode %s' % (tname)
+            body = '#error Can not decode SequenceOfType %s' % (tname)
         return body
 
 
@@ -4304,7 +4310,7 @@ class SetOfType (SeqOfType):
                                          ('%(ETT_INDEX)s', '%(TABLE)s',),
                                          ('%(MIN_VAL)s', '%(MAX_VAL)s','%(EXT)s',),))
         else:
-            body = '#error Can not decode %s' % (tname)
+            body = '#error Can not decode SetOfType %s' % (tname)
         return body
 
 def mk_tag_str (ctx, cls, typ, num):
@@ -4383,7 +4389,7 @@ class SequenceType (SeqType):
                                     par=(('%(TVB)s', '%(OFFSET)s', '%(ACTX)s', '%(TREE)s', '%(HF_INDEX)s'),
                                          ('%(ETT_INDEX)s', '%(TABLE)s',),))
         else:
-            body = '#error Can not decode %s' % (tname)
+            body = '#error Can not decode SequenceType %s' % (tname)
         return body
 
 #--- ExtensionAdditionGroup ---------------------------------------------------
@@ -4417,7 +4423,7 @@ class ExtensionAdditionGroup (SeqType):
             body = ectx.eth_fn_call('dissect_%(ER)s_sequence_eag', ret='offset',
                                     par=(('%(TVB)s', '%(OFFSET)s', '%(ACTX)s', '%(TREE)s', '%(TABLE)s',),))
         else:
-            body = '#error Can not decode %s' % (tname)
+            body = '#error Can not decode ExtensionAdditionGroup %s' % (tname)
         return body
 
 
@@ -4445,7 +4451,7 @@ class SetType (SeqType):
                                     par=(('%(TVB)s', '%(OFFSET)s', '%(ACTX)s', '%(TREE)s', '%(HF_INDEX)s'),
                                          ('%(ETT_INDEX)s', '%(TABLE)s',),))
         else:
-            body = '#error Can not decode %s' % (tname)
+            body = '#error Can not decode SetType %s' % (tname)
         return body
 
 #--- ChoiceType ---------------------------------------------------------------
@@ -4711,7 +4717,7 @@ class ChoiceType (Type):
                                          ('%(ETT_INDEX)s', '%(TABLE)s',),
                                          ('%(VAL_PTR)s',),))
         else:
-            body = '#error Can not decode %s' % (tname)
+            body = '#error Can not decode ChoiceType %s' % (tname)
         return body
 
 #--- ChoiceValue ----------------------------------------------------
@@ -4826,7 +4832,7 @@ class EnumeratedType (Type):
         if (not ectx.Per() and not ectx.Oer()): return ''
         map_table = self.get_vals_etc(ectx)[3]
         if map_table is None: return ''
-        table = "static guint32 %(TABLE)s[%(ROOT_NUM)s+%(EXT_NUM)s] = {"
+        table = "static uint32_t %(TABLE)s[%(ROOT_NUM)s+%(EXT_NUM)s] = {"
         table += ", ".join([str(v) for v in map_table])
         table += "};\n"
         return table
@@ -4846,7 +4852,7 @@ class EnumeratedType (Type):
                                     par=(('%(TVB)s', '%(OFFSET)s', '%(ACTX)s', '%(TREE)s', '%(HF_INDEX)s'),
                                          ('%(ROOT_NUM)s', '%(VAL_PTR)s', '%(EXT)s', '%(EXT_NUM)s', '%(TABLE)s',),))
         else:
-            body = '#error Can not decode %s' % (tname)
+            body = '#error Can not decode EnumeratedType %s' % (tname)
         return body
 
 #--- EmbeddedPDVType -----------------------------------------------------------
@@ -4876,7 +4882,7 @@ class EmbeddedPDVType (Type):
             body = ectx.eth_fn_call('dissect_%(ER)s_embedded_pdv', ret='offset',
                                     par=(('%(TVB)s', '%(OFFSET)s', '%(ACTX)s', '%(TREE)s', '%(HF_INDEX)s', '%(TYPE_REF_FN)s',),))
         else:
-            body = '#error Can not decode %s' % (tname)
+            body = '#error Can not decode EmbeddedPDVType %s' % (tname)
         return body
 
 #--- ExternalType -----------------------------------------------------------
@@ -4906,7 +4912,7 @@ class ExternalType (Type):
             body = ectx.eth_fn_call('dissect_%(ER)s_external_type', ret='offset',
                                     par=(('%(TVB)s', '%(OFFSET)s', '%(ACTX)s', '%(TREE)s', '%(HF_INDEX)s', '%(TYPE_REF_FN)s',),))
         else:
-            body = '#error Can not decode %s' % (tname)
+            body = '#error Can not decode ExternalType %s' % (tname)
         return body
 
 #--- OpenType -----------------------------------------------------------
@@ -4953,11 +4959,11 @@ class OpenType (Type):
         return pars
 
     def eth_type_default_body(self, ectx, tname):
-        if (ectx.Per()):
+        if (ectx.Per() or ectx.Oer()):
             body = ectx.eth_fn_call('dissect_%(ER)s_open_type%(FN_VARIANT)s', ret='offset',
                                     par=(('%(TVB)s', '%(OFFSET)s', '%(ACTX)s', '%(TREE)s', '%(HF_INDEX)s', '%(TYPE_REF_FN)s',),))
         else:
-            body = '#error Can not decode %s' % (tname)
+            body = '#error Can not decode OpenType %s' % (tname)
         return body
 
 #--- InstanceOfType -----------------------------------------------------------
@@ -5214,7 +5220,13 @@ class RestrictedCharacterStringType (CharacterStringType):
             elif (self.eth_tsname() == 'GeneralizedTime' or self.eth_tsname() == 'UTCTime'):
                 body = ectx.eth_fn_call('dissect_%(ER)s_VisibleString', ret='offset',
                                         par=(('%(TVB)s', '%(OFFSET)s', '%(ACTX)s', '%(TREE)s', '%(HF_INDEX)s'),
-                                             ('%(MIN_VAL)s', '%(MAX_VAL)s', '%(EXT)s',),))
+                                             ('%(MIN_VAL)s', '%(MAX_VAL)s', '%(EXT)s'),
+                                             ('%(VAL_PTR)s',),))
+            elif (self.eth_tsname() in KnownMultiplierStringTypes):
+                body = ectx.eth_fn_call('dissect_%(ER)s_%(STRING_TYPE)s', ret='offset',
+                                        par=(('%(TVB)s', '%(OFFSET)s', '%(ACTX)s', '%(TREE)s', '%(HF_INDEX)s'),
+                                             ('%(MIN_VAL)s', '%(MAX_VAL)s', '%(EXT)s'),
+                                             ('%(VAL_PTR)s',),))
             else:
                 body = ectx.eth_fn_call('dissect_%(ER)s_%(STRING_TYPE)s', ret='offset',
                                         par=(('%(TVB)s', '%(OFFSET)s', '%(ACTX)s', '%(TREE)s', '%(HF_INDEX)s'),
@@ -5294,6 +5306,12 @@ class GeneralizedTime (RestrictedCharacterStringType):
     def eth_tsname(self):
         return 'GeneralizedTime'
 
+    def eth_ftype(self, ectx):
+        if (ectx.Ber()):
+            return ('FT_ABSOLUTE_TIME', 'ABSOLUTE_TIME_LOCAL')
+        else:
+            return ('FT_STRING', 'BASE_NONE')
+
     def eth_type_default_body(self, ectx, tname):
         if (ectx.Ber()):
             body = ectx.eth_fn_call('dissect_%(ER)s_%(STRING_TYPE)s', ret='offset',
@@ -5352,6 +5370,9 @@ class ObjectIdentifierType (Type):
             body = ectx.eth_fn_call('dissect_%(ER)s_object_identifier%(FN_VARIANT)s', ret='offset',
                                     par=(('%(IMPLICIT_TAG)s', '%(ACTX)s', '%(TREE)s', '%(TVB)s', '%(OFFSET)s', '%(HF_INDEX)s', '%(VAL_PTR)s',),))
         elif (ectx.Per()):
+            body = ectx.eth_fn_call('dissect_%(ER)s_object_identifier%(FN_VARIANT)s', ret='offset',
+                                    par=(('%(TVB)s', '%(OFFSET)s', '%(ACTX)s', '%(TREE)s', '%(HF_INDEX)s', '%(VAL_PTR)s',),))
+        elif (ectx.Oer()):
             body = ectx.eth_fn_call('dissect_%(ER)s_object_identifier%(FN_VARIANT)s', ret='offset',
                                     par=(('%(TVB)s', '%(OFFSET)s', '%(ACTX)s', '%(TREE)s', '%(HF_INDEX)s', '%(VAL_PTR)s',),))
         else:
@@ -5439,7 +5460,7 @@ class RelativeOIDType (Type):
             body = ectx.eth_fn_call('dissect_%(ER)s_relative_oid%(FN_VARIANT)s', ret='offset',
                                     par=(('%(TVB)s', '%(OFFSET)s', '%(ACTX)s', '%(TREE)s', '%(HF_INDEX)s', '%(VAL_PTR)s',),))
         else:
-            body = '#error Can not decode %s' % (tname)
+            body = '#error Can not decode relative_oid %s' % (tname)
         return body
 
 
@@ -5898,7 +5919,8 @@ def p_SymbolsFromModuleList_2 (t):
     t[0] = [t[1]]
 
 def p_SymbolsFromModule (t):
-    'SymbolsFromModule : SymbolList FROM GlobalModuleReference'
+    '''SymbolsFromModule : SymbolList FROM GlobalModuleReference
+                        | SymbolList FROM GlobalModuleReference WITH SUCCESSORS'''
     t[0] = Node ('SymbolList', symbol_list = t[1], module = t[3])
     for s in (t[0].symbol_list):
         if (isinstance(s, Value_Ref)): lcase_ident_assigned[s.val] = t[3]
@@ -5956,7 +5978,7 @@ def p_Reference_1 (t):
 
 def p_Reference_2 (t):
     '''Reference : LCASE_IDENT_ASSIGNED
-                 | identifier '''  # instead of valuereference wich causes reduce/reduce conflict
+                 | identifier '''  # instead of valuereference which causes reduce/reduce conflict
     t[0] = Value_Ref(val=t[1])
 
 def p_AssignmentList_1 (t):
@@ -5997,7 +6019,7 @@ def p_DefinedValue_1(t):
     t[0] = t[1]
 
 def p_DefinedValue_2(t):
-    '''DefinedValue : identifier '''  # instead of valuereference wich causes reduce/reduce conflict
+    '''DefinedValue : identifier '''  # instead of valuereference which causes reduce/reduce conflict
     t[0] = Value_Ref(val=t[1])
 
 # 13.6
@@ -6023,7 +6045,7 @@ def p_ValueAssignment (t):
     'ValueAssignment : LCASE_IDENT ValueType ASSIGNMENT Value'
     t[0] = ValueAssignment(ident = t[1], typ = t[2], val = t[4])
 
-# only "simple" types are supported to simplify grammer
+# only "simple" types are supported to simplify grammar
 def p_ValueType (t):
     '''ValueType : type_ref
                  | BooleanType
@@ -8002,6 +8024,51 @@ def eth_usage():
                     o - list of output files
   """)
 
+
+## Used to preparse C style comments
+## https://github.com/eerimoq/asn1tools/blob/master/asn1tools/parser.py#L231
+##
+def ignore_comments(string):
+    """Ignore comments in given string by replacing them with spaces. This
+    reduces the parsing time by roughly a factor of two.
+
+    """
+
+    comments = [
+        (mo.start(), mo.group(0))
+        for mo in re.finditer(r'(/\*|\*/|\n)', string)
+    ]
+
+    comments.sort()
+
+    multi_line_comment_depth = 0
+    start_offset = 0
+    non_comment_offset = 0
+    chunks = []
+
+    for offset, kind in comments:
+        if multi_line_comment_depth > 0:
+            if kind == '/*':
+                multi_line_comment_depth += 1
+            elif kind == '*/':
+                multi_line_comment_depth -= 1
+
+                if multi_line_comment_depth == 0:
+                    offset += 2
+                    chunks.append(' ' * (offset - start_offset))
+                    non_comment_offset = offset
+            elif kind == '\n':
+                chunks.append('\n')
+                non_comment_offset = offset
+        elif kind == '/*':
+            multi_line_comment_depth = 1
+            start_offset = offset
+            chunks.append(string[non_comment_offset:start_offset])
+
+    chunks.append(string[non_comment_offset:])
+
+    return ''.join(chunks)
+
 def eth_main():
     global input_file
     global g_conform
@@ -8049,6 +8116,8 @@ def eth_main():
             ectx.srcdir = relpath(a)
         if o in ("-C",):
             ectx.constraints_check = True
+        if o in ("-L",):
+            ectx.conform.suppress_line = True;
         if o in ("-X",):
             warnings.warn("Command line option -X is obsolete and can be removed")
         if o in ("-T",):
@@ -8089,6 +8158,7 @@ def eth_main():
         # Py2 compat, name.translate in eth_output_hf_arr fails with unicode
         if not isinstance(data, str):
             data = data.encode('utf-8')
+        data = ignore_comments(data)
         ast.extend(yacc.parse(data, lexer=lexer, debug=pd))
     ectx.eth_clean()
     if (ectx.merge_modules):  # common output for all module
@@ -8132,7 +8202,7 @@ def eth_main():
 
     if ectx.dbg('o'):
         ectx.output.dbg_print()
-    ectx.output.make_single_file()
+    ectx.output.make_single_file(ectx.conform.suppress_line)
 
 
 # Python compiler
