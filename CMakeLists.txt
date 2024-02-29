@@ -17,10 +17,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 project(iec61850-wireshark-plugin C CXX)
 
-find_package(Wireshark 4.3)
+find_package(Wireshark 4.2)
 
 if(Wireshark_FOUND)
-  MESSAGE(STATUS "Wireshark 4.3 libraries found in ${Wireshark_LIB_DIR}, performing a stand-alone plug-in build.")
+  MESSAGE(STATUS "Wireshark 4.2 libraries found in ${Wireshark_LIB_DIR}, performing a stand-alone plug-in build.")
 
   if(NOT CMAKE_INSTALL_LIBDIR )
     set(CMAKE_INSTALL_LIBDIR ~/.local/lib/wireshark/plugins/${Wireshark_VERSION_MAJOR}.${Wireshark_VERSION_MINOR}/epan)
@@ -46,7 +46,7 @@ if(Wireshark_FOUND)
 
 else(Wireshark_FOUND)
 
-  MESSAGE(STATUS "Wireshark 4.3 libraries not found, performing an in-tree Wireshark plug-in build.")
+  MESSAGE(STATUS "Wireshark 4.2 libraries not found, performing an in-tree Wireshark plug-in build.")
 
   include(WiresharkPlugin)
 
@@ -79,7 +79,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 register_plugin_files(plugin.c
 	plugin
-	"iec61850 dissector"
 	${DISSECTOR_SRC}
 )
 
@@ -108,7 +107,8 @@ if(Wireshark_FOUND)
 
 else(Wireshark_FOUND)
 
-  add_wireshark_epan_plugin_library(iec61850)
+  #add_wireshark_epan_plugin_library(iec61850)
+  add_plugin_library(iec61850 epan)
 
   target_link_libraries(iec61850 epan)
 
