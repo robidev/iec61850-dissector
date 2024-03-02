@@ -1022,12 +1022,21 @@ private_data_get_preCinfo(asn1_ctx_t *actx)
 }
 
 void
-private_data_add_moreCinfo_id(asn1_ctx_t *actx, tvbuff_t *tvb)
+private_data_add_moreCinfo_domainid(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
 	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
 				tvb, 2, tvb_get_guint8(tvb, 1), ENC_STRING), BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, "/", BUFFER_SIZE_MORE);
+}
+
+void
+private_data_add_moreCinfo_itemid(asn1_ctx_t *actx, tvbuff_t *tvb)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
+				tvb, 2, tvb_get_guint8(tvb, 1), ENC_STRING), BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
 }
 
 void
@@ -1037,6 +1046,7 @@ private_data_add_moreCinfo_domain(asn1_ctx_t *actx, tvbuff_t *tvb)
 	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
 	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
 				tvb, 0, tvb_reported_length_remaining(tvb, 0), ENC_STRING), BUFFER_SIZE_MORE);
+
 }
 
 void
@@ -1110,12 +1120,21 @@ dissect_iec61850_Identifier(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int of
                                             actx, tree, tvb, offset, hf_index,
                                             NULL);
 
-	//if ((hf_index == hf_iec61850_domainId) || (hf_index == hf_iec61850_itemId)) {
-		if (tvb_get_guint8(tvb, offset_id) == 0x1a)
-			private_data_add_moreCinfo_id(actx,tvb);
-		else
-			private_data_add_moreCinfo_domain(actx,tvb);	
-	//}
+	if (tvb_get_guint8(tvb, offset_id) == 0x1a)
+	{
+		if (hf_index == hf_iec61850_domainId) 
+		{
+			private_data_add_moreCinfo_domainid(actx,tvb);
+		}
+		else //if (hf_index == hf_iec61850_itemId)
+		{
+			private_data_add_moreCinfo_itemid(actx,tvb);
+		}
+	}
+	else
+	{
+		private_data_add_moreCinfo_domain(actx,tvb);
+	}
 
 
   return offset;
@@ -7438,7 +7457,7 @@ dissect_iec61850_MMSpdu(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 
 /*--- End of included file: packet-iec61850-fn.c ---*/
-#line 153 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 163 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 
 /*
 * Dissect iec61850 PDUs inside a PPDU.
@@ -10243,7 +10262,7 @@ void proto_register_iec61850(void) {
         NULL, HFILL }},
 
 /*--- End of included file: packet-iec61850-hfarr.c ---*/
-#line 221 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 231 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	/* List of subtrees */
@@ -10469,7 +10488,7 @@ void proto_register_iec61850(void) {
     &ett_iec61850_FileAttributes,
 
 /*--- End of included file: packet-iec61850-ettarr.c ---*/
-#line 227 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 237 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	static ei_register_info ei_mms[] = {

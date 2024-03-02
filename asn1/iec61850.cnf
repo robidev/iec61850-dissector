@@ -223,12 +223,21 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 #.FN_BODY Identifier
 	int offset_id = offset;
 %(DEFAULT_BODY)s
-	//if ((hf_index == hf_iec61850_domainId) || (hf_index == hf_iec61850_itemId)) {
-		if (tvb_get_guint8(tvb, offset_id) == 0x1a)
-			private_data_add_moreCinfo_id(actx,tvb);
-		else
-			private_data_add_moreCinfo_domain(actx,tvb);	
-	//}
+	if (tvb_get_guint8(tvb, offset_id) == 0x1a)
+	{
+		if (hf_index == hf_iec61850_domainId) 
+		{
+			private_data_add_moreCinfo_domainid(actx,tvb);
+		}
+		else //if (hf_index == hf_iec61850_itemId)
+		{
+			private_data_add_moreCinfo_itemid(actx,tvb);
+		}
+	}
+	else
+	{
+		private_data_add_moreCinfo_domain(actx,tvb);
+	}
 
 #.FN_BODY GetNameList-Request/objectScope VAL_PTR=&branch_taken
 	gint branch_taken;
