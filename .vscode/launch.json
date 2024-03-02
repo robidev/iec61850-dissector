@@ -10,7 +10,7 @@
             "request": "launch",
             "additionalSOLibSearchPath": "/home/user/.local/lib/wireshark/plugins/3.6/epan",
             "program": "/usr/bin/wireshark",
-            "args": ["/home/user/Desktop/wireshark_dissector/test/filter_retransmit.pcapng"],
+            "args": ["/home/user/Desktop/wireshark_dissector/test/iec61850.pcapng"],
             "cwd" : ".",
             "MIMode": "gdb",
             "setupCommands": [

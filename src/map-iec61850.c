@@ -28,8 +28,17 @@
 
 
 static int hf_iec61850_Unconfirmed = -1;
+static int hf_iec61850_Error = -1;
+static int hf_iec61850_Reject = -1;
 static int hf_iec61850_Associate = -1;
-static int hf_iec61850_GetLogicalNodeDirectory = -1;
+static int hf_iec61850_Cancel = -1;
+static int hf_iec61850_Release = -1;
+static int hf_iec61850_Associate_Error = -1;
+static int hf_iec61850_Cancel_Error = -1;
+static int hf_iec61850_Release_Error = -1;
+static int hf_iec61850_GetServerDirectory = -1;
+static int hf_iec61850_GetLogicalDeviceDirectory = -1;
+static int hf_iec61850_GetNameList_response = -1;
 static int hf_iec61850_GetDataValue = -1;
 static int hf_iec61850_SetDataValue = -1;
 static int hf_iec61850_GetDataDirectory = -1;
@@ -53,8 +62,20 @@ static expert_field ei_iec61850_zero_pdu = EI_INIT;
 
 int Unconfirmed_RPT(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
 int CommandTerm(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
+
+int Error(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
+int Reject(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
 int Associate(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
-int GetLogicalNodeDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
+int Cancel(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
+int Release(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
+int Associate_Error(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
+int Cancel_Error(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
+int Release_Error(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
+//confirmed PDU
+int GetServerDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
+int GetLogicalDeviceDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
+int GetJournalDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
+int GetNameList_response(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
 int GetDataDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
 int GetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
 int SetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
@@ -86,6 +107,32 @@ void register_iec61850_mappings(const int parent)
 			}
 		},
 		{ 
+			&hf_iec61850_Error,
+      		{ 
+				"Error", 			// name
+				"iec61850.Error",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_Reject,
+      		{ 
+				"Reject", 			// name
+				"iec61850.Reject",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
 			&hf_iec61850_Associate,
       		{ 
 				"Associate", 			// name
@@ -99,10 +146,101 @@ void register_iec61850_mappings(const int parent)
 			}
 		},
 		{ 
-			&hf_iec61850_GetLogicalNodeDirectory,
+			&hf_iec61850_Cancel,
       		{ 
-				"GetLogicalNodeDirectory", 			// name
-				"iec61850.GetLogicalNodeDirectory",   // abrev
+				"Cancel", 			// name
+				"iec61850.Cancel",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_Release,
+      		{ 
+				"Release", 			// name
+				"iec61850.Release",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_Associate_Error,
+      		{ 
+				"Associate_Error", 			// name
+				"iec61850.Associate_Error",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_Cancel_Error,
+      		{ 
+				"Cancel_Error", 			// name
+				"iec61850.Cancel_Error",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_Release_Error,
+      		{ 
+				"Release_Error", 			// name
+				"iec61850.Release_Error",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_GetServerDirectory,
+      		{ 
+				"GetServerDirectory", 			// name
+				"iec61850.GetServerDirectory",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_GetLogicalDeviceDirectory,
+      		{ 
+				"GetLogicalDeviceDirectory", 			// name
+				"iec61850.GetLogicalDeviceDirectory",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_GetNameList_response,
+      		{ 
+				"GetNameList-response", 			// name
+				"iec61850.GetNameList-response",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -375,7 +513,28 @@ int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, pro
 				{
 					case 1://GetNameList -> GetLogicalNodeDirectory, GetLogicalDeviceDirectory, GetServerDirectory
 						item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
-						decoded = GetLogicalNodeDirectory(tvb, offset, item, actx, private_data->MMSpdu);
+						if(private_data->MMSpdu == 0) // request
+						{
+							if(private_data->objectScope == 0)//VMD-SPECIFIC
+								decoded = GetServerDirectory(tvb, offset, item, actx);
+							else if(private_data->objectScope == 1)//domainspecific
+							{
+								if(private_data->objectClass == 0)
+									decoded = GetLogicalDeviceDirectory(tvb, offset, item, actx);
+									// if the whole device is requested it is a GetLogicalDeviceDirectory
+									// TODO if a specific logical node is requested, it is a GetLogicalNodeDirecotry
+								if(private_data->objectClass == 2)
+									decoded = GetDataSetDirectory(tvb, offset, item, actx, 0);
+								if(private_data->objectClass == 8)
+									decoded = GetJournalDirectory(tvb, offset, item, actx);
+							}
+							else // aa-specific
+								decoded = GetLogicalDeviceDirectory(tvb, offset, item, actx);
+						}
+						else // response
+						{
+							decoded = GetNameList_response(tvb, offset, item, actx);
+						}
 						break;
 					case 4://read -> GetDataSet
 						item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
@@ -438,6 +597,8 @@ int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, pro
 			}
 			case 2://confirmed-ErrorPDU
 			{
+				item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
+				decoded = Error(tvb, offset, item, actx);
 				break;
 			}
 			case 3://unconfirmed PDU
@@ -469,15 +630,21 @@ int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, pro
 			}
 			case 4://rejectPDU
 			{
+				item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
+				decoded = Reject(tvb, offset, item, actx);
 				break;
 			}
 			case 5://cancel-req
 			case 6://cancel-res
 			{
+				item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
+				decoded = Cancel(tvb, offset, item, actx, private_data->MMSpdu-5);
 				break;
 			}
 			case 7://cancel-Error
 			{
+				item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
+				decoded = Cancel_Error(tvb, offset, item, actx);
 				break;
 			}
 			case 8://Associate - initiate req
@@ -489,15 +656,21 @@ int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, pro
 			}
 			case 10: //	initiate-ErrorPDU		[10] 	IMPLICIT Initiate-ErrorPDU,
 			{
+				item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
+				decoded = Associate_Error(tvb, offset, item, actx);
 				break;
 			}
 			case 11://Release-req conclude
 			case 12://Release-res conclude
 			{
+				item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
+				decoded = Release(tvb, offset, item, actx, private_data->MMSpdu-11);
 				break;
 			}
 			case 13://Release-Error
 			{
+				item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
+				decoded = Release_Error(tvb, offset, item, actx);
 				break;
 			}
 			default:
@@ -511,8 +684,7 @@ int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, pro
 }
 
 int Unconfirmed_RPT(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
-{// Report,
-//Report: The variableListName ObjectName shall contain the VMD-SPECIFIC value “RPT”
+{// TODO Report,(shall have VMD-SPECIFIC)
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
@@ -522,7 +694,7 @@ int Unconfirmed_RPT(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *act
 }
 
 int CommandTerm(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
-{// CommandTermination
+{// TODO CommandTermination + or -
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
@@ -531,8 +703,28 @@ int CommandTerm(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
 	return 1;
 }
 
+int Error(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
+{//TODO: work out error mapping
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Error, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s", "Error" );
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+	return 1;
+}
+
+int Reject(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
+{//TODO: work out reject error mapping
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Reject, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s", "Reject" );
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+	return 1;
+}
+
 int Associate(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res)
-{
+{//TODO: parse out supported services
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Associate, tvb, offset, -1, ENC_NA);
@@ -541,19 +733,102 @@ int Associate(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int
 	return 1;
 }
 
-int GetLogicalNodeDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res)
-{//GetLogicalNodeDirectory, GetLogicalDeviceDirectory, GetServerDirectory
+int Cancel(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res)
+{//abort
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Cancel, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Cancel", res? "res" : "req" );
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+	return 1;
+}
+
+int Release(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res)
+{
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Release, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Release", res? "res" : "req" );
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+	return 1;
+}
+
+int Associate_Error(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
+{
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Associate, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s", "Associate-Error" );
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+	return 1;
+}
+
+int Cancel_Error(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
+{
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Cancel_Error, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s", "Cancel-Error" );
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+	return 1;
+}
+
+int Release_Error(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
+{
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Release_Error, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s", "Release-Error");
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+	return 1;
+}
+
+int GetServerDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
+{
 	proto_item *subitem;
     proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_GetLogicalNodeDirectory, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	private_data_get_preCinfo(actx), "GetLogicalNodeDirectory", 
-		res? "res" : "req", private_data_get_moreCinfo(actx));
+	subitem = proto_tree_add_item(item, hf_iec61850_GetServerDirectory, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetServerDirectory-request", 
+		private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+	return 1;
+}
+
+int GetLogicalDeviceDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
+{//TODO GetLogicalNodeDirectory
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_GetLogicalDeviceDirectory, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetLogicalDeviceDirectory-request", 
+		private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+	return 1;
+}
+
+int GetJournalDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_GetLogicalDeviceDirectory, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetJournalDirectory-request", 
+		private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+	return 1;
+}
+
+int GetNameList_response(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_GetNameList_response, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetNameList-response", 
+		private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 	return 1;
 }
 
 int GetDataDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res)
-{//GetDataDefinition
+{//TODO GetDataDefinition
 	proto_item *subitem;
     proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_GetDataDirectory, tvb, offset, -1, ENC_NA);
@@ -564,7 +839,7 @@ int GetDataDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *ac
 }
 
 int GetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res)
-{//GetAllDataValues, ,GetDataSetValues,GetEditSGValue,GetSGCBValues,
+{//TODO GetAllDataValues(alternate access), ,GetDataSetValues,GetEditSGValue,GetSGCBValues,
 //GetBRCBValues,GetURCBValues,GetLCBValues,GetLogStatusValues,GetGoCBValues
 //GetGsCBValues, 
 	proto_item *subitem;
@@ -577,7 +852,7 @@ int GetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, 
 }
 
 int SetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res)
-{//SetDataSetValues,SelectActiveSG,SelectEditSG,SetEditSGValue,ConfirmEditSGValues
+{//TODO SetDataSetValues,SelectActiveSG,SelectEditSG,SetEditSGValue,ConfirmEditSGValues
 //SetBRCBValues,SetURCBValues,SetLCBValues,SetGoCBValues,SetGsCBValues
 //Select, SelectWithValue, Cancel,Operate,TimeActivatedOperate
 	proto_item *subitem;

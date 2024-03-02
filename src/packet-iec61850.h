@@ -30,9 +30,11 @@ typedef struct iec61850_private_data_t
 	int MMSpdu;
     int Service;//confirmed/unconfirmed
 	int AccessResult; // success/failure
-	int VariableAccessSpecification; 
-	bool alternateAccess;
-	int ObjectName;
+	int VariableAccessSpecification; //RPT/CMDTerm
+	int ObjectName;//0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific)
+	int objectScope;////0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific)
+	int objectClass;//VariableName,NamedVariable, journal
+	int Success;//
 	int DataType; //array, struct, bool, bit-string, int, uint, float, octet, vis-string, bin-time, bcd, boolarr, mmsstring, utctime
     
 } iec61850_private_data_t;
@@ -55,7 +57,7 @@ char* private_data_get_moreCinfo(asn1_ctx_t *actx);
 #line 1 "./wireshark_dissector/asn1/packet-iec61850-exp.h"
 
 /*--- End of included file: packet-iec61850-exp.h ---*/
-#line 46 "./wireshark_dissector/asn1/packet-iec61850-template.h"
+#line 48 "./wireshark_dissector/asn1/packet-iec61850-template.h"
 
 #endif  /* PACKET_IEC61850_H */
 

@@ -28,6 +28,8 @@
 #include "packet-iec61850.h"
 #include "map-iec61850.h"
 
+#include <wsutil/wslog.h>
+
 #define PNAME  "IEC-61850 Protocol"
 #define PSNAME "IEC61850"
 #define PFNAME "iec61850"
@@ -112,11 +114,29 @@ private_data_add_moreCinfo_id(asn1_ctx_t *actx, tvbuff_t *tvb)
 }
 
 void
+private_data_add_moreCinfo_domain(asn1_ctx_t *actx, tvbuff_t *tvb)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
+				tvb, 0, tvb_reported_length_remaining(tvb, 0), ENC_STRING), BUFFER_SIZE_MORE);
+}
+
+void
 private_data_add_moreCinfo_float(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	snprintf(private_data->moreCinfo, BUFFER_SIZE_MORE,
 				" %f", tvb_get_ieee_float(tvb, 1, ENC_BIG_ENDIAN));
+}
+
+void
+private_data_add_moreCinfo_uint8(asn1_ctx_t *actx, gint val)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	snprintf(private_data->moreCinfo, BUFFER_SIZE_MORE,
+				" %d", val);
+	ws_message("uint8: %s", private_data->moreCinfo);
 }
 
 char*

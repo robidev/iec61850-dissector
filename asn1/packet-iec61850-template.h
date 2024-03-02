@@ -22,9 +22,11 @@ typedef struct iec61850_private_data_t
 	int MMSpdu;
     int Service;//confirmed/unconfirmed
 	int AccessResult; // success/failure
-	int VariableAccessSpecification; 
-	bool alternateAccess;
-	int ObjectName;
+	int VariableAccessSpecification; //RPT/CMDTerm
+	int ObjectName;//0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific)
+	int objectScope;////0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific)
+	int objectClass;//VariableName,NamedVariable, journal
+	int Success;//
 	int DataType; //array, struct, bool, bit-string, int, uint, float, octet, vis-string, bin-time, bcd, boolarr, mmsstring, utctime
     
 } iec61850_private_data_t;

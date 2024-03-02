@@ -223,7 +223,37 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 #.FN_BODY Identifier
 	int offset_id = offset;
 %(DEFAULT_BODY)s
-	if ((hf_index == hf_iec61850_domainId) || (hf_index == hf_iec61850_itemId)) {
+	//if ((hf_index == hf_iec61850_domainId) || (hf_index == hf_iec61850_itemId)) {
 		if (tvb_get_guint8(tvb, offset_id) == 0x1a)
 			private_data_add_moreCinfo_id(actx,tvb);
-	}
+		else
+			private_data_add_moreCinfo_domain(actx,tvb);	
+	//}
+
+#.FN_BODY GetNameList-Request/objectScope VAL_PTR=&branch_taken
+	gint branch_taken;
+
+%(DEFAULT_BODY)s
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	private_data->objectScope = branch_taken;
+
+#.FN_BODY GetNameList-Request/extendedObjectClass/objectClass VAL_PTR=&branch_taken
+	gint branch_taken;
+
+%(DEFAULT_BODY)s
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	private_data->objectClass = branch_taken;
+
+#.FN_BODY Data VAL_PTR=&branch_taken
+	gint branch_taken;
+
+%(DEFAULT_BODY)s
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	private_data->DataType = branch_taken;
+
+#.FN_BODY AccessResult VAL_PTR=&branch_taken
+	gint branch_taken;
+
+%(DEFAULT_BODY)s
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	private_data->Success = branch_taken;
