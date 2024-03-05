@@ -18,6 +18,7 @@
 #include <epan/asn1.h>
 #include <epan/expert.h>
 #include <epan/proto_data.h>
+#include <epan/conversation.h>
 
 #include <epan/dissectors/packet-ber.h>
 
@@ -26,6 +27,17 @@
 
 #include <wsutil/wslog.h>
 
+struct _iec61850_key_req {
+	u_int32_t conversation;
+	u_int32_t invokeID;
+} typedef iec61850_key_req;
+
+struct _iec61850_value_req {
+	u_int8_t * serviceName;
+	u_int8_t * arguments;
+} typedef iec61850_value_req;
+
+static wmem_map_t *iec61850_request_hash = NULL;
 
 static int hf_iec61850_Unconfirmed = -1;
 static int hf_iec61850_Error = -1;
@@ -89,6 +101,32 @@ int FileRead(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int 
 int FileClose(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
 int DeleteFile(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
 int GetServerDirectory_FILE(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
+
+/*
+ * Hash Functions
+ */
+static gint
+iec61850_equal(gconstpointer v, gconstpointer w)
+{
+	const iec61850_key_req *v1 = (const iec61850_key_req *)v;
+	const iec61850_key_req *v2 = (const iec61850_key_req *)w;
+
+	if (v1->conversation == v2->conversation &&
+	    v1->invokeID == v2->invokeID ) {
+		return 1;
+	}
+	return 0;
+}
+
+static guint
+iec61850_hash (gconstpointer v)
+{
+	const iec61850_key_req *key = (const iec61850_key_req *)v;
+	guint val;
+	val = key->conversation + key->invokeID;
+
+	return val;
+}
 
 void register_iec61850_mappings(const int parent)
 {
@@ -452,14 +490,14 @@ void register_iec61850_mappings(const int parent)
 	expert_iec61850 = expert_register_protocol(parent);
 	expert_register_field_array(expert_iec61850, ei_61850, array_length(ei_61850));
 
+	iec61850_request_hash = wmem_map_new_autoreset(wmem_epan_scope(), wmem_file_scope(), iec61850_hash, iec61850_equal);
+
 }
 
 void proto_tree_print_node(proto_node *node, gpointer data)
 {
-	int * level = (int *)data;
+	u_int32_t * level = (u_int32_t *)data;
 	field_info   *fi    = PNODE_FINFO(node);
-    gchar         label_str[ITEM_LABEL_LENGTH];
-    gchar        *label_ptr;
 
     g_assert(fi);
 	if(fi != NULL && fi->hfinfo != NULL)
@@ -489,18 +527,14 @@ void proto_tree_print_node(proto_node *node, gpointer data)
 					ws_message("%*s%s: %s", *level," ", fi->hfinfo->name, fi->value.value.string); break;
 				case FT_BYTES:
 				{
-					const u_int32_t BUFLEN = 256;
-					char stringbuf[BUFLEN];
-					int i;
-					char* buf2 = stringbuf;
+					wmem_strbuf_t *strbuf;
+					strbuf = wmem_strbuf_new(wmem_packet_scope(), "");
+					int32_t i;
 					for (i = 0; i < fi->value.value.bytes->len; i++)
 					{
-						if (i < (BUFLEN/2))
-						{
-							buf2 += sprintf(buf2, "%02x", fi->value.value.bytes->data[i]);
-						}
+						wmem_strbuf_append_printf(strbuf, "%02x", fi->value.value.bytes->data[i]);
 					}
-					ws_message("%*s%s: (%i) %s", *level," ", fi->hfinfo->name, fi->value.value.bytes->len, stringbuf); 
+					ws_message("%*s%s: (%i) %s", *level," ", fi->hfinfo->name, fi->value.value.bytes->len, wmem_strbuf_get_str(strbuf)); 
 					break;
 				}
 				default:
@@ -535,13 +569,14 @@ static proto_item *get_iec61850_item(tvbuff_t *tvb, proto_tree *parent_tree, con
 
 int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, proto_tree *parent_tree, proto_tree *mms_tree, const int proto_iec61850)
 {
-	int offset = 0;
-	int old_offset;
-	int level = 1;
-	int decoded = 0;
+	u_int32_t offset = 0;
+	u_int32_t old_offset;
+	int32_t level = 1;
+	u_int32_t decoded = 0;
     
 	if(mms_tree != NULL)
 	{
+		//DEBUG
 		proto_tree_children_foreach(mms_tree, proto_tree_print_node, &level);
 	}
 
@@ -560,8 +595,25 @@ int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, pro
 				{
 					case 1://GetNameList -> GetLogicalNodeDirectory, GetLogicalDeviceDirectory, GetServerDirectory
 						item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
+						conversation_t * conversation = find_or_create_conversation(pinfo);
 						if(private_data->MMSpdu == 0) // request
 						{
+							iec61850_key_req key;
+							iec61850_value_req *request_val = NULL;
+							key.invokeID = private_data->invokeID;
+							key.conversation = conversation->conv_index;
+							request_val = (iec61850_value_req *)wmem_map_lookup(iec61850_request_hash, &key);
+							if (!request_val)
+							{
+								iec61850_key_req *new_key = wmem_alloc(wmem_file_scope(), sizeof(iec61850_key_req));
+								*new_key = key;
+
+								request_val = wmem_alloc(wmem_file_scope(), sizeof(iec61850_value_req));
+								request_val->serviceName = "blah";
+
+								wmem_map_insert(iec61850_request_hash, new_key, request_val);
+							}
+
 							if(private_data->objectScope == 0)//VMD-SPECIFIC
 								decoded = GetServerDirectory(tvb, offset, item, actx);
 							else if(private_data->objectScope == 1)//domainspecific
@@ -580,6 +632,16 @@ int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, pro
 						}
 						else // response
 						{
+							if (conversation != NULL)
+							{
+								iec61850_key_req key;
+								iec61850_value_req *request_val = NULL;
+								key.invokeID = private_data->invokeID;
+								key.conversation = conversation->conv_index;
+								request_val = (iec61850_value_req *)wmem_map_lookup(iec61850_request_hash, &key);
+								ws_warning("response:%s",request_val->serviceName);
+							}
+
 							decoded = GetNameList_response(tvb, offset, item, actx);
 						}
 						break;

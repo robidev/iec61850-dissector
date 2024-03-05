@@ -222,7 +222,7 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 	private_data_add_moreCinfo_float(actx, tvb);
 
 #.FN_BODY Identifier
-	int offset_id = offset;
+	int32_t offset_id = offset;
 %(DEFAULT_BODY)s
 	if (tvb_get_guint8(tvb, offset_id) == 0x1a)
 	{
