@@ -36,7 +36,8 @@ typedef struct iec61850_private_data_t
 	int objectClass;//VariableName,NamedVariable, journal
 	int Success;//
 	int DataType; //array, struct, bool, bit-string, int, uint, float, octet, vis-string, bin-time, bcd, boolarr, mmsstring, utctime
-    
+    int indent;
+
 } iec61850_private_data_t;
 
 
@@ -57,7 +58,7 @@ char* private_data_get_moreCinfo(asn1_ctx_t *actx);
 #line 1 "./wireshark_dissector/asn1/packet-iec61850-exp.h"
 
 /*--- End of included file: packet-iec61850-exp.h ---*/
-#line 48 "./wireshark_dissector/asn1/packet-iec61850-template.h"
+#line 49 "./wireshark_dissector/asn1/packet-iec61850-template.h"
 
 #endif  /* PACKET_IEC61850_H */
 

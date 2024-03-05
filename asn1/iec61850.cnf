@@ -162,7 +162,7 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 		{
 			proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
 		}
-
+		private_data_add_moreCinfo_str(actx, ptime);
 		return offset;
 	}
 
@@ -208,6 +208,7 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 	{
 		proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
 	}
+	private_data_add_moreCinfo_str(actx, ptime);
 
 
 #.FN_BODY Unsigned32 VAL_PTR=&val
@@ -266,3 +267,54 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 %(DEFAULT_BODY)s
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	private_data->Success = branch_taken;
+
+#.FN_BODY Data/structure
+	private_data_add_moreCinfo_structure(actx, 1);
+%(DEFAULT_BODY)s
+	private_data_add_moreCinfo_structure(actx, 0);
+
+#.FN_BODY Data/array
+	private_data_add_moreCinfo_structure(actx, 1);
+%(DEFAULT_BODY)s
+	private_data_add_moreCinfo_structure(actx, 0);
+
+#.FN_BODY Data/boolean VAL_PTR=&val
+	gboolean val;
+%(DEFAULT_BODY)s
+
+	private_data_add_moreCinfo_bool(actx, val);
+
+#.FN_BODY Data/unsigned VAL_PTR=&val
+	gint val;
+%(DEFAULT_BODY)s
+
+	private_data_add_moreCinfo_int(actx, val);
+
+#.FN_BODY Data/integer VAL_PTR=&val
+	gint val;
+%(DEFAULT_BODY)s
+
+	private_data_add_moreCinfo_int(actx, val);
+
+#.FN_BODY Data/bcd VAL_PTR=&val
+	gint val;
+%(DEFAULT_BODY)s
+
+	private_data_add_moreCinfo_int(actx, val);
+
+#.FN_BODY Data/octet-string
+	gint old_offset = offset;
+%(DEFAULT_BODY)s
+	private_data_add_moreCinfo_ostr(actx, tvb, old_offset);
+
+#.FN_BODY Data/visible-string
+	gint old_offset = offset;
+%(DEFAULT_BODY)s
+	private_data_add_moreCinfo_vstr(actx, tvb, old_offset);
+
+#.FN_BODY Data/bit-string
+	gint old_offset = offset;
+%(DEFAULT_BODY)s
+	private_data_add_moreCinfo_bstr(actx, tvb, old_offset);
+
+

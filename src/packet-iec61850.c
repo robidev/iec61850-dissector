@@ -453,19 +453,19 @@ static int hf_iec61850_scopeOfDelete_02 = -1;     /* T_scopeOfDelete_02 */
 static int hf_iec61850_listOfTypeName = -1;       /* SEQUENCE_OF_ObjectName */
 static int hf_iec61850_listOfTypeName_item = -1;  /* ObjectName */
 static int hf_iec61850_success_01 = -1;           /* Data */
-static int hf_iec61850_array_01 = -1;             /* SEQUENCE_OF_Data */
+static int hf_iec61850_array_01 = -1;             /* T_array_01 */
 static int hf_iec61850_array_item = -1;           /* Data */
-static int hf_iec61850_structure_01 = -1;         /* SEQUENCE_OF_Data */
+static int hf_iec61850_structure_01 = -1;         /* T_structure_01 */
 static int hf_iec61850_structure_item = -1;       /* Data */
-static int hf_iec61850_boolean_01 = -1;           /* BOOLEAN */
-static int hf_iec61850_data_bit_string = -1;      /* BIT_STRING */
-static int hf_iec61850_integer_01 = -1;           /* INTEGER */
-static int hf_iec61850_unsigned_01 = -1;          /* INTEGER */
+static int hf_iec61850_boolean_01 = -1;           /* T_boolean */
+static int hf_iec61850_data_bit_string = -1;      /* T_data_bit_string */
+static int hf_iec61850_integer_01 = -1;           /* T_integer */
+static int hf_iec61850_unsigned_01 = -1;          /* T_unsigned */
 static int hf_iec61850_floating_point = -1;       /* FloatingPoint */
-static int hf_iec61850_data_octet_string = -1;    /* OCTET_STRING */
-static int hf_iec61850_data_visible_string = -1;  /* VisibleString */
+static int hf_iec61850_data_octet_string = -1;    /* T_data_octet_string */
+static int hf_iec61850_data_visible_string = -1;  /* T_data_visible_string */
 static int hf_iec61850_data_binary_time = -1;     /* TimeOfDay */
-static int hf_iec61850_bcd_01 = -1;               /* INTEGER */
+static int hf_iec61850_bcd_01 = -1;               /* T_bcd */
 static int hf_iec61850_booleanArray = -1;         /* BIT_STRING */
 static int hf_iec61850_objId_01 = -1;             /* OBJECT_IDENTIFIER */
 static int hf_iec61850_mMSString = -1;            /* MMSString */
@@ -867,6 +867,8 @@ static gint ett_iec61850_DeleteNamedType_Request = -1;
 static gint ett_iec61850_DeleteNamedType_Response = -1;
 static gint ett_iec61850_AccessResult = -1;
 static gint ett_iec61850_Data = -1;
+static gint ett_iec61850_T_array_01 = -1;
+static gint ett_iec61850_T_structure_01 = -1;
 static gint ett_iec61850_VariableAccessSpecification = -1;
 static gint ett_iec61850_T_listOfVariable_02 = -1;
 static gint ett_iec61850_T_listOfVariable_item_02 = -1;
@@ -1053,17 +1055,106 @@ void
 private_data_add_moreCinfo_float(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	snprintf(private_data->moreCinfo, BUFFER_SIZE_MORE,
-				" %f", tvb_get_ieee_float(tvb, 1, ENC_BIG_ENDIAN));
+	char tmp[BUFFER_SIZE_MORE];
+	snprintf(tmp, BUFFER_SIZE_MORE,
+				"%f", tvb_get_ieee_float(tvb, 1, ENC_BIG_ENDIAN));
+	(void) g_strlcat(private_data->moreCinfo, tmp, BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
 }
 
 void
-private_data_add_moreCinfo_uint8(asn1_ctx_t *actx, gint val)
+private_data_add_moreCinfo_int(asn1_ctx_t *actx, gint val)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	snprintf(private_data->moreCinfo, BUFFER_SIZE_MORE,
-				" %d", val);
-	ws_message("uint8: %s", private_data->moreCinfo);
+	char tmp[BUFFER_SIZE_MORE];
+	snprintf(tmp, BUFFER_SIZE_MORE,
+				"%i", val);
+	(void) g_strlcat(private_data->moreCinfo, tmp, BUFFER_SIZE_MORE);			
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	//ws_message("int: %s", private_data->moreCinfo);
+}
+
+void
+private_data_add_moreCinfo_str(asn1_ctx_t *actx, char* str)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, str, BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	//ws_message("str: %s", str);
+}
+
+void
+private_data_add_moreCinfo_vstr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, "\"", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
+				tvb, offset, tvb_reported_length_remaining(tvb, offset), ENC_STRING), BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, "\" ", BUFFER_SIZE_MORE);
+	//ws_message("str: %s", str);
+}
+
+
+void
+private_data_add_moreCinfo_ostr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, "`", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
+				tvb, offset, tvb_reported_length_remaining(tvb, offset), ENC_STR_HEX), BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, "` ", BUFFER_SIZE_MORE);
+}
+
+void
+private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
+{
+	const u_int32_t BUFLEN = 256;
+	char stringbuf[BUFLEN];
+	char* buf2 = stringbuf;
+	int i;
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	size_t len;
+	size_t llen = tvb_reported_length_remaining(tvb, 0)-1;
+	gint padding = tvb_get_guint8(tvb, 0);
+	guint8 *buf = tvb_get_bits_array(actx->pinfo->pool,tvb, 8, (llen*8)-padding,&len, ENC_BIG_ENDIAN);
+	ws_message("bitstirng: %ld, %i, %ld", llen, padding,len);
+
+	for (i = 0; i < len; i++)
+	{
+		if (i < (BUFLEN/2))
+		{
+			buf2 += sprintf(buf2, "%02x", buf[i]);
+		}
+	}
+	//ws_message("bitstirng: %s", stringbuf);
+	(void) g_strlcat(private_data->moreCinfo, stringbuf, BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+}
+
+
+void
+private_data_add_moreCinfo_bool(asn1_ctx_t *actx, int boolean)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, boolean? "true" : "false", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	//ws_message("bool: %i", boolean);
+}
+
+void
+private_data_add_moreCinfo_structure(asn1_ctx_t *actx, int dir)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, dir? "{" : "}", BUFFER_SIZE_MORE);
+	//ws_message("bool: %i", boolean);
+}
+
+void
+private_data_add_moreCinfo_array(asn1_ctx_t *actx, int dir)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, dir? "[" : "]", BUFFER_SIZE_MORE);
+	//ws_message("bool: %i", boolean);
 }
 
 char*
@@ -1092,6 +1183,7 @@ static int dissect_iec61850_VariableSpecification(gboolean implicit_tag _U_, tvb
 static int dissect_iec61850_AlternateAccess(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_);
 
 /* Data -> Data/array -> Data */
+/* Data -> Data/structure -> Data */
 static int dissect_iec61850_Data(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_);
 
 
@@ -1988,14 +2080,35 @@ dissect_iec61850_Read_Request(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 }
 
 
-static const ber_sequence_t SEQUENCE_OF_Data_sequence_of[1] = {
-  { &hf_iec61850_listOfData_item, BER_CLASS_ANY/*choice*/, -1/*choice*/, BER_FLAGS_NOOWNTAG|BER_FLAGS_NOTCHKTAG, dissect_iec61850_Data },
+static const ber_sequence_t T_array_01_sequence_of[1] = {
+  { &hf_iec61850_array_item , BER_CLASS_ANY/*choice*/, -1/*choice*/, BER_FLAGS_NOOWNTAG|BER_FLAGS_NOTCHKTAG, dissect_iec61850_Data },
 };
 
 static int
-dissect_iec61850_SEQUENCE_OF_Data(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_iec61850_T_array_01(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	private_data_add_moreCinfo_structure(actx, 1);
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      SEQUENCE_OF_Data_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_Data);
+                                      T_array_01_sequence_of, hf_index, ett_iec61850_T_array_01);
+
+	private_data_add_moreCinfo_structure(actx, 0);
+
+
+  return offset;
+}
+
+
+static const ber_sequence_t T_structure_01_sequence_of[1] = {
+  { &hf_iec61850_structure_item, BER_CLASS_ANY/*choice*/, -1/*choice*/, BER_FLAGS_NOOWNTAG|BER_FLAGS_NOTCHKTAG, dissect_iec61850_Data },
+};
+
+static int
+dissect_iec61850_T_structure_01(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	private_data_add_moreCinfo_structure(actx, 1);
+  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                      T_structure_01_sequence_of, hf_index, ett_iec61850_T_structure_01);
+
+	private_data_add_moreCinfo_structure(actx, 0);
+
 
   return offset;
 }
@@ -2003,20 +2116,59 @@ dissect_iec61850_SEQUENCE_OF_Data(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, 
 
 
 static int
-dissect_iec61850_BIT_STRING(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_iec61850_T_boolean(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gboolean val;
+  offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, &val);
+
+
+	private_data_add_moreCinfo_bool(actx, val);
+
+
+  return offset;
+}
+
+
+
+static int
+dissect_iec61850_T_data_bit_string(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gint old_offset = offset;
   offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
                                     NULL, 0, hf_index, -1,
                                     NULL);
 
+	private_data_add_moreCinfo_bstr(actx, tvb, old_offset);
+
+
+
   return offset;
 }
 
 
 
 static int
-dissect_iec61850_INTEGER(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_iec61850_T_integer(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gint val;
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+                                                &val);
+
+
+	private_data_add_moreCinfo_int(actx, val);
+
+
+  return offset;
+}
+
+
+
+static int
+dissect_iec61850_T_unsigned(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gint val;
+  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                &val);
+
+
+	private_data_add_moreCinfo_int(actx, val);
+
 
   return offset;
 }
@@ -2029,6 +2181,35 @@ dissect_iec61850_FloatingPoint(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int
                                        NULL);
 
 	private_data_add_moreCinfo_float(actx, tvb);
+
+
+  return offset;
+}
+
+
+
+static int
+dissect_iec61850_T_data_octet_string(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gint old_offset = offset;
+  offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                       NULL);
+
+	private_data_add_moreCinfo_ostr(actx, tvb, old_offset);
+
+
+  return offset;
+}
+
+
+
+static int
+dissect_iec61850_T_data_visible_string(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gint old_offset = offset;
+  offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_VisibleString,
+                                            actx, tree, tvb, offset, hf_index,
+                                            NULL);
+
+	private_data_add_moreCinfo_vstr(actx, tvb, old_offset);
 
 
   return offset;
@@ -2075,7 +2256,7 @@ dissect_iec61850_TimeOfDay(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int off
 		{
 			proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
 		}
-
+		private_data_add_moreCinfo_str(actx, ptime);
 		return offset;
 	}
 
@@ -2086,6 +2267,32 @@ dissect_iec61850_TimeOfDay(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int off
 		proto_tree_add_string(tree, hf_index, tvb, offset, len, "????");
 	}
 
+
+  return offset;
+}
+
+
+
+static int
+dissect_iec61850_T_bcd(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gint val;
+  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                &val);
+
+
+	private_data_add_moreCinfo_int(actx, val);
+
+
+  return offset;
+}
+
+
+
+static int
+dissect_iec61850_BIT_STRING(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
+                                    NULL, 0, hf_index, -1,
+                                    NULL);
 
   return offset;
 }
@@ -2148,6 +2355,7 @@ dissect_iec61850_UtcTime(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offse
 	{
 		proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
 	}
+	private_data_add_moreCinfo_str(actx, ptime);
 
 
 
@@ -2175,17 +2383,17 @@ static const value_string iec61850_Data_vals[] = {
 };
 
 static const ber_choice_t Data_choice[] = {
-  {   1, &hf_iec61850_array_01   , BER_CLASS_CON, 1, BER_FLAGS_IMPLTAG, dissect_iec61850_SEQUENCE_OF_Data },
-  {   2, &hf_iec61850_structure_01, BER_CLASS_CON, 2, BER_FLAGS_IMPLTAG, dissect_iec61850_SEQUENCE_OF_Data },
-  {   3, &hf_iec61850_boolean_01 , BER_CLASS_CON, 3, BER_FLAGS_IMPLTAG, dissect_iec61850_BOOLEAN },
-  {   4, &hf_iec61850_data_bit_string, BER_CLASS_CON, 4, BER_FLAGS_IMPLTAG, dissect_iec61850_BIT_STRING },
-  {   5, &hf_iec61850_integer_01 , BER_CLASS_CON, 5, BER_FLAGS_IMPLTAG, dissect_iec61850_INTEGER },
-  {   6, &hf_iec61850_unsigned_01, BER_CLASS_CON, 6, BER_FLAGS_IMPLTAG, dissect_iec61850_INTEGER },
+  {   1, &hf_iec61850_array_01   , BER_CLASS_CON, 1, BER_FLAGS_IMPLTAG, dissect_iec61850_T_array_01 },
+  {   2, &hf_iec61850_structure_01, BER_CLASS_CON, 2, BER_FLAGS_IMPLTAG, dissect_iec61850_T_structure_01 },
+  {   3, &hf_iec61850_boolean_01 , BER_CLASS_CON, 3, BER_FLAGS_IMPLTAG, dissect_iec61850_T_boolean },
+  {   4, &hf_iec61850_data_bit_string, BER_CLASS_CON, 4, BER_FLAGS_IMPLTAG, dissect_iec61850_T_data_bit_string },
+  {   5, &hf_iec61850_integer_01 , BER_CLASS_CON, 5, BER_FLAGS_IMPLTAG, dissect_iec61850_T_integer },
+  {   6, &hf_iec61850_unsigned_01, BER_CLASS_CON, 6, BER_FLAGS_IMPLTAG, dissect_iec61850_T_unsigned },
   {   7, &hf_iec61850_floating_point, BER_CLASS_CON, 7, BER_FLAGS_IMPLTAG, dissect_iec61850_FloatingPoint },
-  {   9, &hf_iec61850_data_octet_string, BER_CLASS_CON, 9, BER_FLAGS_IMPLTAG, dissect_iec61850_OCTET_STRING },
-  {  10, &hf_iec61850_data_visible_string, BER_CLASS_CON, 10, BER_FLAGS_IMPLTAG, dissect_iec61850_VisibleString },
+  {   9, &hf_iec61850_data_octet_string, BER_CLASS_CON, 9, BER_FLAGS_IMPLTAG, dissect_iec61850_T_data_octet_string },
+  {  10, &hf_iec61850_data_visible_string, BER_CLASS_CON, 10, BER_FLAGS_IMPLTAG, dissect_iec61850_T_data_visible_string },
   {  12, &hf_iec61850_data_binary_time, BER_CLASS_CON, 12, BER_FLAGS_IMPLTAG, dissect_iec61850_TimeOfDay },
-  {  13, &hf_iec61850_bcd_01     , BER_CLASS_CON, 13, BER_FLAGS_IMPLTAG, dissect_iec61850_INTEGER },
+  {  13, &hf_iec61850_bcd_01     , BER_CLASS_CON, 13, BER_FLAGS_IMPLTAG, dissect_iec61850_T_bcd },
   {  14, &hf_iec61850_booleanArray, BER_CLASS_CON, 14, BER_FLAGS_IMPLTAG, dissect_iec61850_BIT_STRING },
   {  15, &hf_iec61850_objId_01   , BER_CLASS_CON, 15, BER_FLAGS_IMPLTAG, dissect_iec61850_OBJECT_IDENTIFIER },
   {  16, &hf_iec61850_mMSString  , BER_CLASS_CON, 16, BER_FLAGS_IMPLTAG, dissect_iec61850_MMSString },
@@ -2213,6 +2421,19 @@ dissect_iec61850_Data(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _
 
 
   p_set_proto_depth(actx->pinfo, proto_id, recursion_depth);
+  return offset;
+}
+
+
+static const ber_sequence_t SEQUENCE_OF_Data_sequence_of[1] = {
+  { &hf_iec61850_listOfData_item, BER_CLASS_ANY/*choice*/, -1/*choice*/, BER_FLAGS_NOOWNTAG|BER_FLAGS_NOTCHKTAG, dissect_iec61850_Data },
+};
+
+static int
+dissect_iec61850_SEQUENCE_OF_Data(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                      SEQUENCE_OF_Data_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_Data);
+
   return offset;
 }
 
@@ -2989,6 +3210,16 @@ static const value_string iec61850_T_file_vals[] = {
 
 static int
 dissect_iec61850_T_file(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                NULL);
+
+  return offset;
+}
+
+
+
+static int
+dissect_iec61850_INTEGER(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -4971,6 +5202,7 @@ dissect_iec61850_AccessResult(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	private_data->Success = branch_taken;
+
 
   return offset;
 }
@@ -7457,7 +7689,7 @@ dissect_iec61850_MMSpdu(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 
 /*--- End of included file: packet-iec61850-fn.c ---*/
-#line 163 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 252 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 
 /*
 * Dissect iec61850 PDUs inside a PPDU.
@@ -9119,7 +9351,7 @@ void proto_register_iec61850(void) {
     { &hf_iec61850_array_01,
       { "array", "iec61850.array",
         FT_UINT32, BASE_DEC, NULL, 0,
-        "SEQUENCE_OF_Data", HFILL }},
+        "T_array_01", HFILL }},
     { &hf_iec61850_array_item,
       { "Data", "iec61850.Data",
         FT_UINT32, BASE_DEC, VALS(iec61850_Data_vals), 0,
@@ -9127,7 +9359,7 @@ void proto_register_iec61850(void) {
     { &hf_iec61850_structure_01,
       { "structure", "iec61850.structure",
         FT_UINT32, BASE_DEC, NULL, 0,
-        "SEQUENCE_OF_Data", HFILL }},
+        "T_structure_01", HFILL }},
     { &hf_iec61850_structure_item,
       { "Data", "iec61850.Data",
         FT_UINT32, BASE_DEC, VALS(iec61850_Data_vals), 0,
@@ -9139,7 +9371,7 @@ void proto_register_iec61850(void) {
     { &hf_iec61850_data_bit_string,
       { "bit-string", "iec61850.data_bit-string",
         FT_BYTES, BASE_NONE, NULL, 0,
-        NULL, HFILL }},
+        "T_data_bit_string", HFILL }},
     { &hf_iec61850_integer_01,
       { "integer", "iec61850.integer",
         FT_INT32, BASE_DEC, NULL, 0,
@@ -9147,7 +9379,7 @@ void proto_register_iec61850(void) {
     { &hf_iec61850_unsigned_01,
       { "unsigned", "iec61850.unsigned",
         FT_INT32, BASE_DEC, NULL, 0,
-        "INTEGER", HFILL }},
+        NULL, HFILL }},
     { &hf_iec61850_floating_point,
       { "floating-point", "iec61850.floating_point",
         FT_BYTES, BASE_NONE, NULL, 0,
@@ -9155,11 +9387,11 @@ void proto_register_iec61850(void) {
     { &hf_iec61850_data_octet_string,
       { "octet-string", "iec61850.data.octet-string",
         FT_BYTES, BASE_NONE, NULL, 0,
-        NULL, HFILL }},
+        "T_data_octet_string", HFILL }},
     { &hf_iec61850_data_visible_string,
       { "visible-string", "iec61850.data.visible-string",
         FT_STRING, BASE_NONE, NULL, 0,
-        "VisibleString", HFILL }},
+        "T_data_visible_string", HFILL }},
     { &hf_iec61850_data_binary_time,
       { "binary-time", "iec61850.data.binary-time",
         FT_STRING, BASE_NONE, NULL, 0,
@@ -9167,7 +9399,7 @@ void proto_register_iec61850(void) {
     { &hf_iec61850_bcd_01,
       { "bcd", "iec61850.bcd",
         FT_INT32, BASE_DEC, NULL, 0,
-        "INTEGER", HFILL }},
+        NULL, HFILL }},
     { &hf_iec61850_booleanArray,
       { "booleanArray", "iec61850.booleanArray",
         FT_BYTES, BASE_NONE, NULL, 0,
@@ -10262,7 +10494,7 @@ void proto_register_iec61850(void) {
         NULL, HFILL }},
 
 /*--- End of included file: packet-iec61850-hfarr.c ---*/
-#line 231 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 320 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	/* List of subtrees */
@@ -10389,6 +10621,8 @@ void proto_register_iec61850(void) {
     &ett_iec61850_DeleteNamedType_Response,
     &ett_iec61850_AccessResult,
     &ett_iec61850_Data,
+    &ett_iec61850_T_array_01,
+    &ett_iec61850_T_structure_01,
     &ett_iec61850_VariableAccessSpecification,
     &ett_iec61850_T_listOfVariable_02,
     &ett_iec61850_T_listOfVariable_item_02,
@@ -10488,7 +10722,7 @@ void proto_register_iec61850(void) {
     &ett_iec61850_FileAttributes,
 
 /*--- End of included file: packet-iec61850-ettarr.c ---*/
-#line 237 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 326 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	static ei_register_info ei_mms[] = {

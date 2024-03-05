@@ -492,7 +492,7 @@ void proto_tree_print_node(proto_node *node, gpointer data)
 					const u_int32_t BUFLEN = 256;
 					char stringbuf[BUFLEN];
 					int i;
-					char* buf2 = (char *)&stringbuf;
+					char* buf2 = stringbuf;
 					for (i = 0; i < fi->value.value.bytes->len; i++)
 					{
 						if (i < (BUFLEN/2))
@@ -517,74 +517,6 @@ void proto_tree_print_node(proto_node *node, gpointer data)
 		*level = *level + 1;
 		if(*level < 100){
 			proto_tree_children_foreach(node, proto_tree_print_node, data);
-		}
-		*level = *level - 1;	
-	}
-}
-
-void proto_tree_render_node(proto_node *node, gpointer data, proto_tree *parent_tree)
-{
-	int * level = (int *)data;
-	field_info   *fi    = PNODE_FINFO(node);
-    gchar         label_str[ITEM_LABEL_LENGTH];
-    gchar        *label_ptr;
-	//proto_tree_add_item(parent_tree, proto_iec61850, tvb, 0, -1, ENC_NA);
-    g_assert(fi);
-	if(fi != NULL && fi->hfinfo != NULL)
-	{
-		if(fi->hfinfo->name != NULL)
-		{
-			switch(fi->hfinfo->type)
-			{
-				case FT_NONE:
-					ws_message("%*s%s", *level," ", fi->hfinfo->name); break;
-				case FT_BOOLEAN:
-					ws_message("%*s%s: %s", *level," ", fi->hfinfo->name, fi->value.value.uinteger? "true" : "false"); break;
-				case FT_UINT8:
-				case FT_CHAR:
-					ws_message("%*s%s: %d", *level," ", fi->hfinfo->name, fi->value.value.uinteger); break;
-				case FT_UINT16:
-					ws_message("%*s%s: %d", *level," ", fi->hfinfo->name, fi->value.value.uinteger); break;
-				case FT_UINT32:
-					ws_message("%*s%s: %d", *level," ", fi->hfinfo->name, fi->value.value.uinteger); break;
-				case FT_INT8:
-					ws_message("%*s%s: %i", *level," ", fi->hfinfo->name, fi->value.value.sinteger); break;
-				case FT_INT16:
-					ws_message("%*s%s: %i", *level," ", fi->hfinfo->name, fi->value.value.sinteger); break;
-				case FT_INT32:
-					ws_message("%*s%s: %i", *level," ", fi->hfinfo->name, fi->value.value.sinteger); break;
-				case FT_STRING:
-					ws_message("%*s%s: %s", *level," ", fi->hfinfo->name, fi->value.value.string); break;
-				case FT_BYTES:
-				{
-					const u_int32_t BUFLEN = 256;
-					char stringbuf[BUFLEN];
-					int i;
-					char* buf2 = (char *)&stringbuf;
-					for (i = 0; i < fi->value.value.bytes->len; i++)
-					{
-						if (i < (BUFLEN/2))
-						{
-							buf2 += sprintf(buf2, "%02x", fi->value.value.bytes->data[i]);
-						}
-					}
-					ws_message("%*s%s: (%i) %s", *level," ", fi->hfinfo->name, fi->value.value.bytes->len, stringbuf); 
-					break;
-				}
-				default:
-					ws_message("%d, type: %d (UNKNOWN)", *level, fi->hfinfo->type); break;
-			}
-		}
-		else
-		{
-			ws_message("l: %i, type: %d", *level, fi->hfinfo->type);
-		}
-	}
-    
-	if (node->first_child != NULL) {
-		*level = *level + 1;
-		if(*level < 100){
-			proto_tree_children_foreach(node, proto_tree_render_node, data);
 		}
 		*level = *level - 1;	
 	}

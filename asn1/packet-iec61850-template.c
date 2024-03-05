@@ -136,17 +136,106 @@ void
 private_data_add_moreCinfo_float(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	snprintf(private_data->moreCinfo, BUFFER_SIZE_MORE,
-				" %f", tvb_get_ieee_float(tvb, 1, ENC_BIG_ENDIAN));
+	char tmp[BUFFER_SIZE_MORE];
+	snprintf(tmp, BUFFER_SIZE_MORE,
+				"%f", tvb_get_ieee_float(tvb, 1, ENC_BIG_ENDIAN));
+	(void) g_strlcat(private_data->moreCinfo, tmp, BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
 }
 
 void
-private_data_add_moreCinfo_uint8(asn1_ctx_t *actx, gint val)
+private_data_add_moreCinfo_int(asn1_ctx_t *actx, gint val)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	snprintf(private_data->moreCinfo, BUFFER_SIZE_MORE,
-				" %d", val);
-	ws_message("uint8: %s", private_data->moreCinfo);
+	char tmp[BUFFER_SIZE_MORE];
+	snprintf(tmp, BUFFER_SIZE_MORE,
+				"%i", val);
+	(void) g_strlcat(private_data->moreCinfo, tmp, BUFFER_SIZE_MORE);			
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	//ws_message("int: %s", private_data->moreCinfo);
+}
+
+void
+private_data_add_moreCinfo_str(asn1_ctx_t *actx, char* str)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, str, BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	//ws_message("str: %s", str);
+}
+
+void
+private_data_add_moreCinfo_vstr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, "\"", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
+				tvb, offset, tvb_reported_length_remaining(tvb, offset), ENC_STRING), BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, "\" ", BUFFER_SIZE_MORE);
+	//ws_message("str: %s", str);
+}
+
+
+void
+private_data_add_moreCinfo_ostr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, "`", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
+				tvb, offset, tvb_reported_length_remaining(tvb, offset), ENC_STR_HEX), BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, "` ", BUFFER_SIZE_MORE);
+}
+
+void
+private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
+{
+	const u_int32_t BUFLEN = 256;
+	char stringbuf[BUFLEN];
+	char* buf2 = stringbuf;
+	int i;
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	size_t len;
+	size_t llen = tvb_reported_length_remaining(tvb, 0)-1;
+	gint padding = tvb_get_guint8(tvb, 0);
+	guint8 *buf = tvb_get_bits_array(actx->pinfo->pool,tvb, 8, (llen*8)-padding,&len, ENC_BIG_ENDIAN);
+	ws_message("bitstirng: %ld, %i, %ld", llen, padding,len);
+
+	for (i = 0; i < len; i++)
+	{
+		if (i < (BUFLEN/2))
+		{
+			buf2 += sprintf(buf2, "%02x", buf[i]);
+		}
+	}
+	//ws_message("bitstirng: %s", stringbuf);
+	(void) g_strlcat(private_data->moreCinfo, stringbuf, BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+}
+
+
+void
+private_data_add_moreCinfo_bool(asn1_ctx_t *actx, int boolean)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, boolean? "true" : "false", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	//ws_message("bool: %i", boolean);
+}
+
+void
+private_data_add_moreCinfo_structure(asn1_ctx_t *actx, int dir)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, dir? "{" : "}", BUFFER_SIZE_MORE);
+	//ws_message("bool: %i", boolean);
+}
+
+void
+private_data_add_moreCinfo_array(asn1_ctx_t *actx, int dir)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, dir? "[" : "]", BUFFER_SIZE_MORE);
+	//ws_message("bool: %i", boolean);
 }
 
 char*

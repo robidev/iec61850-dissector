@@ -28,7 +28,8 @@ typedef struct iec61850_private_data_t
 	int objectClass;//VariableName,NamedVariable, journal
 	int Success;//
 	int DataType; //array, struct, bool, bit-string, int, uint, float, octet, vis-string, bin-time, bcd, boolarr, mmsstring, utctime
-    
+    int indent;
+
 } iec61850_private_data_t;
 
 
