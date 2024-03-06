@@ -25,19 +25,20 @@
 
 typedef struct iec61850_private_data_t
 {
-	char preCinfo[BUFFER_SIZE_PRE];
-	char moreCinfo[BUFFER_SIZE_MORE];
-	int MMSpdu;
-    int Service;//confirmed/unconfirmed
-	int AccessResult; // success/failure
-	int VariableAccessSpecification; //RPT/CMDTerm
-	int ObjectName;//0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific)
-	int objectScope;////0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific)
-	int objectClass;//VariableName,NamedVariable, journal
-	int Success;//
-	int DataType; //array, struct, bool, bit-string, int, uint, float, octet, vis-string, bin-time, bcd, boolarr, mmsstring, utctime
-    int indent;
-	int invokeID;
+	u_int8_t preCinfo[BUFFER_SIZE_PRE];
+	u_int8_t moreCinfo[BUFFER_SIZE_MORE];
+	int32_t MMSpdu;
+    int32_t Service;//confirmed/unconfirmed
+	int32_t AccessResult; // success/failure
+	int32_t VariableAccessSpecification; //RPT/CMDTerm
+	int32_t ObjectName;//0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific)
+	int32_t objectScope;////0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific)
+	int32_t objectClass;//VariableName,NamedVariable, journal
+	int32_t Success;//
+	int32_t DataType; //array, struct, bool, bit-string, int, uint, float, octet, vis-string, bin-time, bcd, boolarr, mmsstring, utctime
+    int32_t indent;
+	int32_t invokeID;
+	int32_t DataAccessError;
 
 } iec61850_private_data_t;
 
@@ -47,10 +48,10 @@ iec61850_private_data_t* iec61850_get_private_data(asn1_ctx_t *actx);
 /* Helper function to test presence of private data struct */
 gboolean iec61850_has_private_data(asn1_ctx_t *actx);
 void private_data_add_preCinfo(asn1_ctx_t *actx, guint32 val);
-char* private_data_get_preCinfo(asn1_ctx_t *actx);
+u_int8_t* private_data_get_preCinfo(asn1_ctx_t *actx);
 void private_data_add_moreCinfo_id(asn1_ctx_t *actx, tvbuff_t *tvb);
 void private_data_add_moreCinfo_float(asn1_ctx_t *actx, tvbuff_t *tvb);
-char* private_data_get_moreCinfo(asn1_ctx_t *actx);
+u_int8_t* private_data_get_moreCinfo(asn1_ctx_t *actx);
 
 
 
@@ -59,7 +60,7 @@ char* private_data_get_moreCinfo(asn1_ctx_t *actx);
 #line 1 "./wireshark_dissector/asn1/packet-iec61850-exp.h"
 
 /*--- End of included file: packet-iec61850-exp.h ---*/
-#line 50 "./wireshark_dissector/asn1/packet-iec61850-template.h"
+#line 51 "./wireshark_dissector/asn1/packet-iec61850-template.h"
 
 #endif  /* PACKET_IEC61850_H */
 

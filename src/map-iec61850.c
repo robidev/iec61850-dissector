@@ -34,7 +34,7 @@ struct _iec61850_key_req {
 
 struct _iec61850_value_req {
 	u_int8_t * serviceName;
-	u_int8_t * arguments;
+	void * data;
 } typedef iec61850_value_req;
 
 static wmem_map_t *iec61850_request_hash = NULL;
@@ -87,7 +87,7 @@ int Release_Error(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
 int GetServerDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
 int GetLogicalDeviceDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
 int GetJournalDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
-int GetNameList_response(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
+int GetNameList_response(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, iec61850_value_req *val);
 int GetDataDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
 int GetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
 int SetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
@@ -122,10 +122,14 @@ static guint
 iec61850_hash (gconstpointer v)
 {
 	const iec61850_key_req *key = (const iec61850_key_req *)v;
-	guint val;
-	val = key->conversation + key->invokeID;
-
-	return val;
+	u_int64_t val=0;
+	// get values from struct
+	u_int64_t conv = (u_int64_t)key->conversation;
+	u_int64_t invokeID = (u_int64_t)key->invokeID;
+	// combine 2 32 bit values in one 64 bit value 
+	val = ((conv<<32)&0xffffffff00000000 || invokeID&0x00000000ffffffff);
+	// hash it to an 32 bit int;
+	return wmem_int64_hash(&val);
 }
 
 void register_iec61850_mappings(const int parent)
@@ -461,7 +465,7 @@ void register_iec61850_mappings(const int parent)
       		{ 
 				"UNKNOWN", 			// name
 				"iec61850.Unknown",   // abrev
-        		FT_NONE, 				// type
+        		FT_STRING, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
 				0,						// 
@@ -556,6 +560,84 @@ void proto_tree_print_node(proto_node *node, gpointer data)
 	}
 }
 
+struct _tree_data {
+	u_int32_t level;
+	proto_tree *tree;
+	tvbuff_t *tvb;
+} typedef tree_data;
+
+void proto_tree_print_tree(proto_node *node, gpointer data)
+{
+	tree_data * pdata = (tree_data *)data;
+	proto_tree *tree = pdata->tree;
+	tvbuff_t *tvb = pdata->tvb;
+	field_info   *fi    = PNODE_FINFO(node);
+
+	//proto_tree_add_string(tree, hf_iec61850_null,tvb, 0, -1, "hoi");
+    g_assert(fi);
+	if(fi != NULL && fi->hfinfo != NULL)
+	{
+		if(fi->hfinfo->name != NULL)
+		{
+			switch(fi->hfinfo->type)
+			{
+				case FT_NONE:
+					ws_message("%*s%s", pdata->level," ", fi->hfinfo->name); 
+					proto_tree_add_string(tree, hf_iec61850_null,tvb, 0, -1,  "NONE"); 
+
+					break;
+				case FT_BOOLEAN:
+					ws_message("%*s%s: %s", pdata->level," ", fi->hfinfo->name, fi->value.value.uinteger? "true" : "false");
+					proto_tree_add_string(tree, hf_iec61850_null,tvb, 0, -1,  fi->value.value.uinteger? "true" : "false"); 
+					break;
+				case FT_UINT8:
+				case FT_CHAR:
+					ws_message("%*s%s: %d", pdata->level," ", fi->hfinfo->name, fi->value.value.uinteger); break;
+				case FT_UINT16:
+					ws_message("%*s%s: %d", pdata->level," ", fi->hfinfo->name, fi->value.value.uinteger); break;
+				case FT_UINT32:
+					ws_message("%*s%s: %d", pdata->level," ", fi->hfinfo->name, fi->value.value.uinteger); break;
+				case FT_INT8:
+					ws_message("%*s%s: %i", pdata->level," ", fi->hfinfo->name, fi->value.value.sinteger); break;
+				case FT_INT16:
+					ws_message("%*s%s: %i", pdata->level," ", fi->hfinfo->name, fi->value.value.sinteger); break;
+				case FT_INT32:
+					ws_message("%*s%s: %i", pdata->level," ", fi->hfinfo->name, fi->value.value.sinteger); break;
+				case FT_STRING:
+					ws_message("%*s%s: %s", pdata->level," ", fi->hfinfo->name, fi->value.value.string); 
+					proto_tree_add_string(tree, hf_iec61850_null,tvb, 0, -1,  fi->value.value.string);
+					break;
+				case FT_BYTES:
+				{
+					wmem_strbuf_t *strbuf;
+					strbuf = wmem_strbuf_new(wmem_packet_scope(), "");
+					int32_t i;
+					for (i = 0; i < fi->value.value.bytes->len; i++)
+					{
+						wmem_strbuf_append_printf(strbuf, "%02x", fi->value.value.bytes->data[i]);
+					}
+					ws_message("%*s%s: (%i) %s", pdata->level," ", fi->hfinfo->name, fi->value.value.bytes->len, wmem_strbuf_get_str(strbuf)); 
+					break;
+				}
+				default:
+					ws_message("%d, type: %d (UNKNOWN)", pdata->level, fi->hfinfo->type); break;
+			}
+		}
+		else
+		{
+			ws_message("l: %i, type: %d", pdata->level, fi->hfinfo->type);
+		}
+	}
+    
+	if (node->first_child != NULL) {
+		pdata->level++;
+		if(pdata->level < 100){
+			proto_tree_children_foreach(node, proto_tree_print_tree, data);
+		}
+		pdata->level++;	
+	}
+}
+
 static proto_item *get_iec61850_item(tvbuff_t *tvb, proto_tree *parent_tree, const int proto_iec61850)
 {
 	proto_item *item=NULL;
@@ -567,17 +649,99 @@ static proto_item *get_iec61850_item(tvbuff_t *tvb, proto_tree *parent_tree, con
 	return item;
 }
 
+void store_invoke_data(packet_info *pinfo, u_int32_t invokeID, iec61850_value_req * data) 
+{
+	iec61850_key_req key;
+	iec61850_value_req *request_val = NULL;
+
+	conversation_t * conversation = find_or_create_conversation(pinfo);
+	if (conversation == NULL)
+	{
+		ws_error("could not allocate conversation");
+		return;
+	}
+	key.conversation = conversation->conv_index;
+	key.invokeID = invokeID;
+
+	request_val = (iec61850_value_req *)wmem_map_lookup(iec61850_request_hash, &key);
+	if (!request_val)
+	{
+		iec61850_key_req *new_key = wmem_alloc(wmem_file_scope(), sizeof(iec61850_key_req));
+		if(new_key == NULL)
+		{
+			ws_error("could not allocate key");
+			return;
+		}
+		*new_key = key;
+
+		request_val = wmem_alloc(wmem_file_scope(), sizeof(iec61850_value_req));
+		if(request_val == NULL)
+		{
+		ws_error("could not allocate value");
+		return;
+		}
+		request_val->serviceName = data->serviceName;
+		request_val->data = data->data;
+
+		wmem_map_insert(iec61850_request_hash, new_key, request_val);
+	}
+	else
+	{
+		request_val->serviceName = data->serviceName;
+		request_val->data = data->data;
+	}
+}
+
+iec61850_value_req *load_invoke_data(packet_info *pinfo, u_int32_t invokeID) 
+{
+	iec61850_key_req key;
+	iec61850_value_req *request_val = NULL;
+	conversation_t * conversation = find_conversation_pinfo(pinfo,0);
+	if (conversation == NULL)
+	{
+		return NULL;
+	}
+	key.conversation = conversation->conv_index;
+	key.invokeID = invokeID;
+
+	return (iec61850_value_req *)wmem_map_lookup(iec61850_request_hash, &key);
+}
+
+void free_invoke_data(packet_info *pinfo, u_int32_t invokeID) 
+{
+	iec61850_key_req key;
+	iec61850_value_req *request_val = NULL;
+	iec61850_value_req *value = NULL;
+	conversation_t * conversation = find_conversation_pinfo(pinfo,0);
+	if (conversation == NULL)
+	{
+		return;
+	}
+	key.conversation = conversation->conv_index;
+	key.invokeID = invokeID;
+
+	value = wmem_map_lookup(iec61850_request_hash, &key);
+	if(value == NULL)
+	{
+		return;
+	}
+	wmem_map_remove(iec61850_request_hash, &key);
+	wmem_free(wmem_file_scope(),value);
+}
+
+
 int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, proto_tree *parent_tree, proto_tree *mms_tree, const int proto_iec61850)
 {
 	u_int32_t offset = 0;
 	u_int32_t old_offset;
 	int32_t level = 1;
 	u_int32_t decoded = 0;
-    
+	iec61850_value_req sessiondata;
+    tree_data data;
 	if(mms_tree != NULL)
 	{
 		//DEBUG
-		proto_tree_children_foreach(mms_tree, proto_tree_print_node, &level);
+		//proto_tree_children_foreach(mms_tree, proto_tree_print_node, &level);
 	}
 
 	if(tvb_reported_length_remaining(tvb, offset) > 0) //while for multiple PDU in 1 packet (may be possible...)
@@ -595,54 +759,45 @@ int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, pro
 				{
 					case 1://GetNameList -> GetLogicalNodeDirectory, GetLogicalDeviceDirectory, GetServerDirectory
 						item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
-						conversation_t * conversation = find_or_create_conversation(pinfo);
 						if(private_data->MMSpdu == 0) // request
 						{
-							iec61850_key_req key;
-							iec61850_value_req *request_val = NULL;
-							key.invokeID = private_data->invokeID;
-							key.conversation = conversation->conv_index;
-							request_val = (iec61850_value_req *)wmem_map_lookup(iec61850_request_hash, &key);
-							if (!request_val)
-							{
-								iec61850_key_req *new_key = wmem_alloc(wmem_file_scope(), sizeof(iec61850_key_req));
-								*new_key = key;
-
-								request_val = wmem_alloc(wmem_file_scope(), sizeof(iec61850_value_req));
-								request_val->serviceName = "blah";
-
-								wmem_map_insert(iec61850_request_hash, new_key, request_val);
-							}
-
 							if(private_data->objectScope == 0)//VMD-SPECIFIC
+							{
 								decoded = GetServerDirectory(tvb, offset, item, actx);
+								sessiondata.serviceName = "GetServerDirectory";
+							}
 							else if(private_data->objectScope == 1)//domainspecific
 							{
 								if(private_data->objectClass == 0)
+								{
 									decoded = GetLogicalDeviceDirectory(tvb, offset, item, actx);
+									sessiondata.serviceName = "GetLogicalDeviceDirectory";
 									// if the whole device is requested it is a GetLogicalDeviceDirectory
 									// TODO if a specific logical node is requested, it is a GetLogicalNodeDirecotry
+								}
 								if(private_data->objectClass == 2)
+								{
 									decoded = GetDataSetDirectory(tvb, offset, item, actx, 0);
+									sessiondata.serviceName = "GetDataSetDirectory";
+								}
 								if(private_data->objectClass == 8)
+								{
 									decoded = GetJournalDirectory(tvb, offset, item, actx);
+									sessiondata.serviceName = "GetJournalDirectory";
+								}
 							}
 							else // aa-specific
+							{
 								decoded = GetLogicalDeviceDirectory(tvb, offset, item, actx);
+								sessiondata.serviceName = "GetLogicalDeviceDirectory";
+							}
+							store_invoke_data(pinfo, private_data->invokeID, &sessiondata);
 						}
 						else // response
 						{
-							if (conversation != NULL)
-							{
-								iec61850_key_req key;
-								iec61850_value_req *request_val = NULL;
-								key.invokeID = private_data->invokeID;
-								key.conversation = conversation->conv_index;
-								request_val = (iec61850_value_req *)wmem_map_lookup(iec61850_request_hash, &key);
-								ws_warning("response:%s",request_val->serviceName);
-							}
-
-							decoded = GetNameList_response(tvb, offset, item, actx);
+							iec61850_value_req * val = load_invoke_data(pinfo, private_data->invokeID);
+							decoded = GetNameList_response(tvb, offset, item, actx, val);
+							free_invoke_data(pinfo, private_data->invokeID);
 						}
 						break;
 					case 4://read -> GetDataSet
@@ -727,13 +882,13 @@ int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, pro
 					else
 					{
 						ws_warning("Not an IEC61850 unconfirmed VariableAccessSpecification: %i", private_data->Service);
-						proto_tree_children_foreach(mms_tree, proto_tree_print_node, &level);
+						//proto_tree_children_foreach(mms_tree, proto_tree_print_node, &level);
 					}
 				}
 				else
 				{
 					ws_warning("Not an IEC61850 unconfirmed service: %i", private_data->Service);
-					proto_tree_children_foreach(mms_tree, proto_tree_print_node, &level);
+					//proto_tree_children_foreach(mms_tree, proto_tree_print_node, &level);
 				}
 				break;
 			}
@@ -788,6 +943,13 @@ int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, pro
 				//proto_tree_add_expert(tree, pinfo, &ei_iec61850_zero_pdu, tvb, offset, -1);
 		}
 		//if(offset == old_offset)????ERROR??
+		if(mms_tree != NULL)
+		{
+			data.level =1;
+			data.tree = item;
+			data.tvb = tvb;
+			proto_tree_children_foreach(mms_tree, proto_tree_print_tree, &data);			
+		}
 	}
     return decoded;
 }
@@ -797,7 +959,7 @@ int Unconfirmed_RPT(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *act
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s", "Unconfirmed-RPT", private_data_get_moreCinfo(actx));
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s", "Unconfirmed ", private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 	return 1;
 }
@@ -807,7 +969,7 @@ int CommandTerm(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s", "Unconfirmed-CommandTermination", private_data_get_moreCinfo(actx));
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s", "Unconfirmed-CommandTermination ", private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 	return 1;
 }
@@ -897,7 +1059,7 @@ int GetServerDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *
 	proto_item *subitem;
     proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_GetServerDirectory, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetServerDirectory-request", 
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetServerDirectory req", 
 		private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 	return 1;
@@ -908,7 +1070,7 @@ int GetLogicalDeviceDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_
 	proto_item *subitem;
     proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_GetLogicalDeviceDirectory, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetLogicalDeviceDirectory-request", 
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetLogicalDeviceDirectory req", 
 		private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 	return 1;
@@ -919,18 +1081,28 @@ int GetJournalDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t 
 	proto_item *subitem;
     proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_GetLogicalDeviceDirectory, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetJournalDirectory-request", 
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetJournalDirectory req", 
 		private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 	return 1;
 }
 
-int GetNameList_response(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx)
+int GetNameList_response(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, iec61850_value_req *val)
 {
 	proto_item *subitem;
     proto_tree *subtree=NULL;
+	u_int8_t * serviceName = NULL;
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	subitem = proto_tree_add_item(item, hf_iec61850_GetNameList_response, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetNameList-response", 
+	if(val != NULL && val->serviceName != NULL)
+	{
+		serviceName = val->serviceName;
+	}
+	else
+	{
+		serviceName = "GetNameList";
+	}
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s%s %s",	private_data_get_preCinfo(actx), serviceName," res", 
 		private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 	return 1;
@@ -953,9 +1125,12 @@ int GetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, 
 //GetGsCBValues, 
 	proto_item *subitem;
     proto_tree *subtree=NULL;
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	subitem = proto_tree_add_item(item, hf_iec61850_GetDataValue, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	private_data_get_preCinfo(actx), "GetDataValue", 
-		res? "res" : "req", private_data_get_moreCinfo(actx));
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s %s",	private_data_get_preCinfo(actx), "GetDataValue", 
+		res? "res" : "req", 
+		res? (private_data->Success? "Success" : "Failure") : "", 
+		private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 	return 1;
 }
@@ -966,9 +1141,12 @@ int SetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, 
 //Select, SelectWithValue, Cancel,Operate,TimeActivatedOperate
 	proto_item *subitem;
     proto_tree *subtree=NULL;
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	subitem = proto_tree_add_item(item, hf_iec61850_SetDataValue, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	private_data_get_preCinfo(actx), "SetDataValue", 
-		res? "res" : "req", private_data_get_moreCinfo(actx));
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s %s",	private_data_get_preCinfo(actx), "SetDataValue", 
+		res? "res" : "req", 
+		res? (private_data->Success? "Success" : "Failure") : "", 
+		private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 	return 1;
 }

@@ -1017,7 +1017,7 @@ private_data_add_preCinfo(asn1_ctx_t *actx, guint32 val)
 	private_data->invokeID = val;
 }
 
-char*
+u_int8_t*
 private_data_get_preCinfo(asn1_ctx_t *actx)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
@@ -1046,10 +1046,11 @@ void
 private_data_add_moreCinfo_domain(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+
 	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
 				tvb, 0, tvb_reported_length_remaining(tvb, 0), ENC_STRING), BUFFER_SIZE_MORE);
-
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	
 }
 
 void
@@ -1164,7 +1165,7 @@ private_data_add_moreCinfo_array(asn1_ctx_t *actx, int dir)
 	(void) g_strlcat(private_data->moreCinfo, dir? "[ " : "] ", BUFFER_SIZE_MORE);
 }
 
-char*
+u_int8_t*
 private_data_get_moreCinfo(asn1_ctx_t *actx)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
@@ -2144,7 +2145,6 @@ dissect_iec61850_T_data_bit_string(gboolean implicit_tag _U_, tvbuff_t *tvb _U_,
                                     NULL);
 
 	private_data_add_moreCinfo_bstr(actx, tvb, old_offset);
-
 
 
   return offset;
@@ -5180,8 +5180,14 @@ static const value_string iec61850_DataAccessError_vals[] = {
 
 static int
 dissect_iec61850_DataAccessError(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gint branch_taken;
+
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+                                                &branch_taken);
+
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	private_data->DataAccessError = branch_taken;
+
 
   return offset;
 }
@@ -5257,10 +5263,14 @@ static const ber_choice_t Write_Response_item_choice[] = {
 
 static int
 dissect_iec61850_Write_Response_item(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gint branch_taken;
+
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  Write_Response_item_choice, hf_index, ett_iec61850_Write_Response_item,
-                                 NULL);
+                                 &branch_taken);
 
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	private_data->Success = branch_taken;
   return offset;
 }
 
@@ -7696,12 +7706,12 @@ dissect_iec61850_MMSpdu(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 
 /*--- End of included file: packet-iec61850-fn.c ---*/
-#line 259 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 260 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 
 /*
 * Dissect iec61850 PDUs inside a PPDU.
 */
-static int
+static int32_t
 dissect_iec61850(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, void* data _U_)
 {
 	int32_t offset = 0;
@@ -10501,7 +10511,7 @@ void proto_register_iec61850(void) {
         NULL, HFILL }},
 
 /*--- End of included file: packet-iec61850-hfarr.c ---*/
-#line 327 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 328 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	/* List of subtrees */
@@ -10729,7 +10739,7 @@ void proto_register_iec61850(void) {
     &ett_iec61850_FileAttributes,
 
 /*--- End of included file: packet-iec61850-ettarr.c ---*/
-#line 333 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 334 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	static ei_register_info ei_mms[] = {

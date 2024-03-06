@@ -317,4 +317,16 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 %(DEFAULT_BODY)s
 	private_data_add_moreCinfo_bstr(actx, tvb, old_offset);
 
+#.FN_BODY DataAccessError VAL_PTR=&branch_taken
+	gint branch_taken;
 
+%(DEFAULT_BODY)s
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	private_data->DataAccessError = branch_taken;
+
+#.FN_BODY Write-Response/_item VAL_PTR=&branch_taken
+	gint branch_taken;
+
+%(DEFAULT_BODY)s
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	private_data->Success = branch_taken;

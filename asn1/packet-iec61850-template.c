@@ -98,7 +98,7 @@ private_data_add_preCinfo(asn1_ctx_t *actx, guint32 val)
 	private_data->invokeID = val;
 }
 
-char*
+u_int8_t*
 private_data_get_preCinfo(asn1_ctx_t *actx)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
@@ -127,10 +127,11 @@ void
 private_data_add_moreCinfo_domain(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+
 	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
 				tvb, 0, tvb_reported_length_remaining(tvb, 0), ENC_STRING), BUFFER_SIZE_MORE);
-
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	
 }
 
 void
@@ -245,7 +246,7 @@ private_data_add_moreCinfo_array(asn1_ctx_t *actx, int dir)
 	(void) g_strlcat(private_data->moreCinfo, dir? "[ " : "] ", BUFFER_SIZE_MORE);
 }
 
-char*
+u_int8_t*
 private_data_get_moreCinfo(asn1_ctx_t *actx)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
@@ -260,7 +261,7 @@ private_data_get_moreCinfo(asn1_ctx_t *actx)
 /*
 * Dissect iec61850 PDUs inside a PPDU.
 */
-static int
+static int32_t
 dissect_iec61850(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, void* data _U_)
 {
 	int32_t offset = 0;
