@@ -183,10 +183,10 @@ void
 private_data_add_moreCinfo_ostr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	(void) g_strlcat(private_data->moreCinfo, "`", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, "'", BUFFER_SIZE_MORE);
 	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
 				tvb, offset, tvb_reported_length_remaining(tvb, offset), ENC_STR_HEX), BUFFER_SIZE_MORE);
-	(void) g_strlcat(private_data->moreCinfo, "` ", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, "' ", BUFFER_SIZE_MORE);
 }
 
 void
@@ -352,7 +352,7 @@ void proto_register_iec61850(void) {
 	/* Register iec-61850 protocol */
 	proto_iec61850 = proto_register_protocol(PNAME, PSNAME, PFNAME);
 	/* Register fields and subtrees */
-	register_iec61850_mappings(proto_iec61850);
+	register_iec61850_mappings(proto_iec61850, hf);
 	//proto_register_field_array(protoiec61850, hf, array_length(hf));
 	
 	//disector register
