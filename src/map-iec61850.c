@@ -650,7 +650,6 @@ int32_t map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx,
 								decoded = GetServerDirectory(tvb, offset, item, actx);
 								sessiondata_request->serviceName = "GetServerDirectory";
 								sessiondata_request->hf_name = hf_iec61850_GetServerDirectory;
-
 							}
 							else if(private_data->objectScope == 1)//domainspecific
 							{
@@ -860,7 +859,7 @@ int32_t CommandTerm(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t 
 }
 
 int32_t Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{//TODO: work out error mapping?
+{
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Error, tvb, offset, -1, ENC_NA);
@@ -883,7 +882,7 @@ int32_t Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
 }
 
 int32_t Reject(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{//TODO: work out reject error mapping
+{
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Reject, tvb, offset, -1, ENC_NA);
@@ -906,7 +905,7 @@ int32_t Reject(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx
 }
 
 int32_t Associate(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{//TODO: parse out supported services
+{
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Associate, tvb, offset, -1, ENC_NA);
@@ -1121,17 +1120,19 @@ int32_t GetNameList_response(tvbuff_t *tvb, int32_t offset, proto_item *item, as
     proto_tree *subtree=NULL;
 	u_int8_t * serviceName = NULL;
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-
+	int32_t hf_name;
 	if(val != NULL && val->serviceName != NULL)
 	{
 		serviceName = val->serviceName;
+		hf_name = val->hf_name;
 	}
 	else
 	{
 		serviceName = "GetNameList";
+		hf_name = hf_iec61850_GetNameList_response;
 	}
 
-	subitem = proto_tree_add_item(item, val->hf_name, tvb, offset, -1, ENC_NA);
+	subitem = proto_tree_add_item(item, hf_name, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s%s %s",	private_data_get_preCinfo(actx), serviceName," res", 
 		private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
@@ -1144,7 +1145,10 @@ int32_t GetNameList_response(tvbuff_t *tvb, int32_t offset, proto_item *item, as
 		data.tvb = tvb;
 		data.offset = subtree->finfo->start;
 		data.actx = actx;
-		data.request = (u_int8_t *)wmem_strbuf_get_str(val->data);
+		if(val != NULL)
+			data.request = (u_int8_t *)wmem_strbuf_get_str(val->data);
+		else
+			data.request = "";
 		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
 	}
 
@@ -1225,7 +1229,10 @@ int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 		data.tvb = tvb;
 		data.offset = subtree->finfo->start;
 		data.actx = actx;
-		data.request = (u_int8_t *)wmem_strbuf_get_str(val->data);
+		if(val != NULL)
+			data.request = (u_int8_t *)wmem_strbuf_get_str(val->data);
+		else
+			data.request = "";
 		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
 	}
 
@@ -1233,8 +1240,11 @@ int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 }
 
 int32_t SetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res, iec61850_value_req * val)
-{//TODO SetDataSetValues,SelectActiveSG,SelectEditSG,SetEditSGValue,ConfirmEditSGValues
-//SetBRCBValues,SetURCBValues,SetLCBValues,SetGoCBValues,SetGsCBValues
+{//TODO SetDataSetValues,
+//SelectActiveSG,SelectEditSG,SetEditSGValue,ConfirmEditSGValues
+//SetBRCBValues,SetURCBValues,
+//SetLCBValues,
+//SetGoCBValues,SetGsCBValues
 //Select, SelectWithValue, Cancel,Operate,TimeActivatedOperate
 	proto_item *subitem;
     proto_tree *subtree=NULL;
@@ -1254,7 +1264,10 @@ int32_t SetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 		data.tvb = tvb;
 		data.offset = subtree->finfo->start;
 		data.actx = actx;
-		data.request = (u_int8_t *)wmem_strbuf_get_str(val->data);
+		if(val != NULL)
+			data.request = (u_int8_t *)wmem_strbuf_get_str(val->data);
+		else
+			data.request = "";
 		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
 	}
 
