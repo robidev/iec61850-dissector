@@ -12,8 +12,8 @@
 #ifndef MAP_IEC61850_H
 #define MAP_IEC61850_H
 
-void register_iec61850_mappings(const int parent,hf_register_info * mms_hf);
-int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, proto_tree *parent_tree, proto_tree *mms_tree, const int proto_iec61850);
+void register_iec61850_mappings(const int32_t parent,hf_register_info * mms_hf);
+int32_t map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, proto_tree *parent_tree, proto_tree *mms_tree, const int32_t proto_iec61850);
 
 #endif  /* MAP_IEC61850_H */
 
