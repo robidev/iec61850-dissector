@@ -68,6 +68,20 @@ static int hf_iec61850_DeleteFile = -1;
 static int hf_iec61850_GetServerDirectory_FILE = -1;
 static int hf_iec61850_null = -1;
 
+static int hf_iec61850_QualityC0 = -1;
+static int hf_iec61850_QualityC1 = -1;
+static int hf_iec61850_Quality20 = -1;
+static int hf_iec61850_Quality10 = -1;
+static int hf_iec61850_Quality8 = -1;
+static int hf_iec61850_Quality4 = -1;
+static int hf_iec61850_Quality2 = -1;
+static int hf_iec61850_Quality1 = -1;
+static int hf_iec61850_Quality0080 = -1;
+static int hf_iec61850_Quality0040 = -1;
+static int hf_iec61850_Quality0020 = -1;
+static int hf_iec61850_Quality0010 = -1;
+static int hf_iec61850_Quality0008 = -1;
+
 static gint ett_iec61850 = -1;
 
 static expert_field ei_iec61850_mal_timeofday_encoding = EI_INIT;
@@ -91,7 +105,7 @@ int GetLogicalDeviceDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_
 int GetJournalDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx);
 int GetNameList_response(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, iec61850_value_req *val);
 int GetDataDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
-int GetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
+int GetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res,iec61850_value_req * val);
 int SetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
 int GetDataSetDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
 int CreateDataSet(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res);
@@ -133,6 +147,26 @@ iec61850_hash (gconstpointer v)
 	val = ((conv<<32)&0xffffffff00000000 || invokeID&0x00000000ffffffff);
 	// hash it to an 32 bit int;
 	return wmem_int64_hash(&val);
+}
+
+
+static const value_string enum_Validity[] = {
+    {0, "Good"},
+    {1, "Invalid"},
+    {2, "Reserved"},
+    {3, "Questionable"},
+    {0, NULL}
+};
+
+static const value_string enum_Source[] = {
+    {0, "Process"},
+    {1, "Substituted"},
+    {0, NULL}
+};
+
+void func(gchar * a, guint32 b)
+{
+
 }
 
 void register_iec61850_mappings(const int parent, hf_register_info * mms_hf)
@@ -477,7 +511,59 @@ void register_iec61850_mappings(const int parent, hf_register_info * mms_hf)
         		NULL, 					// 
 				HFILL 					// ref type
 			}
-		}
+		},
+		{ &hf_iec61850_QualityC0,
+		{ "Validity", "iec61850.Validity",
+			FT_UINT8, BASE_HEX, VALS(enum_Validity), 0xC0,
+			"Validity", HFILL }},
+		{ &hf_iec61850_QualityC1,
+		{ "v1", "iec61850.V1",
+			FT_BOOLEAN, 8, NULL, 0xc0,
+			NULL, HFILL }},
+		{ &hf_iec61850_Quality20,
+		{ "Overflow", "iec61850.Overflow",
+			FT_BOOLEAN, 8, NULL, 0x20,
+			NULL, HFILL }},
+		{ &hf_iec61850_Quality10,
+		{ "OutofRange", "iec61850.OutofRange",
+			FT_BOOLEAN, 8, NULL, 0x10,
+			NULL, HFILL }},
+		{ &hf_iec61850_Quality8,
+		{ "BadReference", "iec61850.BadReference",
+			FT_BOOLEAN, 8, NULL, 0x08,
+			NULL, HFILL }},
+		{ &hf_iec61850_Quality4,
+		{ "Oscillatory", "iec61850.Oscillatory",
+			FT_BOOLEAN, 8, NULL, 0x04,
+			NULL, HFILL }},
+		{ &hf_iec61850_Quality2,
+		{ "Failure", "iec61850.Failure",
+			FT_BOOLEAN, 8, NULL, 0x02,
+			NULL, HFILL }},
+		{ &hf_iec61850_Quality1,
+		{ "OldData", "iec61850.OldData",
+			FT_BOOLEAN, 8, NULL, 0x01,
+			NULL, HFILL }},
+		{ &hf_iec61850_Quality0080,
+		{ "Inconsistent", "iec61850.Inconsistent",
+			FT_BOOLEAN, 8, NULL, 0x80,
+			NULL, HFILL }},
+		{ &hf_iec61850_Quality0040,
+		{ "Inaccurate", "iec61850.Inaccurate",
+			FT_BOOLEAN, 8, NULL, 0x40,
+			NULL, HFILL }},
+		{ &hf_iec61850_Quality0020,
+		{ "Source", "iec61850.Source",
+			FT_UINT8, BASE_HEX, VALS(enum_Source), 0x20,
+			NULL, HFILL }},
+		{ &hf_iec61850_Quality0010,
+		{ "Test", "iec61850.Test",
+			FT_BOOLEAN, 8, NULL, 0x10,
+			NULL, HFILL }},
+		{ &hf_iec61850_Quality0008,
+		{ "OperatorBlocked", "iec61850.OperatorBlocked",
+			FT_BOOLEAN, 8, NULL, 0x08,
+			NULL, HFILL }}
     };
 
 	/* List of subtrees */
@@ -508,17 +594,43 @@ struct _tree_data {
 	proto_tree *tree;
 	tvbuff_t *tvb;
 	u_int32_t offset;
+	asn1_ctx_t *actx;
+	u_int8_t * request;
 } typedef tree_data;
+
+static int * const Quality_bits[] = {
+&hf_iec61850_QualityC0,
+&hf_iec61850_Quality20,
+&hf_iec61850_Quality10,
+&hf_iec61850_Quality8,
+&hf_iec61850_Quality4,
+&hf_iec61850_Quality2,
+&hf_iec61850_Quality1,
+NULL,
+&hf_iec61850_Quality0080,
+&hf_iec61850_Quality0040,
+&hf_iec61850_Quality0020,
+&hf_iec61850_Quality0010,
+&hf_iec61850_Quality0008,
+  NULL
+};
 
 void proto_tree_print_tree(proto_node *node, gpointer data)
 {
-	tree_data * pdata = (tree_data *)data;
-	proto_tree *tree = pdata->tree;
-	tvbuff_t *tvb = pdata->tvb;
-	field_info   *fi    = PNODE_FINFO(node);
+	proto_tree *tree;
+	tvbuff_t *tvb;
 	proto_item *item = NULL;
-
+	u_int32_t offset = 0;
+	field_info *fi = PNODE_FINFO(node);
+	tree_data * pdata = (tree_data *)data;
+	g_assert(pdata);
     g_assert(fi);
+
+	tree = pdata->tree;
+	tvb = pdata->tvb;
+
+	offset =  fi->start - pdata->offset;
+
 	if(fi != NULL && fi->hfinfo != NULL)
 	{
 		if(fi->hfinfo->name != NULL)
@@ -539,29 +651,32 @@ void proto_tree_print_tree(proto_node *node, gpointer data)
 					{
 						break;
 					}
-					item = proto_tree_add_item(tree, fi->hfinfo->id,tvb, fi->start-pdata->offset, fi->length,  0); 
+					item = proto_tree_add_item(tree, fi->hfinfo->id,tvb, offset, fi->length,  0); 
 					break;
 				case FT_BOOLEAN:
 					//ws_message("%*s%s: %s", pdata->level," ", fi->hfinfo->name, fi->value.value.uinteger? "true" : "false");
-					item = proto_tree_add_boolean(tree, fi->hfinfo->id, tvb, fi->start-pdata->offset, fi->length,  fi->value.value.uinteger); 
+					item = proto_tree_add_boolean(tree, fi->hfinfo->id, tvb, offset, fi->length,  fi->value.value.uinteger? fi->hfinfo->bitmask : 0); 
 					break;
 				case FT_UINT8:
 				case FT_UINT16:
 				case FT_UINT32:
 					//TODO, for invokeID, add it to the parent line
 					//ws_message("%*s%s: %d", pdata->level," ", fi->hfinfo->name, fi->value.value.uinteger); 
-					item = proto_tree_add_uint(tree, fi->hfinfo->id,tvb, fi->start-pdata->offset, fi->length,  fi->value.value.uinteger); 
+					if(!g_str_equal(fi->hfinfo->name, "Padding"))
+					{
+						item = proto_tree_add_uint(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.uinteger); 
+					}
 					break;
 				case FT_CHAR:
 				case FT_INT8:
 				case FT_INT16:
 				case FT_INT32:
 					//ws_message("%*s%s: %i", pdata->level," ", fi->hfinfo->name, fi->value.value.sinteger);
-					item = proto_tree_add_int(tree, fi->hfinfo->id,tvb, fi->start-pdata->offset, fi->length,  fi->value.value.sinteger); 
+					item = proto_tree_add_int(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.sinteger); 
 					break;
 				case FT_STRING:
 					//ws_message("%*s%s: %s", pdata->level," ", fi->hfinfo->name, fi->value.value.string); 
-					item = proto_tree_add_string(tree, fi->hfinfo->id,tvb, fi->start-pdata->offset, fi->length,  fi->value.value.string);
+					item = proto_tree_add_string(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.string);
 					break;
 				case FT_BYTES:
 				{
@@ -574,7 +689,14 @@ void proto_tree_print_tree(proto_node *node, gpointer data)
 					}
 					ws_message("%*s%s: (%i) %s", pdata->level," ", fi->hfinfo->name, fi->value.value.bytes->len, wmem_strbuf_get_str(strbuf)); 
 					*/
-					proto_tree_add_bytes(tree, fi->hfinfo->id,tvb, fi->start-pdata->offset, fi->value.value.bytes->len, fi->value.value.bytes->data);//,"%s",wmem_strbuf_get_str(strbuf));
+					if(g_str_equal(fi->hfinfo->name, "bit-string"))// && g_str_has_suffix(pdata->request,"$q"))
+					{
+						dissect_ber_bitstring(1, pdata->actx, tree, tvb, offset-1, Quality_bits, (fi->length * 8), fi->hfinfo->id, ett_iec61850, NULL);
+					}
+					else
+					{
+						proto_tree_add_bytes(tree, fi->hfinfo->id,tvb, offset, fi->value.value.bytes->len, fi->value.value.bytes->data);//,"%s",wmem_strbuf_get_str(strbuf));
+					}
 					break;
 				}
 				default:
@@ -767,7 +889,18 @@ int map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, pro
 						break;
 					case 4://read -> GetDataValue
 						item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
-						decoded = GetDataValue(tvb, offset, item, actx, private_data->MMSpdu);
+						if(private_data->MMSpdu == 0) // request
+						{
+							sessiondata.data = wmem_strbuf_new(wmem_file_scope(),private_data->moreCinfo);
+							g_strstrip((gchar *)wmem_strbuf_get_str(sessiondata.data));
+							store_invoke_data(pinfo, private_data->invokeID, &sessiondata);
+							decoded = GetDataValue(tvb, offset, item, actx, private_data->MMSpdu, &sessiondata);
+						}
+						else
+						{
+							iec61850_value_req * val = load_invoke_data(pinfo, private_data->invokeID);
+							decoded = GetDataValue(tvb, offset, item, actx, private_data->MMSpdu, val);
+						}
 						break;
 					case 5://write -> SetDataValue
 						item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
@@ -1221,7 +1354,7 @@ int GetDataDirectory(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *ac
 	return 1;
 }
 
-int GetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res)
+int GetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, int res, iec61850_value_req * val)
 {//TODO GetAllDataValues(alternate access), ,GetDataSetValues,GetEditSGValue,GetSGCBValues,
 //GetBRCBValues,GetURCBValues,GetLCBValues,GetLogStatusValues,GetGoCBValues
 //GetGsCBValues, 
@@ -1242,6 +1375,8 @@ int GetDataValue(tvbuff_t *tvb, int offset, proto_item *item, asn1_ctx_t *actx, 
 		data.tree = subtree;
 		data.tvb = tvb;
 		data.offset = subtree->finfo->start;
+		data.actx = actx;
+		data.request = (u_int8_t *)wmem_strbuf_get_str(val->data);
 		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
 	}
 
