@@ -198,13 +198,13 @@ private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
 	size_t berlength = tvb_reported_length_remaining(tvb, 0)-1;
 	if(berlength < 1)
 	{
-		ws_error("could not decode bitstring, ber length too small");
+		ws_warning("could not decode bitstring, ber length too small");
 		return;
 	}
 	u_int32_t padding = tvb_get_guint8(tvb, 0);
 	if(padding > 7)
 	{
-		ws_error("could not decode bitstring, padding value too large");
+		ws_warning("could not decode bitstring, padding value too large");
 		return;
 	}
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);

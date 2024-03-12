@@ -5,7 +5,7 @@
 
 /* Input file: packet-iec61850-template.c */
 
-#line 1 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+// 1 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 /* packet-iec61850_asn1.c
  *
  * Ronnie Sahlberg 2005
@@ -55,7 +55,7 @@ static int32_t proto_mms = -1;
 
 
 /*--- Included file: packet-iec61850-hf.c ---*/
-#line 1 "./wireshark_dissector/asn1/packet-iec61850-hf.c"
+// 1 "./wireshark_dissector/asn1/packet-iec61850-hf.c"
 static int hf_iec61850_confirmed_RequestPDU = -1;  /* Confirmed_RequestPDU */
 static int hf_iec61850_confirmed_ResponsePDU = -1;  /* Confirmed_ResponsePDU */
 static int hf_iec61850_confirmed_ErrorPDU = -1;   /* Confirmed_ErrorPDU */
@@ -742,13 +742,13 @@ static int hf_iec61850_Transitions_idle_to_active = -1;
 static int hf_iec61850_Transitions_any_to_deleted = -1;
 
 /*--- End of included file: packet-iec61850-hf.c ---*/
-#line 49 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+// 49 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 
 /* Initialize the subtree pointers */
 static gint ettmms = -1;
 
 /*--- Included file: packet-iec61850-ett.c ---*/
-#line 1 "./wireshark_dissector/asn1/packet-iec61850-ett.c"
+// 1 "./wireshark_dissector/asn1/packet-iec61850-ett.c"
 static gint ett_iec61850_MMSpdu = -1;
 static gint ett_iec61850_Confirmed_RequestPDU = -1;
 static gint ett_iec61850_SEQUENCE_OF_Modifier = -1;
@@ -968,7 +968,7 @@ static gint ett_iec61850_DirectoryEntry = -1;
 static gint ett_iec61850_FileAttributes = -1;
 
 /*--- End of included file: packet-iec61850-ett.c ---*/
-#line 53 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+// 53 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 
 static expert_field ei_iec61850_mal_timeofday_encoding = EI_INIT;
 static expert_field ei_iec61850_mal_utctime_encoding = EI_INIT;
@@ -1117,13 +1117,13 @@ private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
 	size_t berlength = tvb_reported_length_remaining(tvb, 0)-1;
 	if(berlength < 1)
 	{
-		ws_error("could not decode bitstring, ber length too small");
+		ws_warning("could not decode bitstring, ber length too small");
 		return;
 	}
 	u_int32_t padding = tvb_get_guint8(tvb, 0);
 	if(padding > 7)
 	{
-		ws_error("could not decode bitstring, padding value too large");
+		ws_warning("could not decode bitstring, padding value too large");
 		return;
 	}
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
@@ -1177,7 +1177,7 @@ private_data_get_moreCinfo(asn1_ctx_t *actx)
 
 
 /*--- Included file: packet-iec61850-fn.c ---*/
-#line 1 "./wireshark_dissector/asn1/packet-iec61850-fn.c"
+// 1 "./wireshark_dissector/asn1/packet-iec61850-fn.c"
 /*--- Cyclic dependencies ---*/
 
 /* TypeSpecification -> TypeSpecification/array -> TypeSpecification */
@@ -7706,7 +7706,7 @@ dissect_iec61850_MMSpdu(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 
 /*--- End of included file: packet-iec61850-fn.c ---*/
-#line 260 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+// 260 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 
 /*
 * Dissect iec61850 PDUs inside a PPDU.
@@ -7776,7 +7776,7 @@ void proto_register_iec61850(void) {
 		//generated items
 
 /*--- Included file: packet-iec61850-hfarr.c ---*/
-#line 1 "./wireshark_dissector/asn1/packet-iec61850-hfarr.c"
+// 1 "./wireshark_dissector/asn1/packet-iec61850-hfarr.c"
     { &hf_iec61850_confirmed_RequestPDU,
       { "confirmed-RequestPDU", "iec61850.confirmed_RequestPDU_element",
         FT_NONE, BASE_NONE, NULL, 0,
@@ -10511,7 +10511,7 @@ void proto_register_iec61850(void) {
         NULL, HFILL }},
 
 /*--- End of included file: packet-iec61850-hfarr.c ---*/
-#line 328 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+// 328 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	/* List of subtrees */
@@ -10519,7 +10519,7 @@ void proto_register_iec61850(void) {
 		&ettmms,
 
 /*--- Included file: packet-iec61850-ettarr.c ---*/
-#line 1 "./wireshark_dissector/asn1/packet-iec61850-ettarr.c"
+// 1 "./wireshark_dissector/asn1/packet-iec61850-ettarr.c"
     &ett_iec61850_MMSpdu,
     &ett_iec61850_Confirmed_RequestPDU,
     &ett_iec61850_SEQUENCE_OF_Modifier,
@@ -10739,7 +10739,7 @@ void proto_register_iec61850(void) {
     &ett_iec61850_FileAttributes,
 
 /*--- End of included file: packet-iec61850-ettarr.c ---*/
-#line 334 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+// 334 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	static ei_register_info ei_mms[] = {

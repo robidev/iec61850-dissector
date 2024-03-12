@@ -824,7 +824,7 @@ int32_t map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx,
 				break;
 			}
 			default:
-				ws_error("Not an IEC61850 PDU: %i", private_data->MMSpdu);
+				ws_warning("Not an IEC61850 PDU: %i", private_data->MMSpdu);
 				//proto_tree_add_item(item, hf_iec61850_null, tvb, offset, -1, ENC_NA);
 				//proto_tree_add_expert(tree, pinfo, &ei_iec61850_zero_pdu, tvb, offset, -1);
 		}
@@ -1204,10 +1204,19 @@ int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 	{
 		fieldName = "GetLCBValues";
 	}
-	if(0)//TODO GetAllDataValues(alternate access),
+	/*
+	the read request Variable AccessSpecification shall specify alternateAccess. 
+	The accessSelection of the alternate access specification shall specify component. 
+	The value of the component shall be the value of the functional constraint being specified.
+	*/
+	if(0)//private_data->VariableAccessSpecification)//TODO GetAllDataValues(alternate access),
 	{
 		fieldName = "GetAllDataValues";
 	}
+	/*
+	specificationWithResultShall be TRUE
+	variableAccessSpecificationShall be constrained to variableListName
+	*/
 	if(0)//TODO //GetDataSetValues
 	{
 		fieldName = "GetDataSetValues";
@@ -1569,7 +1578,7 @@ static void store_invoke_data(packet_info *pinfo, u_int32_t invokeID, iec61850_v
 	conversation_t * conversation = find_or_create_conversation(pinfo);
 	if (conversation == NULL)
 	{
-		ws_error("could not allocate conversation");
+		ws_warning("could not allocate conversation");
 		return;
 	}
 	key.conversation = conversation->conv_index;
@@ -1581,7 +1590,7 @@ static void store_invoke_data(packet_info *pinfo, u_int32_t invokeID, iec61850_v
 		iec61850_key_req *new_key = wmem_alloc(wmem_file_scope(), sizeof(iec61850_key_req));
 		if(new_key == NULL)
 		{
-			ws_error("could not allocate key");
+			ws_warning("could not allocate key");
 			return;
 		}
 		*new_key = key;
@@ -1589,8 +1598,8 @@ static void store_invoke_data(packet_info *pinfo, u_int32_t invokeID, iec61850_v
 		request_val = wmem_alloc(wmem_file_scope(), sizeof(iec61850_value_req));
 		if(request_val == NULL)
 		{
-		ws_error("could not allocate value");
-		return;
+			ws_warning("could not allocate value");
+			return;
 		}
 		request_val->serviceName = data->serviceName;
 		request_val->hf_name = data->hf_name;
