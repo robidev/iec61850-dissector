@@ -178,15 +178,68 @@ private_data_add_moreCinfo_vstr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
 	(void) g_strlcat(private_data->moreCinfo, "\" ", BUFFER_SIZE_MORE);
 }
 
+int32_t is_text(u_int8_t * str)
+{
+  if(g_str_is_ascii(str)){
+    int i = 0;
+    for(i = 0; i < strlen(str); i++){
+      if( str[i] < 0x20){
+        return 0;
+      }
+    }
+    return 1;
+  }
+  return 0;
+}
 
 void
 private_data_add_moreCinfo_ostr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
 {
+	u_int8_t * ostr = NULL;
+	size_t len;
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	(void) g_strlcat(private_data->moreCinfo, "'", BUFFER_SIZE_MORE);
-	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
-				tvb, offset, tvb_reported_length_remaining(tvb, offset), ENC_STR_HEX), BUFFER_SIZE_MORE);
-	(void) g_strlcat(private_data->moreCinfo, "' ", BUFFER_SIZE_MORE);
+
+	ostr = tvb_get_string_enc(actx->pinfo->pool, tvb, offset, tvb_reported_length_remaining(tvb, offset), ENC_ASCII);
+	len = strlen(ostr);
+	if(len > 0)
+	{
+		int32_t i;
+    u_int8_t temp[4] = "";
+    (void) g_strlcat(private_data->moreCinfo, "'", BUFFER_SIZE_MORE);
+    for (i = 0; i < len; i ++) {
+      snprintf(temp, sizeof(temp),"%02x", ostr[i]);
+      (void) g_strlcat(private_data->moreCinfo, temp, BUFFER_SIZE_MORE);
+    }
+    (void) g_strlcat(private_data->moreCinfo, "'", BUFFER_SIZE_MORE);
+
+		if(is_text(ostr) == TRUE)
+		{
+	    (void) g_strlcat(private_data->moreCinfo, "( ", BUFFER_SIZE_MORE);
+			(void) g_strlcat(private_data->moreCinfo, ostr, BUFFER_SIZE_MORE);
+      (void) g_strlcat(private_data->moreCinfo, " )", BUFFER_SIZE_MORE);
+		}
+    (void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	}
+ 	else
+	  (void) g_strlcat(private_data->moreCinfo, "'' ", BUFFER_SIZE_MORE);
+}
+
+void print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_t bytelen, u_int32_t padding)
+{
+    u_int8_t byte;
+    int32_t i, j, end = 0;
+	wmem_strbuf_append_printf(strbuf,"b'");
+    for (i = 0; i < bytelen; i++) {
+		if(i == bytelen-1) //padding applies
+			end = padding;
+		else
+			end = 0;
+        for (j = 7; j >= end; j--) {
+            byte = (bitstring[i] >> j) & 1;
+            wmem_strbuf_append_printf(strbuf, "%u", byte);
+        }
+    }
+	wmem_strbuf_append_printf(strbuf,"'");
 }
 
 void
@@ -196,9 +249,11 @@ private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
 
 	size_t bytelen = 0;
 	size_t berlength = tvb_reported_length_remaining(tvb, 0)-1;
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	if(berlength < 1)
 	{
 		ws_warning("could not decode bitstring, ber length too small");
+    	(void) g_strlcat(private_data->moreCinfo, "b'' ", BUFFER_SIZE_MORE); // it may be valid to leave the field length zero, implying all data is zero
 		return;
 	}
 	u_int32_t padding = tvb_get_guint8(tvb, 0);
@@ -207,17 +262,18 @@ private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
 		ws_warning("could not decode bitstring, padding value too large");
 		return;
 	}
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	u_int8_t *bitstring = tvb_get_bits_array(actx->pinfo->pool,tvb, 8, (berlength*8)-padding,&bytelen, ENC_BIG_ENDIAN);
 
 	int32_t i;
 	wmem_strbuf_t *strbuf;
 	strbuf = wmem_strbuf_new(pinfo->pool, "");
 
-	for (i = 0; i < bytelen; i++)
+	/*for (i = 0; i < bytelen; i++)
 	{
 		wmem_strbuf_append_printf(strbuf, "%02x", bitstring[i]);
 	}
+	wmem_strbuf_append_printf(strbuf,"->");*/
+	print_bytes(strbuf,bitstring,bytelen, padding);
 
 	(void) g_strlcat(private_data->moreCinfo, wmem_strbuf_get_str(strbuf), BUFFER_SIZE_MORE);
 	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);

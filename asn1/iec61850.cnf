@@ -330,3 +330,8 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 %(DEFAULT_BODY)s
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	private_data->Success = branch_taken;
+
+#.FN_BODY AlternateAccess
+%(DEFAULT_BODY)s
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	private_data->AlternateAccess = 1;

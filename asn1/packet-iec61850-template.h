@@ -23,6 +23,7 @@ typedef struct iec61850_private_data_t
     int32_t Service;//confirmed/unconfirmed
 	int32_t AccessResult; // success/failure
 	int32_t VariableAccessSpecification; //RPT/CMDTerm
+	int32_t AlternateAccess; // alternate access defined
 	int32_t ObjectName;//0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific)
 	int32_t objectScope;////0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific)
 	int32_t objectClass;//VariableName,NamedVariable, journal

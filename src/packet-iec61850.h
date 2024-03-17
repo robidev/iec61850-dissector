@@ -31,6 +31,7 @@ typedef struct iec61850_private_data_t
     int32_t Service;//confirmed/unconfirmed
 	int32_t AccessResult; // success/failure
 	int32_t VariableAccessSpecification; //RPT/CMDTerm
+	int32_t AlternateAccess; // alternate access defined
 	int32_t ObjectName;//0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific)
 	int32_t objectScope;////0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific)
 	int32_t objectClass;//VariableName,NamedVariable, journal
@@ -60,7 +61,7 @@ u_int8_t* private_data_get_moreCinfo(asn1_ctx_t *actx);
 #line 1 "./wireshark_dissector/asn1/packet-iec61850-exp.h"
 
 /*--- End of included file: packet-iec61850-exp.h ---*/
-#line 51 "./wireshark_dissector/asn1/packet-iec61850-template.h"
+#line 52 "./wireshark_dissector/asn1/packet-iec61850-template.h"
 
 #endif  /* PACKET_IEC61850_H */
 

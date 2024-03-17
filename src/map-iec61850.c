@@ -73,6 +73,7 @@ static int32_t hf_iec61850_DeleteDataSet = -1;
 static int32_t hf_iec61850_QueryLog = -1;
 static int32_t hf_iec61850_SetFile = -1;
 static int32_t hf_iec61850_GetFile = -1;
+static int32_t hf_iec61850_OpenFile = -1;
 static int32_t hf_iec61850_FileRead = -1;
 static int32_t hf_iec61850_FileClose = -1;
 static int32_t hf_iec61850_DeleteFile = -1;
@@ -718,6 +719,10 @@ int32_t map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx,
 						item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
 						decoded = SetFile(tvb, offset, item, actx, private_data->MMSpdu);
 						break;
+					case 47://GetFile response
+						item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
+						decoded = GetFile(tvb, offset, item, actx, private_data->MMSpdu);
+						break;
 					case 72://GetFile						72 fileOpen, 
 						item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
 						decoded = GetFile(tvb, offset, item, actx, private_data->MMSpdu);
@@ -1067,7 +1072,7 @@ int32_t GetServerDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1
 }
 
 int32_t GetLogicalDeviceDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{//TODO GetLogicalNodeDirectory
+{//TODO GetLogicalNodeDirectory vs GetLogicalDeviceDirectory
 	proto_item *subitem;
     proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_GetLogicalDeviceDirectory, tvb, offset, -1, ENC_NA);
@@ -1083,7 +1088,7 @@ int32_t GetLogicalDeviceDirectory(tvbuff_t *tvb, int32_t offset, proto_item *ite
 		data.tvb = tvb;
 		data.offset = subtree->finfo->start;
 		data.actx = actx;
-		data.request = "";//TODO
+		data.request = "";
 		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
 	}
 
@@ -1107,7 +1112,7 @@ int32_t GetJournalDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn
 		data.tvb = tvb;
 		data.offset = subtree->finfo->start;
 		data.actx = actx;
-		data.request = "";//TODO
+		data.request = "";
 		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
 	}
 
@@ -1172,7 +1177,7 @@ int32_t GetDataDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_c
 		data.tvb = tvb;
 		data.offset = subtree->finfo->start;
 		data.actx = actx;
-		data.request = "";//TODO
+		data.request = "";
 		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
 	}
 
@@ -1186,7 +1191,10 @@ int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 
 	u_int8_t * fieldName = "GetDataValue";
-	const u_int8_t * request = wmem_strbuf_get_str(val->data);
+	u_int8_t * request = "";
+
+	if(val != NULL)
+		request = (u_int8_t *)wmem_strbuf_get_str(val->data);
 
 	if(g_strrstr(request,"$BR$") || g_strrstr(request,"$RP$"))//GetBRCBValues,GetURCBValues,
 	{
@@ -1204,20 +1212,26 @@ int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 	{
 		fieldName = "GetLCBValues";
 	}
+	if(g_str_has_suffix(request,"$SBO") )//Select,
+	{
+		fieldName = "Select";
+		if(g_str_has_suffix(private_data->moreCinfo, "\"\" "))
+			private_data->Success = 0; //empty SBO means failure
+	}
 	/*
 	the read request Variable AccessSpecification shall specify alternateAccess. 
 	The accessSelection of the alternate access specification shall specify component. 
 	The value of the component shall be the value of the functional constraint being specified.
 	*/
-	if(0)//private_data->VariableAccessSpecification)//TODO GetAllDataValues(alternate access),
+	if(private_data->AlternateAccess == 1)//GetAllDataValues(alternate access),
 	{
 		fieldName = "GetAllDataValues";
 	}
 	/*
-	specificationWithResultShall be TRUE
-	variableAccessSpecificationShall be constrained to variableListName
+	specificationWithResult Shall be TRUE
+	variableAccessSpecification Shall be constrained to variableListName
 	*/
-	if(0)//TODO //GetDataSetValues
+	if(private_data->VariableAccessSpecification == 1) //GetDataSetValues
 	{
 		fieldName = "GetDataSetValues";
 	}
@@ -1249,17 +1263,52 @@ int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 }
 
 int32_t SetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res, iec61850_value_req * val)
-{//TODO SetDataSetValues,
-//SelectActiveSG,SelectEditSG,SetEditSGValue,ConfirmEditSGValues
-//SetBRCBValues,SetURCBValues,
-//SetLCBValues,
-//SetGoCBValues,SetGsCBValues
-//Select, SelectWithValue, Cancel,Operate,TimeActivatedOperate
+{
 	proto_item *subitem;
     proto_tree *subtree=NULL;
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	u_int8_t * fieldName = "SetDataValue";
+	u_int8_t * request = "";
+
+	if(val != NULL)
+		request = (u_int8_t *)wmem_strbuf_get_str(val->data);
+
+	if(g_strrstr(request,"$BR$") || g_strrstr(request,"$RP$"))//SetBRCBValues,SetURCBValues,
+	{
+		fieldName = "SetRCBValues";
+	}
+	if(g_strrstr(request,"$GO$") )//SetGoCBValues, SetGsCBValues
+	{
+		fieldName = "SetGCBValues";
+	}
+	if(g_strrstr(request,"$SG$") )//SelectActiveSG,SelectEditSG,SetEditSGValue,ConfirmEditSGValues
+	{
+		fieldName = "SetSGCBValues";
+	}
+	if(g_strrstr(request,"$LG$") )//SetLCBValues
+	{
+		fieldName = "SetLCBValues";
+	}
+	if(private_data->VariableAccessSpecification == 1) //SetDataSetValues
+	{
+		fieldName = "SetDataSetValues";
+	}
+	if(g_strrstr(request,"$SBOw ") )//SelectWithValue, 
+	{
+		fieldName = "SelectWithValue";
+	}
+	if(g_strrstr(request,"$Cancel ") )//Cancel,
+	{
+		fieldName = "Cancel";
+	}
+	if(g_strrstr(request,"$Oper ") )// Operate,TimeActivatedOperate
+	{
+		fieldName = "Operate";
+	}
+	val->serviceName = fieldName;
+
 	subitem = proto_tree_add_item(item, hf_iec61850_SetDataValue, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s %s",	private_data_get_preCinfo(actx), "SetDataValue", 
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s %s",	private_data_get_preCinfo(actx), fieldName, 
 		res? "res" : "req", 
 		res? (private_data->Success? "Success" : "Failure") : "", 
 		private_data_get_moreCinfo(actx));
@@ -1939,6 +1988,19 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
       		{ 
 				"GetFile", 			// name
 				"iec61850.GetFile",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_OpenFile,
+      		{ 
+				"OpenFile", 			// name
+				"iec61850.OpenFile",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
