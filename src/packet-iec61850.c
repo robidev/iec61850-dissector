@@ -1043,6 +1043,16 @@ private_data_add_moreCinfo_itemid(asn1_ctx_t *actx, tvbuff_t *tvb)
 }
 
 void
+private_data_add_moreCinfo_vmd(asn1_ctx_t *actx, tvbuff_t *tvb)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, "<", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
+				tvb, 0, tvb_reported_length_remaining(tvb, 0), ENC_STRING), BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, "> ", BUFFER_SIZE_MORE);
+}
+
+void
 private_data_add_moreCinfo_domain(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
@@ -1294,6 +1304,10 @@ dissect_iec61850_Identifier(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int of
 		{
 			private_data_add_moreCinfo_itemid(actx,tvb);
 		}
+	}
+	else if (hf_index == hf_iec61850_vmd_specific)
+	{
+		private_data_add_moreCinfo_vmd(actx,tvb);			
 	}
 	else
 	{
@@ -7809,7 +7823,7 @@ dissect_iec61850_MMSpdu(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 
 /*--- End of included file: packet-iec61850-fn.c ---*/
-#line 324 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 334 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 
 /*
 * Dissect iec61850 PDUs inside a PPDU.
@@ -10614,7 +10628,7 @@ void proto_register_iec61850(void) {
         NULL, HFILL }},
 
 /*--- End of included file: packet-iec61850-hfarr.c ---*/
-#line 392 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 402 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	/* List of subtrees */
@@ -10842,7 +10856,7 @@ void proto_register_iec61850(void) {
     &ett_iec61850_FileAttributes,
 
 /*--- End of included file: packet-iec61850-ettarr.c ---*/
-#line 398 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 408 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	static ei_register_info ei_mms[] = {

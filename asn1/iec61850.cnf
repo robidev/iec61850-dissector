@@ -244,6 +244,10 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 			private_data_add_moreCinfo_itemid(actx,tvb);
 		}
 	}
+	else if (hf_index == hf_iec61850_vmd_specific)
+	{
+		private_data_add_moreCinfo_vmd(actx,tvb);			
+	}
 	else
 	{
 		private_data_add_moreCinfo_domain(actx,tvb);

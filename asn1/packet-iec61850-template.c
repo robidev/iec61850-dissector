@@ -124,6 +124,16 @@ private_data_add_moreCinfo_itemid(asn1_ctx_t *actx, tvbuff_t *tvb)
 }
 
 void
+private_data_add_moreCinfo_vmd(asn1_ctx_t *actx, tvbuff_t *tvb)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, "<", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
+				tvb, 0, tvb_reported_length_remaining(tvb, 0), ENC_STRING), BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, "> ", BUFFER_SIZE_MORE);
+}
+
+void
 private_data_add_moreCinfo_domain(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);

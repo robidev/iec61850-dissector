@@ -907,6 +907,18 @@ int32_t Unconfirmed_RPT(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ct
 	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
 		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s", "Unconfirmed ", private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	if(g_mms_tree != NULL)
+	{
+		tree_data data;
+		data.level =1;
+		data.tree = subtree;
+		data.tvb = tvb;
+		data.offset = subtree->finfo->start;
+		data.actx = actx;
+		data.request = "RPT";
+		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
+	}
 	return 1;
 }
 
@@ -917,6 +929,18 @@ int32_t CommandTerm(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t 
 	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
 		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s", "Unconfirmed-CommandTermination ", private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	if(g_mms_tree != NULL)
+	{
+		tree_data data;
+		data.level =1;
+		data.tree = subtree;
+		data.tvb = tvb;
+		data.offset = subtree->finfo->start;
+		data.actx = actx;
+		data.request = "CmdTerm";
+		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
+	}
 	return 1;
 }
 
