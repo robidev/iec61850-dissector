@@ -175,12 +175,18 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 
 #.FN_BODY UtcTime
 
+	guint8 quality;
 	guint32 len;
 	guint32 seconds;
 	guint32	fraction;
 	guint32 nanoseconds;
 	nstime_t ts;
 	gchar *	ptime;
+	gchar * timestring;
+
+	ws_assert(actx->pinfo->pool);
+	timestring = wmem_alloc0(actx->pinfo->pool, BUFFER_SIZE_MORE );
+	ws_assert(timestring);
 
 	len = tvb_reported_length_remaining(tvb, offset);
 
@@ -204,11 +210,14 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 
 	ptime = abs_time_to_str(actx->pinfo->pool, &ts, ABSOLUTE_TIME_UTC, TRUE);
 
+	quality = tvb_get_guint8(tvb, offset+7);
+	snprintf(timestring, BUFFER_SIZE_MORE, "%s,q:%02x", ptime, quality);
+
 	if(hf_index > 0)
 	{
-		proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
+		proto_tree_add_string(tree, hf_index, tvb, offset, len, timestring);
 	}
-	private_data_add_moreCinfo_str(actx, ptime);
+	private_data_add_moreCinfo_str(actx, timestring);
 
 
 #.FN_BODY Unsigned32 VAL_PTR=&val

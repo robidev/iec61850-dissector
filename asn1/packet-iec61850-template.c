@@ -430,11 +430,6 @@ dissect_iec61850_heur(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree
 	int32_t tmp_tag;
 	/*NOTES
 
-	find_conversation();
-conversation_get_proto_data(conversation_t *conv, int proto);
-read numbers, store numbers, store a string
-
-
 NO char[]!!!
 use int64_t
 
@@ -446,15 +441,8 @@ don't use "%lld", "%llu", "%llx", or "%llo" - not all platforms
 support "%ll" for printing 64-bit integral data types.  Instead use
 the macros in <inttypes.h>, for example:
 
-    proto_tree_add_uint64_format_value(tree, hf_uint64, tvb, offset, len,
-                                       val, "%" PRIu64, val);
-
-
-   wmem_strbuf_t *strbuf;
-   strbuf = wmem_strbuf_new(pinfo->pool, "");
-   wmem_strbuf_append_printf(strbuf, ...
-
-   buffer=wmem_alloc(pinfo->pool, MAX_BUFFER);
+proto_tree_add_uint64_format_value(tree, hf_uint64, tvb, offset, len,
+									val, "%" PRIu64, val);
 
 Use ws_assert() instead of g_assert() 
 

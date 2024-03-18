@@ -417,6 +417,14 @@ static int32_t * const Quality_bits[] = {
   	NULL
 };
 
+static int32_t * const TimeQuality_bits[] = {
+	&hf_iec61850_timequality80,
+	&hf_iec61850_timequality40,
+	&hf_iec61850_timequality20,
+	&hf_iec61850_timequality1F,
+	NULL
+};
+
 static int32_t * const Check_bits[] = {
 	&hf_iec61850_Check2,
 	&hf_iec61850_Check1,
@@ -547,6 +555,10 @@ void proto_tree_print_tree(proto_node *node, gpointer data)
 				case FT_STRING:
 					//ws_message("%*s%s: %s", pdata->level," ", fi->hfinfo->name, fi->value.value.string); 
 					item = proto_tree_add_string(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.string);
+					if(g_str_equal(fi->hfinfo->name, "utc-time"))
+					{
+						proto_tree_add_bitmask_list(tree, tvb, offset+7, 1, TimeQuality_bits, ENC_BIG_ENDIAN);						
+					}
 					break;
 				case FT_BYTES:
 				{
