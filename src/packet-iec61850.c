@@ -2387,12 +2387,18 @@ dissect_iec61850_MMSString(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int off
 static int
 dissect_iec61850_UtcTime(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
 
+	guint8 quality;
 	guint32 len;
 	guint32 seconds;
 	guint32	fraction;
 	guint32 nanoseconds;
 	nstime_t ts;
 	gchar *	ptime;
+	gchar * timestring;
+
+	ws_assert(actx->pinfo->pool);
+	timestring = wmem_alloc0(actx->pinfo->pool, BUFFER_SIZE_MORE );
+	ws_assert(timestring);
 
 	len = tvb_reported_length_remaining(tvb, offset);
 
@@ -2416,11 +2422,14 @@ dissect_iec61850_UtcTime(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offse
 
 	ptime = abs_time_to_str(actx->pinfo->pool, &ts, ABSOLUTE_TIME_UTC, TRUE);
 
+	quality = tvb_get_guint8(tvb, offset+7);
+	snprintf(timestring, BUFFER_SIZE_MORE, "%s,q:%02x", ptime, quality);
+
 	if(hf_index > 0)
 	{
-		proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
+		proto_tree_add_string(tree, hf_index, tvb, offset, len, timestring);
 	}
-	private_data_add_moreCinfo_str(actx, ptime);
+	private_data_add_moreCinfo_str(actx, timestring);
 
 
 
@@ -10843,11 +10852,6 @@ dissect_iec61850_heur(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree
 	int32_t tmp_tag;
 	/*NOTES
 
-	find_conversation();
-conversation_get_proto_data(conversation_t *conv, int proto);
-read numbers, store numbers, store a string
-
-
 NO char[]!!!
 use int64_t
 
@@ -10859,15 +10863,8 @@ don't use "%lld", "%llu", "%llx", or "%llo" - not all platforms
 support "%ll" for printing 64-bit integral data types.  Instead use
 the macros in <inttypes.h>, for example:
 
-    proto_tree_add_uint64_format_value(tree, hf_uint64, tvb, offset, len,
-                                       val, "%" PRIu64, val);
-
-
-   wmem_strbuf_t *strbuf;
-   strbuf = wmem_strbuf_new(pinfo->pool, "");
-   wmem_strbuf_append_printf(strbuf, ...
-
-   buffer=wmem_alloc(pinfo->pool, MAX_BUFFER);
+proto_tree_add_uint64_format_value(tree, hf_uint64, tvb, offset, len,
+									val, "%" PRIu64, val);
 
 Use ws_assert() instead of g_assert() 
 
