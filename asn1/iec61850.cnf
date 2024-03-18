@@ -332,6 +332,7 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 %(DEFAULT_BODY)s
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	private_data->DataAccessError = branch_taken;
+	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_DataAccessError_vals);
 
 #.FN_BODY Write-Response/_item VAL_PTR=&branch_taken
 	gint branch_taken;

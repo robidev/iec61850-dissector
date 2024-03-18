@@ -178,6 +178,14 @@ private_data_add_moreCinfo_vstr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
 	(void) g_strlcat(private_data->moreCinfo, "\" ", BUFFER_SIZE_MORE);
 }
 
+void
+private_data_add_moreCinfo_enum(asn1_ctx_t *actx, int32_t value, const value_string * enum_list)
+{
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	(void) g_strlcat(private_data->moreCinfo, try_val_to_str(value, enum_list), BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+}
+
 int32_t is_text(u_int8_t * str)
 {
   if(g_str_is_ascii(str)){

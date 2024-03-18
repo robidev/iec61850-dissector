@@ -62,10 +62,28 @@ static int32_t hf_iec61850_Cancel_Error = -1;
 static int32_t hf_iec61850_Release_Error = -1;
 static int32_t hf_iec61850_GetServerDirectory = -1;
 static int32_t hf_iec61850_GetLogicalDeviceDirectory = -1;
+static int32_t hf_iec61850_GetLogicalNodeDirectory = -1;
 static int32_t hf_iec61850_GetJournalDirectory = -1;
 static int32_t hf_iec61850_GetNameList_response = -1;
 static int32_t hf_iec61850_GetDataValue = -1;
 static int32_t hf_iec61850_SetDataValue = -1;
+
+static int32_t hf_iec61850_GetRCBValues = -1;
+static int32_t hf_iec61850_GetGCBValues = -1;
+static int32_t hf_iec61850_GetSGCBValues = -1;
+static int32_t hf_iec61850_GetLCBValues = -1;
+static int32_t hf_iec61850_Select = -1;
+static int32_t hf_iec61850_GetAllDataValues = -1;
+static int32_t hf_iec61850_GetDataSetValues = -1;
+static int32_t hf_iec61850_SetRCBValues = -1;
+static int32_t hf_iec61850_SetGCBValues = -1;
+static int32_t hf_iec61850_SetSGCBValues = -1;
+static int32_t hf_iec61850_SetLCBValues = -1;
+static int32_t hf_iec61850_SetDataSetValues = -1;
+static int32_t hf_iec61850_SelectWithValue = -1;
+static int32_t hf_iec61850_OperCancel = -1;
+static int32_t hf_iec61850_Operate = -1;
+
 static int32_t hf_iec61850_GetDataDirectory = -1;
 static int32_t hf_iec61850_GetDataSetDirectory = -1;
 static int32_t hf_iec61850_CreateDataSet = -1;
@@ -152,6 +170,7 @@ int32_t Release_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_
 //confirmed PDU
 int32_t GetServerDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
 int32_t GetLogicalDeviceDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
+int32_t GetLogicalNodeDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
 int32_t GetJournalDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
 int32_t GetNameList_response(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, iec61850_value_req *val);
 int32_t GetDataDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
@@ -593,6 +612,12 @@ void proto_tree_print_tree(proto_node *node, gpointer data)
 							break;
 						}
 					}
+					if(g_str_equal(fi->hfinfo->name, "floating-point"))
+					{
+						//snprintf(tmp, BUFFER_SIZE_MORE, "%f", );
+						proto_tree_add_bytes_format_value(tree, fi->hfinfo->id,tvb, offset, fi->value.value.bytes->len, fi->value.value.bytes->data, "%f",tvb_get_ieee_float(tvb, 1, ENC_BIG_ENDIAN) );
+						break;
+					}
 
 					proto_tree_add_bytes(tree, fi->hfinfo->id,tvb, offset, fi->value.value.bytes->len, fi->value.value.bytes->data);//,"%s",wmem_strbuf_get_str(strbuf));
 					break;
@@ -668,11 +693,19 @@ int32_t map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx,
 							{
 								if(private_data->objectClass == 0)
 								{
-									decoded = GetLogicalDeviceDirectory(tvb, offset, item, actx);
-									sessiondata_request->serviceName = "GetLogicalDeviceDirectory";
-									sessiondata_request->hf_name = hf_iec61850_GetLogicalDeviceDirectory;
-									// if the whole device is requested it is a GetLogicalDeviceDirectory
-									// TODO if a specific logical node is requested, it is a GetLogicalNodeDirecotry
+									u_int8_t * request = (u_int8_t *)wmem_strbuf_get_str(sessiondata_request->data);
+									if(g_strrstr(request,"/") == NULL || g_str_has_suffix(request, "/"))// if the whole device is requested it is a GetLogicalDeviceDirectory
+									{
+										decoded = GetLogicalDeviceDirectory(tvb, offset, item, actx);
+										sessiondata_request->serviceName = "GetLogicalDeviceDirectory";
+										sessiondata_request->hf_name = hf_iec61850_GetLogicalDeviceDirectory;
+									}
+									if(g_strrstr(request,"/") && !g_str_has_suffix(request, "/"))// if a specific logical node is requested, it is a GetLogicalNodeDirecotry
+									{
+										decoded = GetLogicalNodeDirectory(tvb, offset, item, actx);
+										sessiondata_request->serviceName = "GetLogicalNodeDirectory";
+										sessiondata_request->hf_name = hf_iec61850_GetLogicalNodeDirectory;										
+									}
 								}
 								if(private_data->objectClass == 2)
 								{
@@ -1084,11 +1117,35 @@ int32_t GetServerDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1
 }
 
 int32_t GetLogicalDeviceDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{//TODO GetLogicalNodeDirectory vs GetLogicalDeviceDirectory
+{
 	proto_item *subitem;
     proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_GetLogicalDeviceDirectory, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetLogicalDeviceDirectory req", 
+		private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	if(g_mms_tree != NULL)
+	{
+		tree_data data;
+		data.level =1;
+		data.tree = subtree;
+		data.tvb = tvb;
+		data.offset = subtree->finfo->start;
+		data.actx = actx;
+		data.request = "";
+		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
+	}
+
+	return 1;
+}
+
+int32_t GetLogicalNodeDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_GetLogicalNodeDirectory, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetLogicalNodeDirectory req", 
 		private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
@@ -1173,7 +1230,7 @@ int32_t GetNameList_response(tvbuff_t *tvb, int32_t offset, proto_item *item, as
 }
 
 int32_t GetDataDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{//TODO GetDataDefinition
+{//also GetDataDefinition
 	proto_item *subitem;
     proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_GetDataDirectory, tvb, offset, -1, ENC_NA);
@@ -1204,6 +1261,7 @@ int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 
 	u_int8_t * fieldName = "GetDataValue";
 	u_int8_t * request = "";
+	int32_t hf_name = hf_iec61850_GetDataValue;
 
 	if(val != NULL)
 		request = (u_int8_t *)wmem_strbuf_get_str(val->data);
@@ -1211,22 +1269,27 @@ int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 	if(g_strrstr(request,"$BR$") || g_strrstr(request,"$RP$"))//GetBRCBValues,GetURCBValues,
 	{
 		fieldName = "GetRCBValues";
+		hf_name = hf_iec61850_GetRCBValues;
 	}
 	if(g_strrstr(request,"$GO$") )//GetGoCBValues, GetGsCBValues
 	{
 		fieldName = "GetGCBValues";
+		hf_name = hf_iec61850_GetRCBValues;
 	}
 	if(g_strrstr(request,"$SG$") )//GetEditSGValue,GetSGCBValues,
 	{
 		fieldName = "GetSGCBValues";
+		hf_name = hf_iec61850_GetSGCBValues;
 	}
 	if(g_strrstr(request,"$LG$") )//GetLCBValues,GetLogStatusValues,
 	{
 		fieldName = "GetLCBValues";
+		hf_name = hf_iec61850_GetLCBValues;
 	}
 	if(g_str_has_suffix(request,"$SBO") )//Select,
 	{
 		fieldName = "Select";
+		hf_name = hf_iec61850_Select;
 		if(g_str_has_suffix(private_data->moreCinfo, "\"\" "))
 			private_data->Success = 0; //empty SBO means failure
 	}
@@ -1238,6 +1301,7 @@ int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 	if(private_data->AlternateAccess == 1)//GetAllDataValues(alternate access),
 	{
 		fieldName = "GetAllDataValues";
+		hf_name = hf_iec61850_GetAllDataValues;
 	}
 	/*
 	specificationWithResult Shall be TRUE
@@ -1246,10 +1310,11 @@ int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 	if(private_data->VariableAccessSpecification == 1) //GetDataSetValues
 	{
 		fieldName = "GetDataSetValues";
+		hf_name = hf_iec61850_GetDataSetValues;
 	}
 	val->serviceName = fieldName;
 
-	subitem = proto_tree_add_item(item, hf_iec61850_GetDataValue, tvb, offset, -1, ENC_NA);
+	subitem = proto_tree_add_item(item, hf_name, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s %s",	private_data_get_preCinfo(actx), fieldName, 
 		res? "res" : "req", 
 		res? (private_data->Success? "Success" : "Failure") : "", 
@@ -1281,6 +1346,7 @@ int32_t SetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	u_int8_t * fieldName = "SetDataValue";
 	u_int8_t * request = "";
+	int32_t hf_name = hf_iec61850_SetDataValue;
 
 	if(val != NULL)
 		request = (u_int8_t *)wmem_strbuf_get_str(val->data);
@@ -1288,38 +1354,46 @@ int32_t SetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 	if(g_strrstr(request,"$BR$") || g_strrstr(request,"$RP$"))//SetBRCBValues,SetURCBValues,
 	{
 		fieldName = "SetRCBValues";
+		hf_name = hf_iec61850_SetRCBValues;
 	}
 	if(g_strrstr(request,"$GO$") )//SetGoCBValues, SetGsCBValues
 	{
 		fieldName = "SetGCBValues";
+		hf_name = hf_iec61850_SetGCBValues;
 	}
 	if(g_strrstr(request,"$SG$") )//SelectActiveSG,SelectEditSG,SetEditSGValue,ConfirmEditSGValues
 	{
 		fieldName = "SetSGCBValues";
+		hf_name = hf_iec61850_SetSGCBValues;
 	}
 	if(g_strrstr(request,"$LG$") )//SetLCBValues
 	{
 		fieldName = "SetLCBValues";
+		hf_name = hf_iec61850_SetLCBValues;
 	}
 	if(private_data->VariableAccessSpecification == 1) //SetDataSetValues
 	{
 		fieldName = "SetDataSetValues";
+		hf_name = hf_iec61850_SetDataSetValues;
 	}
 	if(g_strrstr(request,"$SBOw ") )//SelectWithValue, 
 	{
 		fieldName = "SelectWithValue";
+		hf_name = hf_iec61850_SelectWithValue;
 	}
 	if(g_strrstr(request,"$Cancel ") )//Cancel,
 	{
 		fieldName = "Cancel";
+		hf_name = hf_iec61850_OperCancel;
 	}
 	if(g_strrstr(request,"$Oper ") )// Operate,TimeActivatedOperate
 	{
 		fieldName = "Operate";
+		hf_name = hf_iec61850_Operate;
 	}
 	val->serviceName = fieldName;
 
-	subitem = proto_tree_add_item(item, hf_iec61850_SetDataValue, tvb, offset, -1, ENC_NA);
+	subitem = proto_tree_add_item(item, hf_name, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s %s",	private_data_get_preCinfo(actx), fieldName, 
 		res? "res" : "req", 
 		res? (private_data->Success? "Success" : "Failure") : "", 
@@ -1866,6 +1940,19 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			}
 		},
 		{ 
+			&hf_iec61850_GetLogicalNodeDirectory,
+      		{ 
+				"GetLogicalNodeDirectory", 			// name
+				"iec61850.GetLogicalNodeDirectory",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
 			&hf_iec61850_GetJournalDirectory,
       		{ 
 				"GetJournalDirectory", 			// name
@@ -1909,6 +1996,201 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
       		{ 
 				"SetDataValue", 			// name
 				"iec61850.SetDataValue",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_GetRCBValues,
+      		{ 
+				"GetRCBValues", 			// name
+				"iec61850.GetRCBValues",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_GetGCBValues,
+      		{ 
+				"GetGCBValues", 			// name
+				"iec61850.GetGCBValues",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_GetSGCBValues,
+      		{ 
+				"GetSGCBValues", 			// name
+				"iec61850.GetSGCBValues",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_GetLCBValues,
+      		{ 
+				"GetLCBValues", 			// name
+				"iec61850.GetLCBValues",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_Select,
+      		{ 
+				"Select", 			// name
+				"iec61850.Select",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_GetAllDataValues,
+      		{ 
+				"GetAllDataValues", 			// name
+				"iec61850.GetAllDataValues",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_GetDataSetValues,
+      		{ 
+				"GetDataSetValues", 			// name
+				"iec61850.GetDataSetValues",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_SetRCBValues,
+      		{ 
+				"SetRCBValues", 			// name
+				"iec61850.SetRCBValues",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_SetGCBValues,
+      		{ 
+				"SetGCBValues", 			// name
+				"iec61850.SetGCBValues",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_SetSGCBValues,
+      		{ 
+				"SetSGCBValues", 			// name
+				"iec61850.SetSGCBValues",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_SetLCBValues,
+      		{ 
+				"SetLCBValues", 			// name
+				"iec61850.SetLCBValues",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_SetDataSetValues,
+      		{ 
+				"SetDataSetValues", 			// name
+				"iec61850.SetDataSetValues",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_SelectWithValue,
+      		{ 
+				"SelectWithValue", 			// name
+				"iec61850.SelectWithValue",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_OperCancel,
+      		{ 
+				"Operate Cancel", 			// name
+				"iec61850.OperCancel",   // abrev
+        		FT_NONE, 				// type
+				BASE_NONE, 				// display
+				NULL, 					// 
+				0,						// 
+        		NULL, 					// 
+				HFILL 					// ref type
+			}
+		},
+		{ 
+			&hf_iec61850_Operate,
+      		{ 
+				"Operate", 			// name
+				"iec61850.Operate",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2324,3 +2606,30 @@ hf_iec61850_BinaryStepC
 	iec61850_request_hash = wmem_map_new_autoreset(wmem_epan_scope(), wmem_file_scope(), iec61850_hash, iec61850_equal);
 
 }
+
+/*
+
+dissect_iec61850_T_access
+dissect_iec61850_T_service
+dissect_iec61850_T_file
+dissect_iec61850_T_definition
+dissect_iec61850_T_initiate
+dissect_iec61850_T_conclude
+******************************
+		fieldName = "GetRCBValues";
+		fieldName = "GetGCBValues";
+		fieldName = "GetSGCBValues";
+		fieldName = "GetLCBValues";
+		fieldName = "Select";
+		fieldName = "GetAllDataValues";
+		fieldName = "GetDataSetValues";
+		fieldName = "SetRCBValues";
+		fieldName = "SetGCBValues";
+		fieldName = "SetSGCBValues";
+		fieldName = "SetLCBValues";
+		fieldName = "SetDataSetValues";
+		fieldName = "SelectWithValue";
+		fieldName = "Cancel";
+		fieldName = "Operate";
+
+*/
