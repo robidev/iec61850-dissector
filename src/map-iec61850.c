@@ -141,6 +141,8 @@ static int32_t hf_iec61850_Mod = -1;
 static int32_t hf_iec61850_Beh = -1;
 static int32_t hf_iec61850_Health = -1;
 static int32_t hf_iec61850_dir = -1;
+static int32_t hf_iec61850_serviceType = -1;
+static int32_t hf_iec61850_errorCode = -1;
 
 static int32_t ett_iec61850 = -1;
 
@@ -557,6 +559,16 @@ void proto_tree_print_tree(proto_node *node, gpointer data)
 							dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_Health, NULL);
 							break;						
 						}
+						if(g_str_has_suffix(pdata->request,"serviceType"))
+						{
+							dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_serviceType, NULL);
+							break;						
+						}
+						if(g_str_has_suffix(pdata->request,"errorCode"))
+						{
+							dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_errorCode, NULL);
+							break;						
+						}
 						if( g_str_has_suffix(pdata->request,"$dirGeneral") || 
 							g_str_has_suffix(pdata->request,"$dirPhsA") || 
 							g_str_has_suffix(pdata->request,"$dirPhsB") ||
@@ -913,7 +925,7 @@ int32_t Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Error, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s", "Error" );
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Error", private_data_get_moreCinfo(actx) );
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
 	if(g_mms_tree != NULL)
@@ -936,7 +948,7 @@ int32_t Reject(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Reject, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s", "Reject" );
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Reject", private_data_get_moreCinfo(actx) );
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
 	if(g_mms_tree != NULL)
@@ -959,7 +971,7 @@ int32_t Associate(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *a
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Associate, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Associate", res? "res" : "req" );
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s %s", "Associate", res? "res" : "req", private_data_get_moreCinfo(actx) );
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
 	if(g_mms_tree != NULL)
@@ -982,7 +994,7 @@ int32_t Cancel(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Cancel, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Cancel", res? "res" : "req" );
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s %s", "Cancel", res? "res" : "req", private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
 	if(g_mms_tree != NULL)
@@ -1005,7 +1017,7 @@ int32_t Release(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *act
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Release, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Release", res? "res" : "req" );
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s %s", "Release", res? "res" : "req" , private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
 	if(g_mms_tree != NULL)
@@ -1028,7 +1040,7 @@ int32_t Associate_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ct
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Associate, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s", "Associate-Error" );
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Associate-Error", private_data_get_moreCinfo(actx) );
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
 	if(g_mms_tree != NULL)
@@ -1051,7 +1063,7 @@ int32_t Cancel_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Cancel_Error, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s", "Cancel-Error" );
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Cancel-Error",private_data_get_moreCinfo(actx) );
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
 	if(g_mms_tree != NULL)
@@ -1074,7 +1086,7 @@ int32_t Release_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Release_Error, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s", "Release-Error");
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Release-Error",private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
 	if(g_mms_tree != NULL)
@@ -2581,6 +2593,14 @@ hf_iec61850_BinaryStepC
 		{ "direction", "iec61850.direction",
 			FT_UINT8, BASE_DEC, VALS(enum_dir), 0,
 			NULL, HFILL }},
+		{ &hf_iec61850_serviceType,
+		{ "ServiceType", "iec61850.ServiceType",
+			FT_UINT8, BASE_DEC, VALS(enum_ServiceType), 0,
+			NULL, HFILL }},
+		{ &hf_iec61850_errorCode,
+		{ "ErrorCode", "iec61850.ErrorCode",
+			FT_UINT8, BASE_DEC, VALS(enum_ServiceError), 0,
+			NULL, HFILL }},
     };
 
 	/* List of subtrees */
@@ -2606,30 +2626,3 @@ hf_iec61850_BinaryStepC
 	iec61850_request_hash = wmem_map_new_autoreset(wmem_epan_scope(), wmem_file_scope(), iec61850_hash, iec61850_equal);
 
 }
-
-/*
-
-dissect_iec61850_T_access
-dissect_iec61850_T_service
-dissect_iec61850_T_file
-dissect_iec61850_T_definition
-dissect_iec61850_T_initiate
-dissect_iec61850_T_conclude
-******************************
-		fieldName = "GetRCBValues";
-		fieldName = "GetGCBValues";
-		fieldName = "GetSGCBValues";
-		fieldName = "GetLCBValues";
-		fieldName = "Select";
-		fieldName = "GetAllDataValues";
-		fieldName = "GetDataSetValues";
-		fieldName = "SetRCBValues";
-		fieldName = "SetGCBValues";
-		fieldName = "SetSGCBValues";
-		fieldName = "SetLCBValues";
-		fieldName = "SetDataSetValues";
-		fieldName = "SelectWithValue";
-		fieldName = "Cancel";
-		fieldName = "Operate";
-
-*/

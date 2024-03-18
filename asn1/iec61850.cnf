@@ -345,3 +345,33 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 %(DEFAULT_BODY)s
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	private_data->AlternateAccess = 1;
+
+#.FN_BODY ServiceError/errorClass/access VAL_PTR=&branch_taken
+	gint branch_taken;
+%(DEFAULT_BODY)s
+	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_access_vals);
+
+#.FN_BODY ServiceError/errorClass/service VAL_PTR=&branch_taken
+	gint branch_taken;
+%(DEFAULT_BODY)s
+	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_service_vals);
+
+#.FN_BODY ServiceError/errorClass/file VAL_PTR=&branch_taken
+	gint branch_taken;
+%(DEFAULT_BODY)s
+	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_file_vals);
+
+#.FN_BODY ServiceError/errorClass/definition VAL_PTR=&branch_taken
+	gint branch_taken;
+%(DEFAULT_BODY)s
+	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_definition_vals);
+
+#.FN_BODY ServiceError/errorClass/initiate VAL_PTR=&branch_taken
+	gint branch_taken;
+%(DEFAULT_BODY)s
+	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_initiate_vals);
+
+#.FN_BODY ServiceError/errorClass/conclude VAL_PTR=&branch_taken
+	gint branch_taken;
+%(DEFAULT_BODY)s
+	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_conclude_vals);

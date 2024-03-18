@@ -2013,6 +2013,8 @@ dissect_iec61850_AlternateAccess(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, i
 
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	private_data->AlternateAccess = 1;
+
+
   p_set_proto_depth(actx->pinfo, proto_id, recursion_depth);
   return offset;
 }
@@ -3120,8 +3122,12 @@ static const value_string iec61850_T_definition_vals[] = {
 
 static int
 dissect_iec61850_T_definition(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gint branch_taken;
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+                                                &branch_taken);
+
+	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_definition_vals);
+
 
   return offset;
 }
@@ -3160,8 +3166,12 @@ static const value_string iec61850_T_service_vals[] = {
 
 static int
 dissect_iec61850_T_service(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gint branch_taken;
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+                                                &branch_taken);
+
+	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_service_vals);
+
 
   return offset;
 }
@@ -3213,8 +3223,12 @@ static const value_string iec61850_T_access_vals[] = {
 
 static int
 dissect_iec61850_T_access(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gint branch_taken;
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+                                                &branch_taken);
+
+	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_access_vals);
+
 
   return offset;
 }
@@ -3235,8 +3249,12 @@ static const value_string iec61850_T_initiate_vals[] = {
 
 static int
 dissect_iec61850_T_initiate(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gint branch_taken;
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+                                                &branch_taken);
+
+	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_initiate_vals);
+
 
   return offset;
 }
@@ -3251,8 +3269,11 @@ static const value_string iec61850_T_conclude_vals[] = {
 
 static int
 dissect_iec61850_T_conclude(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gint branch_taken;
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+                                                &branch_taken);
+
+	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_conclude_vals);
 
   return offset;
 }
@@ -3292,8 +3313,12 @@ static const value_string iec61850_T_file_vals[] = {
 
 static int
 dissect_iec61850_T_file(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+	gint branch_taken;
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+                                                &branch_taken);
+
+	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_file_vals);
+
 
   return offset;
 }
