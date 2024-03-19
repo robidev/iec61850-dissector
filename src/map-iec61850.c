@@ -1836,7 +1836,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_Unconfirmed,
       		{ 
 				"Unconfirmed", 			// name
-				"iec61850.Unconfirmed",   // abrev
+				"iec61850.unconfirmed",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -1849,7 +1849,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_Error,
       		{ 
 				"Error", 			// name
-				"iec61850.Error",   // abrev
+				"iec61850.error",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -1862,7 +1862,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_Reject,
       		{ 
 				"Reject", 			// name
-				"iec61850.Reject",   // abrev
+				"iec61850.reject",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -1875,7 +1875,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_Associate,
       		{ 
 				"Associate", 			// name
-				"iec61850.Associate",   // abrev
+				"iec61850.associate",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -1888,7 +1888,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_Cancel,
       		{ 
 				"Cancel", 			// name
-				"iec61850.Cancel",   // abrev
+				"iec61850.cancel",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -1901,7 +1901,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_Release,
       		{ 
 				"Release", 			// name
-				"iec61850.Release",   // abrev
+				"iec61850.release",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -1914,7 +1914,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_Associate_Error,
       		{ 
 				"Associate_Error", 			// name
-				"iec61850.Associate_Error",   // abrev
+				"iec61850.associate_error",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -1927,7 +1927,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_Cancel_Error,
       		{ 
 				"Cancel_Error", 			// name
-				"iec61850.Cancel_Error",   // abrev
+				"iec61850.cancel_error",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -1940,7 +1940,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_Release_Error,
       		{ 
 				"Release_Error", 			// name
-				"iec61850.Release_Error",   // abrev
+				"iec61850.release_error",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -1953,7 +1953,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetServerDirectory,
       		{ 
 				"GetServerDirectory", 			// name
-				"iec61850.GetServerDirectory",   // abrev
+				"iec61850.getserverdirectory",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -1966,7 +1966,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetLogicalDeviceDirectory,
       		{ 
 				"GetLogicalDeviceDirectory", 			// name
-				"iec61850.GetLogicalDeviceDirectory",   // abrev
+				"iec61850.getlogicaldevicedirectory",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -1979,7 +1979,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetLogicalNodeDirectory,
       		{ 
 				"GetLogicalNodeDirectory", 			// name
-				"iec61850.GetLogicalNodeDirectory",   // abrev
+				"iec61850.getlogicalnodedirectory",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -1992,7 +1992,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetJournalDirectory,
       		{ 
 				"GetJournalDirectory", 			// name
-				"iec61850.GetJournalDirectory",   // abrev
+				"iec61850.getjournaldirectory",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2004,8 +2004,8 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 		{ 
 			&hf_iec61850_GetNameList_response,
       		{ 
-				"GetNameList-response", 			// name
-				"iec61850.GetNameList-response",   // abrev
+				"GetNameList", 			// name
+				"iec61850.getnamelist",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2018,7 +2018,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetDataValue,
       		{ 
 				"GetDataValue", 			// name
-				"iec61850.GetDataValue",   // abrev
+				"iec61850.getdatavalue",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2031,7 +2031,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_SetDataValue,
       		{ 
 				"SetDataValue", 			// name
-				"iec61850.SetDataValue",   // abrev
+				"iec61850.setdatavalue",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2044,7 +2044,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetRCBValues,
       		{ 
 				"GetRCBValues", 			// name
-				"iec61850.GetRCBValues",   // abrev
+				"iec61850.getrcbvalues",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2057,7 +2057,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetGCBValues,
       		{ 
 				"GetGCBValues", 			// name
-				"iec61850.GetGCBValues",   // abrev
+				"iec61850.getgcbvalues",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2070,7 +2070,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetSGCBValues,
       		{ 
 				"GetSGCBValues", 			// name
-				"iec61850.GetSGCBValues",   // abrev
+				"iec61850.getsgcbvalues",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2083,7 +2083,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetLCBValues,
       		{ 
 				"GetLCBValues", 			// name
-				"iec61850.GetLCBValues",   // abrev
+				"iec61850.getlcbvalues",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2096,7 +2096,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_Select,
       		{ 
 				"Select", 			// name
-				"iec61850.Select",   // abrev
+				"iec61850.select",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2109,7 +2109,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetAllDataValues,
       		{ 
 				"GetAllDataValues", 			// name
-				"iec61850.GetAllDataValues",   // abrev
+				"iec61850.getalldatavalues",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2122,7 +2122,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetDataSetValues,
       		{ 
 				"GetDataSetValues", 			// name
-				"iec61850.GetDataSetValues",   // abrev
+				"iec61850.getdatasetvalues",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2135,7 +2135,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_SetRCBValues,
       		{ 
 				"SetRCBValues", 			// name
-				"iec61850.SetRCBValues",   // abrev
+				"iec61850.setrcbvalues",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2148,7 +2148,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_SetGCBValues,
       		{ 
 				"SetGCBValues", 			// name
-				"iec61850.SetGCBValues",   // abrev
+				"iec61850.setgcbalues",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2161,7 +2161,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_SetSGCBValues,
       		{ 
 				"SetSGCBValues", 			// name
-				"iec61850.SetSGCBValues",   // abrev
+				"iec61850.setsgcbvalues",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2174,7 +2174,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_SetLCBValues,
       		{ 
 				"SetLCBValues", 			// name
-				"iec61850.SetLCBValues",   // abrev
+				"iec61850.setlcbvalues",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2187,7 +2187,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_SetDataSetValues,
       		{ 
 				"SetDataSetValues", 			// name
-				"iec61850.SetDataSetValues",   // abrev
+				"iec61850.setdatasetvalues",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2200,7 +2200,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_SelectWithValue,
       		{ 
 				"SelectWithValue", 			// name
-				"iec61850.SelectWithValue",   // abrev
+				"iec61850.selectwithvalue",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2213,7 +2213,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_OperCancel,
       		{ 
 				"Operate Cancel", 			// name
-				"iec61850.OperCancel",   // abrev
+				"iec61850.opercancel",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2226,7 +2226,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_Operate,
       		{ 
 				"Operate", 			// name
-				"iec61850.Operate",   // abrev
+				"iec61850.operate",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2239,7 +2239,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetDataDirectory,
       		{ 
 				"GetDataDirectory", 			// name
-				"iec61850.GetDataDirectory",   // abrev
+				"iec61850.getdatadirectory",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2252,7 +2252,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetDataSetDirectory,
       		{ 
 				"GetDataSetDirectory", 			// name
-				"iec61850.GetDataSetDirectory",   // abrev
+				"iec61850.getdatasetdirectory",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2265,7 +2265,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_CreateDataSet,
       		{ 
 				"CreateDataSet", 			// name
-				"iec61850.CreateDataSet",   // abrev
+				"iec61850.createdataset",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2278,7 +2278,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_DeleteDataSet,
       		{ 
 				"DeleteDataSet", 			// name
-				"iec61850.DeleteDataSet",   // abrev
+				"iec61850.deletedataSet",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2291,7 +2291,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_QueryLog,
       		{ 
 				"QueryLog", 			// name
-				"iec61850.QueryLog",   // abrev
+				"iec61850.querylog",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2304,7 +2304,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_SetFile,
       		{ 
 				"SetFile", 			// name
-				"iec61850.SetFile",   // abrev
+				"iec61850.setfile",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2317,7 +2317,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetFile,
       		{ 
 				"GetFile", 			// name
-				"iec61850.GetFile",   // abrev
+				"iec61850.getfile",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2330,7 +2330,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_OpenFile,
       		{ 
 				"OpenFile", 			// name
-				"iec61850.OpenFile",   // abrev
+				"iec61850.openfile",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2343,7 +2343,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_FileRead,
       		{ 
 				"FileRead", 			// name
-				"iec61850.FileRead",   // abrev
+				"iec61850.fileread",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2356,7 +2356,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_FileClose,
       		{ 
 				"FileClose", 			// name
-				"iec61850.FileClose",   // abrev
+				"iec61850.fileclose",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2369,7 +2369,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_DeleteFile,
       		{ 
 				"DeleteFile", 			// name
-				"iec61850.DeleteFile",   // abrev
+				"iec61850.deletefile",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2382,7 +2382,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_GetServerDirectory_FILE,
       		{ 
 				"GetServerDirectory_FILE", 			// name
-				"iec61850.GetServerDirectory_FILE",   // abrev
+				"iec61850.getserverdirectory_file",   // abrev
         		FT_NONE, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2395,7 +2395,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			&hf_iec61850_null,
       		{ 
 				"UNKNOWN", 			// name
-				"iec61850.Unknown",   // abrev
+				"iec61850.unknown",   // abrev
         		FT_STRING, 				// type
 				BASE_NONE, 				// display
 				NULL, 					// 
@@ -2405,51 +2405,51 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			}
 		},
 		{ &hf_iec61850_QualityC0,
-		{ "Validity", "iec61850.Validity",
+		{ "Validity", "iec61850.validity",
 			FT_UINT8, BASE_HEX, VALS(enum_Validity), 0xC0,
 			"Validity", HFILL }},
 		{ &hf_iec61850_Quality20,
-		{ "Overflow", "iec61850.Overflow",
+		{ "Overflow", "iec61850.overflow",
 			FT_BOOLEAN, 8, NULL, 0x20,
 			NULL, HFILL }},
 		{ &hf_iec61850_Quality10,
-		{ "OutofRange", "iec61850.OutofRange",
+		{ "OutofRange", "iec61850.outofrange",
 			FT_BOOLEAN, 8, NULL, 0x10,
 			NULL, HFILL }},
 		{ &hf_iec61850_Quality8,
-		{ "BadReference", "iec61850.BadReference",
+		{ "BadReference", "iec61850.badreference",
 			FT_BOOLEAN, 8, NULL, 0x08,
 			NULL, HFILL }},
 		{ &hf_iec61850_Quality4,
-		{ "Oscillatory", "iec61850.Oscillatory",
+		{ "Oscillatory", "iec61850.oscillatory",
 			FT_BOOLEAN, 8, NULL, 0x04,
 			NULL, HFILL }},
 		{ &hf_iec61850_Quality2,
-		{ "Failure", "iec61850.Failure",
+		{ "Failure", "iec61850.failure",
 			FT_BOOLEAN, 8, NULL, 0x02,
 			NULL, HFILL }},
 		{ &hf_iec61850_Quality1,
-		{ "OldData", "iec61850.OldData",
+		{ "OldData", "iec61850.oldData",
 			FT_BOOLEAN, 8, NULL, 0x01,
 			NULL, HFILL }},
 		{ &hf_iec61850_Quality0080,
-		{ "Inconsistent", "iec61850.Inconsistent",
+		{ "Inconsistent", "iec61850.inconsistent",
 			FT_BOOLEAN, 8, NULL, 0x80,
 			NULL, HFILL }},
 		{ &hf_iec61850_Quality0040,
-		{ "Inaccurate", "iec61850.Inaccurate",
+		{ "Inaccurate", "iec61850.inaccurate",
 			FT_BOOLEAN, 8, NULL, 0x40,
 			NULL, HFILL }},
 		{ &hf_iec61850_Quality0020,
-		{ "Source", "iec61850.Source",
+		{ "Source", "iec61850.source",
 			FT_UINT8, BASE_HEX, VALS(enum_Source), 0x20,
 			NULL, HFILL }},
 		{ &hf_iec61850_Quality0010,
-		{ "Test", "iec61850.Test",
+		{ "Test", "iec61850.test",
 			FT_BOOLEAN, 8, NULL, 0x10,
 			NULL, HFILL }},
 		{ &hf_iec61850_Quality0008,
-		{ "OperatorBlocked", "iec61850.OperatorBlocked",
+		{ "OperatorBlocked", "iec61850.operatorblocked",
 			FT_BOOLEAN, 8, NULL, 0x08,
 			NULL, HFILL }},
 /* timequality
@@ -2459,19 +2459,19 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 	3-7 Time accuracy
 */
 		{ &hf_iec61850_timequality80,
-		{ "Leap Second Known", "iec61850.LeapSecondKnown",
+		{ "Leap Second Known", "iec61850.leapsecondknown",
 			FT_BOOLEAN, 8, NULL, 0x80,
 			NULL, HFILL }},
 		{ &hf_iec61850_timequality40,
-		{ "ClockFailure", "iec61850.ClockFailure",
+		{ "ClockFailure", "iec61850.clockfailure",
 			FT_BOOLEAN, 8, NULL, 0x40,
 			NULL, HFILL }},
 		{ &hf_iec61850_timequality20,
-		{ "Clock not synchronized", "iec61850.ClockNotSynchronized",
+		{ "Clock not synchronized", "iec61850.clocknotsynchronized",
 			FT_BOOLEAN, 8, NULL, 0x20,
 			NULL, HFILL }},
 		{ &hf_iec61850_timequality1F,
-		{ "Time Accuracy", "iec61850.TimeAccuracy",
+		{ "Time Accuracy", "iec61850.timeaccuracy",
 			FT_UINT8, BASE_HEX, VALS(enum_TimeAccuracy), 0x1F,
 			NULL, HFILL }},
 /*
@@ -2484,7 +2484,7 @@ check bits (interlock/synchrocheck) - bitstring
 			FT_BOOLEAN, 2, NULL, 0x2,
 			NULL, HFILL }},
 		{ &hf_iec61850_Check1,
-		{ "Interlock-check", "iec61850.InterlockCheck",
+		{ "Interlock-check", "iec61850.interlockcheck",
 			FT_BOOLEAN, 2, NULL, 0x1,
 			NULL, HFILL }},
 /*
@@ -2498,19 +2498,19 @@ ReasonCode (ReasonForInclusion)/TriggerConditions/TrgOp  - bitstring
 	Bit 6 application-trigger
 */
 		{ &hf_iec61850_ReasonCode80,
-		{ "Reserved", "iec61850.Reserved",
+		{ "Reserved", "iec61850.reserved",
 			FT_BOOLEAN, 7, NULL, 0x80,
 			NULL, HFILL }},
 		{ &hf_iec61850_ReasonCode40,
-		{ "data-change", "iec61850.DataChange",
+		{ "data-change", "iec61850.datachange",
 			FT_BOOLEAN, 7, NULL, 0x40,
 			NULL, HFILL }},
 		{ &hf_iec61850_ReasonCode20,
-		{ "quality-change", "iec61850.QualityChange",
+		{ "quality-change", "iec61850.qualitychange",
 			FT_BOOLEAN, 7, NULL, 0x20,
 			NULL, HFILL }},
 		{ &hf_iec61850_ReasonCode10,
-		{ "data-update", "iec61850.DataUpdate",
+		{ "data-update", "iec61850.dataupdate",
 			FT_BOOLEAN, 7, NULL, 0x10,
 			NULL, HFILL }},
 		{ &hf_iec61850_ReasonCode8,
@@ -2518,11 +2518,11 @@ ReasonCode (ReasonForInclusion)/TriggerConditions/TrgOp  - bitstring
 			FT_BOOLEAN, 7, NULL, 0x8,
 			NULL, HFILL }},
 		{ &hf_iec61850_ReasonCode4,
-		{ "general-interrogation", "iec61850.GeneralInterrogation",
+		{ "general-interrogation", "iec61850.generalinterrogation",
 			FT_BOOLEAN, 7, NULL, 0x4,
 			NULL, HFILL }},
 		{ &hf_iec61850_ReasonCode2,
-		{ "application-trigger", "iec61850.ApplicationTrigger",
+		{ "application-trigger", "iec61850.applicationtrigger",
 			FT_BOOLEAN, 7, NULL, 0x2,
 			NULL, HFILL }},
 /*
@@ -2539,7 +2539,7 @@ OptFlds - bitstring
 	segmentation			9
 */
 		{ &hf_iec61850_OptFlds80,
-		{ "Reserved", "iec61850.Reserved",
+		{ "Reserved", "iec61850.reserved",
 			FT_BOOLEAN, 8, NULL, 0x80,
 			NULL, HFILL }},
 		{ &hf_iec61850_OptFlds40,
@@ -2567,7 +2567,7 @@ OptFlds - bitstring
 			FT_BOOLEAN, 8, NULL, 0x2,
 			NULL, HFILL }},
 		{ &hf_iec61850_OptFlds1,
-		{ "entryID", "iec61850.entryID",
+		{ "entryID", "iec61850.entryid",
 			FT_BOOLEAN, 8, NULL, 0x1,
 			NULL, HFILL }},
 		{ &hf_iec61850_OptFlds0080,
@@ -2582,35 +2582,35 @@ OptFlds - bitstring
 DBPos
 */
 		{ &hf_iec61850_DBPosC,
-		{ "Double Position", "iec61850.DBPos",
+		{ "Double Position", "iec61850.dbpos",
 			FT_UINT8, BASE_HEX, VALS(enum_DBPos), 0xC0,
 			NULL, HFILL }},
 /*
 hf_iec61850_BinaryStepC
 */
 		{ &hf_iec61850_BinaryStepC,
-		{ "Step Position", "iec61850.BinaryStep",
+		{ "Step Position", "iec61850.binarystep",
 			FT_UINT8, BASE_HEX, VALS(enum_BinaryStep), 0xC,
 			NULL, HFILL }},
 
 		{ &hf_iec61850_ctlModel,
-		{ "ctlModel", "iec61850.ctlModel",
+		{ "ctlModel", "iec61850.ctlmodel",
 			FT_UINT8, BASE_DEC, VALS(enum_ctlModel), 0,
 			NULL, HFILL }},
 		{ &hf_iec61850_orCat,
-		{ "orCat", "iec61850.orCat",
+		{ "orCat", "iec61850.orcat",
 			FT_UINT8, BASE_DEC, VALS(enum_orCategory), 0,
 			NULL, HFILL }},
 		{ &hf_iec61850_Beh,
-		{ "Beh", "iec61850.Beh",
+		{ "Beh", "iec61850.beh",
 			FT_UINT8, BASE_DEC, VALS(enum_Beh_Mod), 0,
 			NULL, HFILL }},
 		{ &hf_iec61850_Mod,
-		{ "Mod", "iec61850.Mod",
+		{ "Mod", "iec61850.mod",
 			FT_UINT8, BASE_DEC, VALS(enum_Beh_Mod), 0,
 			NULL, HFILL }},
 		{ &hf_iec61850_Health,
-		{ "Health", "iec61850.Health",
+		{ "Health", "iec61850.health",
 			FT_UINT8, BASE_DEC, VALS(enum_Health), 0,
 			NULL, HFILL }},
 		{ &hf_iec61850_dir,
@@ -2618,11 +2618,11 @@ hf_iec61850_BinaryStepC
 			FT_UINT8, BASE_DEC, VALS(enum_dir), 0,
 			NULL, HFILL }},
 		{ &hf_iec61850_serviceType,
-		{ "ServiceType", "iec61850.ServiceType",
+		{ "ServiceType", "iec61850.servicetype",
 			FT_UINT8, BASE_DEC, VALS(enum_ServiceType), 0,
 			NULL, HFILL }},
 		{ &hf_iec61850_errorCode,
-		{ "ErrorCode", "iec61850.ErrorCode",
+		{ "ErrorCode", "iec61850.errorcode",
 			FT_UINT8, BASE_DEC, VALS(enum_ServiceError), 0,
 			NULL, HFILL }},
     };

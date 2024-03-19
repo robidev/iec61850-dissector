@@ -7834,50 +7834,44 @@ dissect_iec61850(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, voi
 	int32_t offset = 0;
 	int32_t old_offset;
 	int32_t decoded = 0;
+	int32_t error = 0;
 
-	proto_item *item=NULL;
+	proto_item *mms_item=NULL;
 	proto_tree *mms_tree=NULL;
 
 	asn1_ctx_t asn1_ctx;
 	asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
 
-	
 	col_clear(pinfo->cinfo, COL_INFO);
 
 	if(parent_tree){
-		item = proto_tree_add_item(parent_tree, proto_mms, tvb, 0, -1, ENC_NA);
-		mms_tree = proto_item_add_subtree(item, ettmms);
+		mms_item = proto_tree_add_item(parent_tree, proto_mms, tvb, 0, -1, ENC_NA);
+		mms_tree = proto_item_add_subtree(mms_item, ettmms);
 	}
 
 	while (tvb_reported_length_remaining(tvb, offset) > 0){
 		old_offset=offset;
+		//parse mms similar to mms disector to retrieve all relevant values for mapping, and store in private data
 		offset=dissect_iec61850_MMSpdu(FALSE, tvb, offset, &asn1_ctx , mms_tree, -1);
 		if(offset == old_offset){
 			proto_tree_add_expert(mms_tree, pinfo, &ei_mms_zero_pdu, tvb, offset, -1);
+			error = 1;
 			break;
 		}
 	}
-	//if mms is parsed succesfull, try to map to iec61850 pdu's
-	decoded = map_iec61850_packet(tvb, pinfo, &asn1_ctx, parent_tree, mms_tree, proto_iec61850);
-
-
-	if(decoded == 0)// not an iec61850 PDU
-	{
-		iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(&asn1_ctx);
-		col_set_str(pinfo->cinfo, COL_PROTOCOL, "MMS");
-		if( (private_data->MMSpdu!=-1) && iec61850_MMSpdu_vals[private_data->MMSpdu].strptr ){
-			
-			if (iec61850_has_private_data(&asn1_ctx))
-				col_append_fstr(asn1_ctx.pinfo->cinfo, COL_INFO, "%s%s%s",
-					private_data_get_preCinfo(&asn1_ctx), iec61850_MMSpdu_vals[private_data->MMSpdu].strptr, private_data_get_moreCinfo(&asn1_ctx));
-			else
-				col_append_fstr(asn1_ctx.pinfo->cinfo, COL_INFO, "%s",
-					iec61850_MMSpdu_vals[private_data->MMSpdu].strptr);
-		}
-	}
-	else // an iec61850 PDU
+	if(error == 0)//if mms is parsed without issue, try to map to iec61850 pdu's
+		decoded = map_iec61850_packet(tvb, pinfo, &asn1_ctx, parent_tree, mms_tree, proto_iec61850);
+	if(decoded == 1)//if we decoded an IEC-61850 PDU succesfull
 	{
 		col_set_str(pinfo->cinfo, COL_PROTOCOL, "IEC-61850");
+	}
+	else // not an IEC-61850 PDU, so remove IEC-61850 data from this packet, and dissect as mms
+	{
+		proto_item_set_hidden(mms_item);
+		col_clear(pinfo->cinfo, COL_INFO);
+		dissector_handle_t mms_dissector = find_dissector( "mms" );
+		ws_assert(mms_dissector);
+		call_dissector(mms_dissector, tvb, pinfo, parent_tree);
 	}
 
 	return tvb_captured_length(tvb);
@@ -10628,7 +10622,7 @@ void proto_register_iec61850(void) {
         NULL, HFILL }},
 
 /*--- End of included file: packet-iec61850-hfarr.c ---*/
-#line 402 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 396 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	/* List of subtrees */
@@ -10856,7 +10850,7 @@ void proto_register_iec61850(void) {
     &ett_iec61850_FileAttributes,
 
 /*--- End of included file: packet-iec61850-ettarr.c ---*/
-#line 408 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 402 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	static ei_register_info ei_mms[] = {
@@ -10958,7 +10952,5 @@ Use ws_assert() instead of g_assert()
 void proto_reg_handoff_iec61850(void) {
 	register_ber_oid_dissector("1.0.9506.2.3", dissect_iec61850, proto_iec61850,"IEC61850");
 	register_ber_oid_dissector("1.0.9506.2.1", dissect_iec61850, proto_iec61850,"iec61850-abstract-syntax-version1(1)");
-	heur_dissector_add("cotp", dissect_iec61850_heur, "IEC61850 over COTP", "iec61850_cotp", proto_iec61850, HEURISTIC_ENABLE);
-	heur_dissector_add("cotp_is", dissect_iec61850_heur, "IEC61850 over COTP (inactive subset)", "iec61850_cotp_is", proto_iec61850, HEURISTIC_ENABLE);
 }
 
