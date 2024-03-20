@@ -39,7 +39,7 @@
 #include <wsutil/wslog.h>
 
 #define PNAME  "IEC-61850 Protocol"
-#define PSNAME "IEC61850"
+#define PSNAME "IEC-61850"
 #define PFNAME "iec61850"
 
 #define PNAME_MMS  "MMS Protocol (IEC-61850)"
@@ -974,7 +974,9 @@ static expert_field ei_iec61850_mal_timeofday_encoding = EI_INIT;
 static expert_field ei_iec61850_mal_utctime_encoding = EI_INIT;
 static expert_field ei_mms_zero_pdu = EI_INIT;
 
+static int32_t use_iec61850_mapping = TRUE;
 
+void proto_update_iec61850_settings(void);
 static int32_t dissect_acse_EXTERNALt(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
 static int32_t dissect_acse_AP_title_stub(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
 static int32_t dissect_acse_AP_invocation_identifier_stub(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
@@ -7819,7 +7821,7 @@ dissect_iec61850_MMSpdu(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 
 /*--- End of included file: packet-iec61850-fn.c ---*/
-#line 330 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 332 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 
 /*
 * Dissect iec61850 PDUs inside a PPDU.
@@ -7834,6 +7836,15 @@ dissect_iec61850(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, voi
 
 	proto_item *mms_item=NULL;
 	proto_tree *mms_tree=NULL;
+
+	/* only dissect MMS, and return immediately */
+	if(use_iec61850_mapping == FALSE)
+	{
+		dissector_handle_t mms_dissector = find_dissector( "mms" );
+		ws_assert(mms_dissector);
+		call_dissector(mms_dissector, tvb, pinfo, parent_tree);
+		return tvb_captured_length(tvb);
+	}
 
 	asn1_ctx_t asn1_ctx;
 	asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
@@ -10620,7 +10631,7 @@ void proto_register_iec61850(void) {
         NULL, HFILL }},
 
 /*--- End of included file: packet-iec61850-hfarr.c ---*/
-#line 394 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 405 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	/* List of subtrees */
@@ -10848,7 +10859,7 @@ void proto_register_iec61850(void) {
     &ett_iec61850_FileAttributes,
 
 /*--- End of included file: packet-iec61850-ettarr.c ---*/
-#line 400 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 411 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	static ei_register_info ei_mms[] = {
@@ -10874,6 +10885,14 @@ void proto_register_iec61850(void) {
 
 	/* disector register */
 	register_dissector("iec61850", dissect_iec61850, proto_iec61850);
+
+	/* setting */
+    module_t * iec61850_module = prefs_register_protocol(proto_iec61850, proto_update_iec61850_settings);
+
+    prefs_register_bool_preference(iec61850_module, "use_iec61850_mapping",
+                                 "Use IEC-61850 mapping to decode MMS stream",
+                                 "Enables or disables the layer that maps IEC-61850 on top of MMS",
+                                 &use_iec61850_mapping);
 }
 
 
@@ -10883,3 +10902,7 @@ void proto_reg_handoff_iec61850(void) {
 	register_ber_oid_dissector("1.0.9506.2.1", dissect_iec61850, proto_iec61850,"iec61850-abstract-syntax-version1(1)");
 }
 
+void proto_update_iec61850_settings(void)
+{
+
+}

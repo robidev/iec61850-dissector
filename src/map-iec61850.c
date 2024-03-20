@@ -1336,8 +1336,7 @@ int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 		fieldName = "GetDataSetValues";
 		hf_name = hf_iec61850_GetDataSetValues;
 	}
-	val->serviceName = fieldName;
-
+	
 	subitem = proto_tree_add_item(item, hf_name, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s %s",	private_data_get_preCinfo(actx), fieldName, 
 		res? "res" : "req", 
@@ -1354,7 +1353,10 @@ int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 		data.offset = subtree->finfo->start;
 		data.actx = actx;
 		if(val != NULL)
+		{
+			val->serviceName = fieldName;
 			data.request = (u_int8_t *)wmem_strbuf_get_str(val->data);
+		}
 		else
 			data.request = "";
 		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
@@ -1415,7 +1417,6 @@ int32_t SetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 		fieldName = "Operate";
 		hf_name = hf_iec61850_Operate;
 	}
-	val->serviceName = fieldName;
 
 	subitem = proto_tree_add_item(item, hf_name, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s %s",	private_data_get_preCinfo(actx), fieldName, 
@@ -1433,7 +1434,10 @@ int32_t SetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 		data.offset = subtree->finfo->start;
 		data.actx = actx;
 		if(val != NULL)
-			data.request = (u_int8_t *)wmem_strbuf_get_str(val->data);
+		{
+			val->serviceName = fieldName;
+			data.request = (u_int8_t *)wmem_strbuf_get_str(val->data);			
+		}
 		else
 			data.request = "";
 		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
