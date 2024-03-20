@@ -56,11 +56,11 @@ static expert_field ei_iec61850_mal_utctime_encoding = EI_INIT;
 static expert_field ei_mms_zero_pdu = EI_INIT;
 
 
-static int32_t dissect_acse_EXTERNALt(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {  return offset; }
-static int32_t dissect_acse_AP_title_stub(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {  return offset; }
-static int32_t dissect_acse_AP_invocation_identifier_stub(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {  return offset; }
-static int32_t dissect_acse_AE_qualifier_stub(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {  return offset; }
-static int32_t dissect_acse_AE_invocation_identifier_stub(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {  return offset; }
+static int32_t dissect_acse_EXTERNALt(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
+static int32_t dissect_acse_AP_title_stub(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
+static int32_t dissect_acse_AP_invocation_identifier_stub(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
+static int32_t dissect_acse_AE_qualifier_stub(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
+static int32_t dissect_acse_AE_invocation_identifier_stub(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
 
 /*****************************************************************************/
 /* Packet private data                                                       */
@@ -83,15 +83,14 @@ iec61850_private_data_t* iec61850_get_private_data(asn1_ctx_t *actx)
 }
 
 /* Helper function to test presence of private data struct */
-gboolean
-iec61850_has_private_data(asn1_ctx_t *actx)
+int32_t iec61850_has_private_data(asn1_ctx_t *actx)
 {
 	packet_info *pinfo = actx->pinfo;
 	return (p_get_proto_data(pinfo->pool, pinfo, proto_iec61850, pinfo->curr_layer_num) != NULL);
 }
 
 void
-private_data_add_preCinfo(asn1_ctx_t *actx, guint32 val)
+private_data_add_preCinfo(asn1_ctx_t *actx, u_int32_t val)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	snprintf(private_data->preCinfo, BUFFER_SIZE_PRE, "%02d ", val);
@@ -158,7 +157,7 @@ private_data_add_moreCinfo_float(asn1_ctx_t *actx, tvbuff_t *tvb)
 }
 
 void
-private_data_add_moreCinfo_int(asn1_ctx_t *actx, gint val)
+private_data_add_moreCinfo_int(asn1_ctx_t *actx, int32_t val)
 {
 	packet_info *pinfo = actx->pinfo;
 	u_int8_t *tmp = wmem_alloc0(pinfo->pool, BUFFER_SIZE_MORE );
@@ -171,7 +170,7 @@ private_data_add_moreCinfo_int(asn1_ctx_t *actx, gint val)
 }
 
 void
-private_data_add_moreCinfo_str(asn1_ctx_t *actx, char* str)
+private_data_add_moreCinfo_str(asn1_ctx_t *actx, u_int8_t* str)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	(void) g_strlcat(private_data->moreCinfo, str, BUFFER_SIZE_MORE);
@@ -179,7 +178,7 @@ private_data_add_moreCinfo_str(asn1_ctx_t *actx, char* str)
 }
 
 void
-private_data_add_moreCinfo_vstr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
+private_data_add_moreCinfo_vstr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	(void) g_strlcat(private_data->moreCinfo, "\"", BUFFER_SIZE_MORE);
@@ -199,7 +198,7 @@ private_data_add_moreCinfo_enum(asn1_ctx_t *actx, int32_t value, const value_str
 int32_t is_text(u_int8_t * str)
 {
   if(g_str_is_ascii(str)){
-    int i = 0;
+    int32_t i = 0;
     for(i = 0; i < strlen(str); i++){
       if( str[i] < 0x20){
         return 0;
@@ -211,7 +210,7 @@ int32_t is_text(u_int8_t * str)
 }
 
 void
-private_data_add_moreCinfo_ostr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
+private_data_add_moreCinfo_ostr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 {
 	u_int8_t * ostr = NULL;
 	size_t len;
@@ -222,24 +221,25 @@ private_data_add_moreCinfo_ostr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
 	if(len > 0)
 	{
 		int32_t i;
-    u_int8_t temp[4] = "";
-    (void) g_strlcat(private_data->moreCinfo, "'", BUFFER_SIZE_MORE);
-    for (i = 0; i < len; i ++) {
-      snprintf(temp, sizeof(temp),"%02x", ostr[i]);
-      (void) g_strlcat(private_data->moreCinfo, temp, BUFFER_SIZE_MORE);
-    }
-    (void) g_strlcat(private_data->moreCinfo, "'", BUFFER_SIZE_MORE);
+		u_int8_t temp[4] = "";
+		(void) g_strlcat(private_data->moreCinfo, "'", BUFFER_SIZE_MORE);
+		for (i = 0; i < len; i ++) 
+		{
+			snprintf(temp, sizeof(temp),"%02x", ostr[i]);
+			(void) g_strlcat(private_data->moreCinfo, temp, BUFFER_SIZE_MORE);
+		}
+		(void) g_strlcat(private_data->moreCinfo, "'", BUFFER_SIZE_MORE);
 
 		if(is_text(ostr) == TRUE)
 		{
-	    (void) g_strlcat(private_data->moreCinfo, "( ", BUFFER_SIZE_MORE);
+			(void) g_strlcat(private_data->moreCinfo, "( ", BUFFER_SIZE_MORE);
 			(void) g_strlcat(private_data->moreCinfo, ostr, BUFFER_SIZE_MORE);
-      (void) g_strlcat(private_data->moreCinfo, " )", BUFFER_SIZE_MORE);
+			(void) g_strlcat(private_data->moreCinfo, " )", BUFFER_SIZE_MORE);
 		}
-    (void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+		(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
 	}
  	else
-	  (void) g_strlcat(private_data->moreCinfo, "'' ", BUFFER_SIZE_MORE);
+		(void) g_strlcat(private_data->moreCinfo, "'' ", BUFFER_SIZE_MORE);
 }
 
 void print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_t bytelen, u_int32_t padding)
@@ -247,12 +247,14 @@ void print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_t bytelen, u_i
     u_int8_t byte;
     int32_t i, j, end = 0;
 	wmem_strbuf_append_printf(strbuf,"b'");
-    for (i = 0; i < bytelen; i++) {
-		if(i == bytelen-1) //padding applies
+    for (i = 0; i < bytelen; i++) 
+	{
+		if(i == bytelen-1) /* padding applies */
 			end = padding;
 		else
 			end = 0;
-        for (j = 7; j >= end; j--) {
+        for (j = 7; j >= end; j--) 
+		{
             byte = (bitstring[i] >> j) & 1;
             wmem_strbuf_append_printf(strbuf, "%u", byte);
         }
@@ -261,7 +263,7 @@ void print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_t bytelen, u_i
 }
 
 void
-private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
+private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 {
 	packet_info *pinfo = actx->pinfo;
 
@@ -285,12 +287,6 @@ private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
 	int32_t i;
 	wmem_strbuf_t *strbuf;
 	strbuf = wmem_strbuf_new(pinfo->pool, "");
-
-	/*for (i = 0; i < bytelen; i++)
-	{
-		wmem_strbuf_append_printf(strbuf, "%02x", bitstring[i]);
-	}
-	wmem_strbuf_append_printf(strbuf,"->");*/
 	print_bytes(strbuf,bitstring,bytelen, padding);
 
 	(void) g_strlcat(private_data->moreCinfo, wmem_strbuf_get_str(strbuf), BUFFER_SIZE_MORE);
@@ -299,7 +295,7 @@ private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int offset)
 
 
 void
-private_data_add_moreCinfo_bool(asn1_ctx_t *actx, int boolean)
+private_data_add_moreCinfo_bool(asn1_ctx_t *actx, int32_t boolean)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	(void) g_strlcat(private_data->moreCinfo, boolean? "true" : "false", BUFFER_SIZE_MORE);
@@ -307,14 +303,14 @@ private_data_add_moreCinfo_bool(asn1_ctx_t *actx, int boolean)
 }
 
 void
-private_data_add_moreCinfo_structure(asn1_ctx_t *actx, int dir)
+private_data_add_moreCinfo_structure(asn1_ctx_t *actx, int32_t dir)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	(void) g_strlcat(private_data->moreCinfo, dir? "{ " : "} ", BUFFER_SIZE_MORE);
 }
 
 void
-private_data_add_moreCinfo_array(asn1_ctx_t *actx, int dir)
+private_data_add_moreCinfo_array(asn1_ctx_t *actx, int32_t dir)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	(void) g_strlcat(private_data->moreCinfo, dir? "[ " : "] ", BUFFER_SIZE_MORE);
@@ -351,14 +347,16 @@ dissect_iec61850(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, voi
 
 	col_clear(pinfo->cinfo, COL_INFO);
 
-	if(parent_tree){
+	if(parent_tree)
+	{
 		mms_item = proto_tree_add_item(parent_tree, proto_mms, tvb, 0, -1, ENC_NA);
 		mms_tree = proto_item_add_subtree(mms_item, ettmms);
 	}
 
-	while (tvb_reported_length_remaining(tvb, offset) > 0){
+	while (tvb_reported_length_remaining(tvb, offset) > 0)
+	{
 		old_offset=offset;
-		//parse mms similar to mms disector to retrieve all relevant values for mapping, and store in private data
+		/* parse mms similar to mms disector to retrieve all relevant values for mapping, and store in private data */
 		offset=dissect_iec61850_MMSpdu(FALSE, tvb, offset, &asn1_ctx , mms_tree, -1);
 		if(offset == old_offset){
 			proto_tree_add_expert(mms_tree, pinfo, &ei_mms_zero_pdu, tvb, offset, -1);
@@ -366,13 +364,13 @@ dissect_iec61850(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, voi
 			break;
 		}
 	}
-	if(error == 0)//if mms is parsed without issue, try to map to iec61850 pdu's
+	if(error == 0)/* if mms is parsed without issue, try to map to iec61850 pdu's */
 		decoded = map_iec61850_packet(tvb, pinfo, &asn1_ctx, parent_tree, mms_tree, proto_iec61850);
-	if(decoded == 1)//if we decoded an IEC-61850 PDU succesfull
+	if(decoded == 1)/* if we decoded an IEC-61850 PDU succesfull */
 	{
 		col_set_str(pinfo->cinfo, COL_PROTOCOL, "IEC-61850");
 	}
-	else // not an IEC-61850 PDU, so remove IEC-61850 data from this packet, and dissect as mms
+	else /*  not an IEC-61850 PDU, so remove IEC-61850 data from this packet, and dissect as mms */
 	{
 		proto_item_set_hidden(mms_item);
 		col_clear(pinfo->cinfo, COL_INFO);
@@ -391,12 +389,12 @@ void proto_register_iec61850(void) {
 	/* List of fields */
 	static hf_register_info hf[] =
 	{
-		//generated items
+		/*generated items */
 #include "packet-iec61850-hfarr.c"
 	};
 
 	/* List of subtrees */
-	static gint *ett_mms[] = {
+	static int32_t *ett_mms[] = {
 		&ettmms,
 #include "packet-iec61850-ettarr.c"
 	};
@@ -421,80 +419,11 @@ void proto_register_iec61850(void) {
 	proto_iec61850 = proto_register_protocol(PNAME, PSNAME, PFNAME);
 	/* Register fields and subtrees */
 	register_iec61850_mappings(proto_iec61850, hf);
-	//proto_register_field_array(protoiec61850, hf, array_length(hf));
-	
-	//disector register
+
+	/* disector register */
 	register_dissector("iec61850", dissect_iec61850, proto_iec61850);
 }
 
-
-static gboolean
-dissect_iec61850_heur(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, void *data _U_)
-{
-	/* must check that this really is an iec61850 packet */
-	int32_t offset = 0;
-	int32_t length = 0 ;
-	int32_t oct;
-	int32_t idx = 0 ;
-
-	int8_t tmp_class;
-	int32_t tmp_pc;
-	int32_t tmp_tag;
-	/*NOTES
-
-NO char[]!!!
-use int64_t
-
-tvb_ensure_bytes_exist
-
-sprintf() -> snprintf()
-
-don't use "%lld", "%llu", "%llx", or "%llo" - not all platforms
-support "%ll" for printing 64-bit integral data types.  Instead use
-the macros in <inttypes.h>, for example:
-
-proto_tree_add_uint64_format_value(tree, hf_uint64, tvb, offset, len,
-									val, "%" PRIu64, val);
-
-Use ws_assert() instead of g_assert() 
-
-*/
-
-
-		/* first, check do we have at least 2 bytes (pdu) */
-	if (!tvb_bytes_exist(tvb, 0, 2))
-		return FALSE;	/* no */
-
-	/* can we recognize IEC61850 PDU ? Return FALSE if  not */
-	/*   get IEC61850 PDU type */
-	offset = get_ber_identifier(tvb, offset, &tmp_class, &tmp_pc, &tmp_tag);
-
-	/* check IEC61850 type */
-
-	/* Class should be constructed */
-	if (tmp_class!=BER_CLASS_CON)
-		return FALSE;
-
-	/* see if the tag is a valid IEC61850 PDU */
-	try_val_to_str_idx(tmp_tag, iec61850_MMSpdu_vals, &idx);
-	if  (idx == -1) {
-	 	return FALSE;  /* no, it isn't an IEC61850 PDU */
-	}
-
-	/* check IEC61850 length  */
-	oct = tvb_get_guint8(tvb, offset)& 0x7F;
-	if (oct==0)
-		/* IEC61850 requires length after tag so not IEC61850 if indefinite length*/
-		return FALSE;
-
-	offset = get_ber_length(tvb, offset, &length, NULL);
-	/* do we have enough bytes? */
-	if (!tvb_bytes_exist(tvb, offset, length))
-		return FALSE;
-
-	dissect_iec61850(tvb, pinfo, parent_tree, data);
-	return TRUE;
-}
 
 /*--- proto_reg_handoff_iec61850 --- */
 void proto_reg_handoff_iec61850(void) {

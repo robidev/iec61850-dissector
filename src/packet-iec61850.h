@@ -47,8 +47,8 @@ typedef struct iec61850_private_data_t
 /* Helper function to get or create the private data struct */
 iec61850_private_data_t* iec61850_get_private_data(asn1_ctx_t *actx);
 /* Helper function to test presence of private data struct */
-gboolean iec61850_has_private_data(asn1_ctx_t *actx);
-void private_data_add_preCinfo(asn1_ctx_t *actx, guint32 val);
+int32_t iec61850_has_private_data(asn1_ctx_t *actx);
+void private_data_add_preCinfo(asn1_ctx_t *actx, u_int32_t val);
 u_int8_t* private_data_get_preCinfo(asn1_ctx_t *actx);
 void private_data_add_moreCinfo_id(asn1_ctx_t *actx, tvbuff_t *tvb);
 void private_data_add_moreCinfo_float(asn1_ctx_t *actx, tvbuff_t *tvb);

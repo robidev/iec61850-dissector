@@ -169,7 +169,7 @@ int32_t Release(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *act
 int32_t Associate_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
 int32_t Cancel_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
 int32_t Release_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
-//confirmed PDU
+/* confirmed PDU */
 int32_t GetServerDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
 int32_t GetLogicalDeviceDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
 int32_t GetLogicalNodeDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
@@ -462,7 +462,7 @@ static int32_t * const BinaryStep_bits[] = {
 	NULL
 };
 
-void proto_tree_print_tree(proto_node *node, gpointer data)
+void proto_tree_print_tree(proto_node *node, void * data)
 {
 	proto_tree *tree;
 	tvbuff_t *tvb;
@@ -470,8 +470,8 @@ void proto_tree_print_tree(proto_node *node, gpointer data)
 	int32_t offset = 0;
 	field_info *fi = PNODE_FINFO(node);
 	tree_data * pdata = (tree_data *)data;
-	g_assert(pdata);
-    g_assert(fi);
+	ws_assert(pdata);
+    ws_assert(fi);
 
 	tree = pdata->tree;
 	tvb = pdata->tvb;
@@ -482,7 +482,7 @@ void proto_tree_print_tree(proto_node *node, gpointer data)
 	{
 		if(fi->hfinfo->name != NULL)
 		{
-			//set expert info to display failed requests
+			/* set expert info to display failed requests */
 			if(g_str_equal(fi->hfinfo->name, "failure"))
 			{
 				proto_tree_add_expert_format(tree, pdata->actx->pinfo, &ei_iec61850_failed_resp,tvb, offset, -1, 
@@ -492,8 +492,7 @@ void proto_tree_print_tree(proto_node *node, gpointer data)
 			switch(fi->hfinfo->type)
 			{
 				case FT_NONE:
-					//ws_message("%*s%s", pdata->level," ", fi->hfinfo->name); 
-					//filter out some entries that are redundant
+					/* filter out some entries that are redundant */
 					if(g_str_equal(fi->hfinfo->name, "confirmed-RequestPDU") || 
 						g_str_equal(fi->hfinfo->name, "confirmed-ResponsePDU") ||
 						g_str_equal(fi->hfinfo->name, "initiate-RequestPDU") ||
@@ -508,12 +507,11 @@ void proto_tree_print_tree(proto_node *node, gpointer data)
 					item = proto_tree_add_item(tree, fi->hfinfo->id,tvb, offset, fi->length,  0); 
 					break;
 				case FT_BOOLEAN:
-					//ws_message("%*s%s: %s", pdata->level," ", fi->hfinfo->name, fi->value.value.uinteger? "true" : "false");
 					u_int32_t boolean = 0;
 					u_int32_t bitmask = 1;
-					if(fi->hfinfo->bitmask)// if a bitmask exists, use that value
+					if(fi->hfinfo->bitmask)/* if a bitmask exists, use that value */
 						bitmask = fi->hfinfo->bitmask;
-					if(fi->value.value.uinteger) //if value is non-zero, set bool to bitmask
+					if(fi->value.value.uinteger) /* if value is non-zero, set bool to bitmask */
 						boolean = bitmask;
 
 					item = proto_tree_add_boolean(tree, fi->hfinfo->id, tvb, offset, fi->length, boolean ); 
@@ -521,8 +519,6 @@ void proto_tree_print_tree(proto_node *node, gpointer data)
 				case FT_UINT8:
 				case FT_UINT16:
 				case FT_UINT32:
-					//TODO, for invokeID, add it to the parent line
-					//ws_message("%*s%s: %d", pdata->level," ", fi->hfinfo->name, fi->value.value.uinteger); 
 					if(!g_str_equal(fi->hfinfo->name, "Padding"))
 					{
 						item = proto_tree_add_uint(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.uinteger); 
@@ -578,13 +574,10 @@ void proto_tree_print_tree(proto_node *node, gpointer data)
 							dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_dir, NULL);
 							break;						
 						}
-						//dir
 					}
-					//ws_message("%*s%s: %i", pdata->level," ", fi->hfinfo->name, fi->value.value.sinteger);
 					item = proto_tree_add_int(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.sinteger); 
 					break;
 				case FT_STRING:
-					//ws_message("%*s%s: %s", pdata->level," ", fi->hfinfo->name, fi->value.value.string); 
 					item = proto_tree_add_string(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.string);
 					if(g_str_equal(fi->hfinfo->name, "utc-time"))
 					{
@@ -593,14 +586,6 @@ void proto_tree_print_tree(proto_node *node, gpointer data)
 					break;
 				case FT_BYTES:
 				{
-					/*wmem_strbuf_t *strbuf;
-					strbuf = wmem_strbuf_new(wmem_packet_scope(), "");
-					int32_t i;
-					for (i = 0; i < fi->value.value.bytes->len; i++){
-						wmem_strbuf_append_printf(strbuf, "%02x", fi->value.value.bytes->data[i]);
-					}
-					ws_message("%*s%s: (%i) %s", pdata->level," ", fi->hfinfo->name, fi->value.value.bytes->len, wmem_strbuf_get_str(strbuf)); 
-					*/
 					if(g_str_equal(fi->hfinfo->name, "bit-string"))
 					{
 						if(g_str_has_suffix(pdata->request,"$q"))
@@ -626,7 +611,6 @@ void proto_tree_print_tree(proto_node *node, gpointer data)
 					}
 					if(g_str_equal(fi->hfinfo->name, "floating-point"))
 					{
-						//snprintf(tmp, BUFFER_SIZE_MORE, "%f", );
 						proto_tree_add_bytes_format_value(tree, fi->hfinfo->id,tvb, offset, fi->value.value.bytes->len, fi->value.value.bytes->data, "%f",tvb_get_ieee_float(tvb, 1, ENC_BIG_ENDIAN) );
 						break;
 					}
@@ -640,13 +624,15 @@ void proto_tree_print_tree(proto_node *node, gpointer data)
 		}
 		else
 		{
-			ws_warning("l: %i, type: %d", pdata->level, fi->hfinfo->type);
+			ws_warning("unnamed item: %i, type: %d", pdata->level, fi->hfinfo->type);
 		}
 	}
     
-	if (node->first_child != NULL ) {
+	if (node->first_child != NULL ) 
+	{
 		pdata->level++;
-		if(pdata->level < 100){
+		if(pdata->level < 100)
+		{
 			if(item != NULL)
 			{
 				proto_tree *subtree = proto_item_add_subtree(item, ett_iec61850);
@@ -669,50 +655,50 @@ int32_t map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx,
 	iec61850_value_req * sessiondata_request = &sessiondata;
 	g_mms_tree = mms_tree;
 
-	if(tvb_reported_length_remaining(tvb, offset) > 0) //while for multiple PDU in 1 packet (may be possible...)
+	if(tvb_reported_length_remaining(tvb, offset) > 0) /* while for multiple PDU in 1 packet (may be possible...) */
 	{
 		proto_item *item;
 		old_offset=offset;
 		
 		iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-		g_assert(private_data);
+		ws_assert(private_data);
 
-		if(private_data->MMSpdu == 1)//load request data for response
+		if(private_data->MMSpdu == 1)/* load request data for response */
 		{
 			sessiondata_request = load_invoke_data(pinfo, private_data->invokeID);
 		}
 
 		switch(private_data->MMSpdu)
 		{
-			case 0://confirmed-req
+			case 0:/* confirmed-req */
 				sessiondata.data = wmem_strbuf_new(wmem_file_scope(),private_data->moreCinfo);
-				g_strstrip((gchar *)wmem_strbuf_get_str(sessiondata.data));
-			case 1://confirmed-res
+				g_strstrip((u_int8_t *)wmem_strbuf_get_str(sessiondata.data));
+			case 1:/* confirmed-res */
 			{
 				switch(private_data->Service)
 				{
-					case 1://GetNameList -> GetLogicalNodeDirectory, GetLogicalDeviceDirectory, GetServerDirectory
+					case 1:/* GetNameList -> GetLogicalNodeDirectory, GetLogicalDeviceDirectory, GetServerDirectory */
 						item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
-						if(private_data->MMSpdu == 0) // request
+						if(private_data->MMSpdu == 0) /* request */
 						{
-							if(private_data->objectScope == 0)//VMD-SPECIFIC
+							if(private_data->objectScope == 0)/* VMD-SPECIFIC */
 							{
 								decoded = GetServerDirectory(tvb, offset, item, actx);
 								sessiondata_request->serviceName = "GetServerDirectory";
 								sessiondata_request->hf_name = hf_iec61850_GetServerDirectory;
 							}
-							else if(private_data->objectScope == 1)//domainspecific
+							else if(private_data->objectScope == 1)/* domainspecific */
 							{
 								if(private_data->objectClass == 0)
 								{
 									u_int8_t * request = (u_int8_t *)wmem_strbuf_get_str(sessiondata_request->data);
-									if(g_strrstr(request,"/") == NULL || g_str_has_suffix(request, "/"))// if the whole device is requested it is a GetLogicalDeviceDirectory
+									if(g_strrstr(request,"/") == NULL || g_str_has_suffix(request, "/")) /* if the whole device is requested it is a GetLogicalDeviceDirectory */
 									{
 										decoded = GetLogicalDeviceDirectory(tvb, offset, item, actx);
 										sessiondata_request->serviceName = "GetLogicalDeviceDirectory";
 										sessiondata_request->hf_name = hf_iec61850_GetLogicalDeviceDirectory;
 									}
-									if(g_strrstr(request,"/") && !g_str_has_suffix(request, "/"))// if a specific logical node is requested, it is a GetLogicalNodeDirecotry
+									if(g_strrstr(request,"/") && !g_str_has_suffix(request, "/")) /* if a specific logical node is requested, it is a GetLogicalNodeDirecotry */
 									{
 										decoded = GetLogicalNodeDirectory(tvb, offset, item, actx);
 										sessiondata_request->serviceName = "GetLogicalNodeDirectory";
@@ -732,14 +718,14 @@ int32_t map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx,
 									sessiondata_request->hf_name = hf_iec61850_GetJournalDirectory;
 								}
 							}
-							else // aa-specific
+							else /* aa-specific */
 							{
 								decoded = GetLogicalDeviceDirectory(tvb, offset, item, actx);
 								sessiondata_request->serviceName = "GetLogicalDeviceDirectory";
 								sessiondata_request->hf_name = hf_iec61850_GetLogicalDeviceDirectory;
 							}
 						}
-						else // response
+						else /* response */
 						{
 							decoded = GetNameList_response(tvb, offset, item, actx, sessiondata_request);
 						}
@@ -802,8 +788,10 @@ int32_t map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx,
 						break;
 					default:
 						ws_warning("Not an IEC61850 confirmed service: %i", private_data->Service);
-						//to_tree_add_item(item, hf_iec61850_null, tvb, offset, -1, ENC_NA);
-						//proto_tree_add_expert(tree, pinfo, &ei_iec61850_zero_pdu, tvb, offset, -1);
+						/*
+						to_tree_add_item(item, hf_iec61850_null, tvb, offset, -1, ENC_NA);
+						proto_tree_add_expert(tree, pinfo, &ei_iec61850_zero_pdu, tvb, offset, -1);
+						*/
 				}
 				break;
 			}
@@ -830,13 +818,11 @@ int32_t map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx,
 					else
 					{
 						ws_warning("Not an IEC61850 unconfirmed VariableAccessSpecification: %i", private_data->Service);
-						//proto_tree_children_foreach(mms_tree, proto_tree_print_node, &level);
 					}
 				}
 				else
 				{
 					ws_warning("Not an IEC61850 unconfirmed service: %i", private_data->Service);
-					//proto_tree_children_foreach(mms_tree, proto_tree_print_node, &level);
 				}
 				break;
 			}
@@ -887,21 +873,23 @@ int32_t map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx,
 			}
 			default:
 				ws_warning("Not an IEC61850 PDU: %i", private_data->MMSpdu);
-				//proto_tree_add_item(item, hf_iec61850_null, tvb, offset, -1, ENC_NA);
-				//proto_tree_add_expert(tree, pinfo, &ei_iec61850_zero_pdu, tvb, offset, -1);
+				/*
+				proto_tree_add_item(item, hf_iec61850_null, tvb, offset, -1, ENC_NA);
+				proto_tree_add_expert(tree, pinfo, &ei_iec61850_zero_pdu, tvb, offset, -1);
+				*/
 		}
 		if(private_data->MMSpdu == 0)//store request data
 		{
 			store_invoke_data(pinfo, private_data->invokeID, &sessiondata);
 		}
-		//if(offset == old_offset)????ERROR??
+		/* if(offset == old_offset)????ERROR?? */
 
 	}
     return decoded;
 }
 
 int32_t Unconfirmed_RPT(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{// TODO Report,(shall have VMD-SPECIFIC)
+{
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
@@ -923,7 +911,7 @@ int32_t Unconfirmed_RPT(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ct
 }
 
 int32_t CommandTerm(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{// TODO CommandTermination + or -
+{
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
@@ -1014,7 +1002,7 @@ int32_t Associate(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *a
 }
 
 int32_t Cancel(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{//abort
+{/* abort */ 
 	proto_item *subitem;
 	proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_Cancel, tvb, offset, -1, ENC_NA);
@@ -1266,7 +1254,7 @@ int32_t GetNameList_response(tvbuff_t *tvb, int32_t offset, proto_item *item, as
 }
 
 int32_t GetDataDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{//also GetDataDefinition
+{/* also GetDataDefinition */
 	proto_item *subitem;
     proto_tree *subtree=NULL;
 	subitem = proto_tree_add_item(item, hf_iec61850_GetDataDirectory, tvb, offset, -1, ENC_NA);
@@ -1713,12 +1701,12 @@ static u_int32_t iec61850_hash (gconstpointer v)
 {
 	const iec61850_key_req *key = (const iec61850_key_req *)v;
 	u_int64_t val=0;
-	// get values from struct
+	/* get values from struct */
 	u_int64_t conv = (u_int64_t)key->conversation;
 	u_int64_t invokeID = (u_int64_t)key->invokeID;
-	// combine 2 32 bit values in one 64 bit value 
+	/* combine 2 32 bit values in one 64 bit value  */
 	val = ((conv<<32)&0xffffffff00000000 || invokeID&0x00000000ffffffff);
-	// hash it to an 32 bit int;
+	/* hash it to an 32 bit int; */
 	return wmem_int64_hash(&val);
 }
 
@@ -1835,573 +1823,573 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 		{ 
 			&hf_iec61850_Unconfirmed,
       		{ 
-				"Unconfirmed", 			// name
-				"iec61850.unconfirmed",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"Unconfirmed", 			
+				"iec61850.unconfirmed", 
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_Error,
       		{ 
-				"Error", 			// name
-				"iec61850.error",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"Error", 			
+				"iec61850.error",   
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_Reject,
       		{ 
-				"Reject", 			// name
-				"iec61850.reject",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"Reject", 			
+				"iec61850.reject",  
+        		FT_NONE, 			
+				BASE_NONE, 			
+				NULL, 				
+				0,					
+        		NULL, 				
+				HFILL 				
 			}
 		},
 		{ 
 			&hf_iec61850_Associate,
       		{ 
-				"Associate", 			// name
-				"iec61850.associate",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"Associate", 		
+				"iec61850.associate",   
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_Cancel,
       		{ 
-				"Cancel", 			// name
-				"iec61850.cancel",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"Cancel", 			
+				"iec61850.cancel",  
+        		FT_NONE, 			
+				BASE_NONE, 			
+				NULL, 				
+				0,					
+        		NULL, 				
+				HFILL 				
 			}
 		},
 		{ 
 			&hf_iec61850_Release,
       		{ 
-				"Release", 			// name
-				"iec61850.release",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"Release", 			
+				"iec61850.release", 
+        		FT_NONE, 			
+				BASE_NONE, 			
+				NULL, 				
+				0,					
+        		NULL, 				
+				HFILL 				
 			}
 		},
 		{ 
 			&hf_iec61850_Associate_Error,
       		{ 
-				"Associate_Error", 			// name
-				"iec61850.associate_error",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"Associate_Error", 			
+				"iec61850.associate_error", 
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_Cancel_Error,
       		{ 
-				"Cancel_Error", 			// name
-				"iec61850.cancel_error",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"Cancel_Error",
+				"iec61850.cancel_error",
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 				
 			}
 		},
 		{ 
 			&hf_iec61850_Release_Error,
       		{ 
-				"Release_Error", 			// name
-				"iec61850.release_error",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"Release_Error", 	
+				"iec61850.release_error", 
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					 
+				0,						 
+        		NULL, 					 
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_GetServerDirectory,
       		{ 
-				"GetServerDirectory", 			// name
-				"iec61850.getserverdirectory",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetServerDirectory", 			
+				"iec61850.getserverdirectory",  
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_GetLogicalDeviceDirectory,
       		{ 
-				"GetLogicalDeviceDirectory", 			// name
-				"iec61850.getlogicaldevicedirectory",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetLogicalDeviceDirectory", 			
+				"iec61850.getlogicaldevicedirectory",   
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_GetLogicalNodeDirectory,
       		{ 
-				"GetLogicalNodeDirectory", 			// name
-				"iec61850.getlogicalnodedirectory",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetLogicalNodeDirectory", 			
+				"iec61850.getlogicalnodedirectory", 
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_GetJournalDirectory,
       		{ 
-				"GetJournalDirectory", 			// name
-				"iec61850.getjournaldirectory",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetJournalDirectory", 			
+				"iec61850.getjournaldirectory", 
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_GetNameList_response,
       		{ 
-				"GetNameList", 			// name
-				"iec61850.getnamelist",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetNameList", 			
+				"iec61850.getnamelist", 
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_GetDataValue,
       		{ 
-				"GetDataValue", 			// name
-				"iec61850.getdatavalue",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetDataValue", 		
+				"iec61850.getdatavalue",
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_SetDataValue,
       		{ 
-				"SetDataValue", 			// name
-				"iec61850.setdatavalue",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"SetDataValue", 		
+				"iec61850.setdatavalue",
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_GetRCBValues,
       		{ 
-				"GetRCBValues", 			// name
-				"iec61850.getrcbvalues",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetRCBValues", 		
+				"iec61850.getrcbvalues",
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_GetGCBValues,
       		{ 
-				"GetGCBValues", 			// name
-				"iec61850.getgcbvalues",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetGCBValues", 		
+				"iec61850.getgcbvalues",
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_GetSGCBValues,
       		{ 
-				"GetSGCBValues", 			// name
-				"iec61850.getsgcbvalues",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetSGCBValues", 		
+				"iec61850.getsgcbvalues",
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_GetLCBValues,
       		{ 
-				"GetLCBValues", 			// name
-				"iec61850.getlcbvalues",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetLCBValues", 		
+				"iec61850.getlcbvalues",
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_Select,
       		{ 
-				"Select", 			// name
-				"iec61850.select",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"Select", 			
+				"iec61850.select",  
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_GetAllDataValues,
       		{ 
-				"GetAllDataValues", 			// name
-				"iec61850.getalldatavalues",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetAllDataValues", 		
+				"iec61850.getalldatavalues",
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_GetDataSetValues,
       		{ 
-				"GetDataSetValues", 			// name
-				"iec61850.getdatasetvalues",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetDataSetValues", 
+				"iec61850.getdatasetvalues", 
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_SetRCBValues,
       		{ 
-				"SetRCBValues", 			// name
-				"iec61850.setrcbvalues",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"SetRCBValues", 		
+				"iec61850.setrcbvalues",
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_SetGCBValues,
       		{ 
-				"SetGCBValues", 			// name
-				"iec61850.setgcbalues",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"SetGCBValues", 		
+				"iec61850.setgcbalues", 
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_SetSGCBValues,
       		{ 
-				"SetSGCBValues", 			// name
-				"iec61850.setsgcbvalues",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"SetSGCBValues", 		
+				"iec61850.setsgcbvalues",
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_SetLCBValues,
       		{ 
-				"SetLCBValues", 			// name
-				"iec61850.setlcbvalues",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"SetLCBValues", 		
+				"iec61850.setlcbvalues",
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_SetDataSetValues,
       		{ 
-				"SetDataSetValues", 			// name
-				"iec61850.setdatasetvalues",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"SetDataSetValues", 		
+				"iec61850.setdatasetvalues",
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_SelectWithValue,
       		{ 
-				"SelectWithValue", 			// name
-				"iec61850.selectwithvalue",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"SelectWithValue", 			
+				"iec61850.selectwithvalue", 
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_OperCancel,
       		{ 
-				"Operate Cancel", 			// name
-				"iec61850.opercancel",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"Operate Cancel", 		
+				"iec61850.opercancel",  
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_Operate,
       		{ 
-				"Operate", 			// name
-				"iec61850.operate",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"Operate", 			
+				"iec61850.operate", 
+        		FT_NONE, 			
+				BASE_NONE, 			
+				NULL, 				
+				0,					
+        		NULL, 				
+				HFILL 				
 			}
 		},
 		{ 
 			&hf_iec61850_GetDataDirectory,
       		{ 
-				"GetDataDirectory", 			// name
-				"iec61850.getdatadirectory",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetDataDirectory", 		
+				"iec61850.getdatadirectory",
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_GetDataSetDirectory,
       		{ 
-				"GetDataSetDirectory", 			// name
-				"iec61850.getdatasetdirectory",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetDataSetDirectory", 			
+				"iec61850.getdatasetdirectory", 
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_CreateDataSet,
       		{ 
-				"CreateDataSet", 			// name
-				"iec61850.createdataset",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"CreateDataSet", 		
+				"iec61850.createdataset", 
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_DeleteDataSet,
       		{ 
-				"DeleteDataSet", 			// name
-				"iec61850.deletedataSet",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"DeleteDataSet", 		
+				"iec61850.deletedataSet",  
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_QueryLog,
       		{ 
-				"QueryLog", 			// name
-				"iec61850.querylog",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"QueryLog", 		
+				"iec61850.querylog",   
+        		FT_NONE, 			
+				BASE_NONE, 			
+				NULL, 				
+				0,					
+        		NULL, 				
+				HFILL 				
 			}
 		},
 		{ 
 			&hf_iec61850_SetFile,
       		{ 
-				"SetFile", 			// name
-				"iec61850.setfile",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"SetFile", 			
+				"iec61850.setfile", 
+        		FT_NONE, 			
+				BASE_NONE, 			
+				NULL, 				
+				0,					
+        		NULL, 				
+				HFILL 				
 			}
 		},
 		{ 
 			&hf_iec61850_GetFile,
       		{ 
-				"GetFile", 			// name
-				"iec61850.getfile",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetFile", 			
+				"iec61850.getfile", 
+        		FT_NONE, 			
+				BASE_NONE, 			
+				NULL, 				
+				0,					
+        		NULL, 				
+				HFILL 				
 			}
 		},
 		{ 
 			&hf_iec61850_OpenFile,
       		{ 
-				"OpenFile", 			// name
-				"iec61850.openfile",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"OpenFile", 		
+				"iec61850.openfile",
+        		FT_NONE, 			
+				BASE_NONE, 			
+				NULL, 				
+				0,					
+        		NULL, 				
+				HFILL 				
 			}
 		},
 		{ 
 			&hf_iec61850_FileRead,
       		{ 
-				"FileRead", 			// name
-				"iec61850.fileread",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"FileRead", 		
+				"iec61850.fileread",
+        		FT_NONE, 			
+				BASE_NONE, 			
+				NULL, 				
+				0,					
+        		NULL, 				
+				HFILL 				
 			}
 		},
 		{ 
 			&hf_iec61850_FileClose,
       		{ 
-				"FileClose", 			// name
-				"iec61850.fileclose",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"FileClose", 			
+				"iec61850.fileclose",   
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_DeleteFile,
       		{ 
-				"DeleteFile", 			// name
-				"iec61850.deletefile",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"DeleteFile", 			
+				"iec61850.deletefile",  
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_GetServerDirectory_FILE,
       		{ 
-				"GetServerDirectory_FILE", 			// name
-				"iec61850.getserverdirectory_file",   // abrev
-        		FT_NONE, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"GetServerDirectory_FILE", 			
+				"iec61850.getserverdirectory_file", 
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
 			}
 		},
 		{ 
 			&hf_iec61850_null,
       		{ 
-				"UNKNOWN", 			// name
-				"iec61850.unknown",   // abrev
-        		FT_STRING, 				// type
-				BASE_NONE, 				// display
-				NULL, 					// 
-				0,						// 
-        		NULL, 					// 
-				HFILL 					// ref type
+				"UNKNOWN", 			
+				"iec61850.unknown", 
+        		FT_STRING, 			
+				BASE_NONE, 			
+				NULL, 				
+				0,					
+        		NULL, 				
+				HFILL 				
 			}
 		},
 		{ &hf_iec61850_QualityC0,
