@@ -1118,16 +1118,19 @@ private_data_add_moreCinfo_enum(asn1_ctx_t *actx, int32_t value, const value_str
 
 int32_t is_text(u_int8_t * str)
 {
-  if(g_str_is_ascii(str)){
-    int32_t i = 0;
-    for(i = 0; i < strlen(str); i++){
-      if( str[i] < 0x20){
-        return 0;
-      }
-    }
-    return 1;
-  }
-  return 0;
+	if(g_str_is_ascii(str))
+	{
+		int32_t i = 0;
+		for(i = 0; i < strlen(str); i++)
+		{
+			if( str[i] < 0x20)
+			{
+				return 0;
+			}
+		}
+		return 1;
+	}
+	return 0;
 }
 
 void
@@ -1163,24 +1166,31 @@ private_data_add_moreCinfo_ostr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 		(void) g_strlcat(private_data->moreCinfo, "'' ", BUFFER_SIZE_MORE);
 }
 
-void print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_t bytelen, u_int32_t padding)
+u_int32_t print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_t bytelen, u_int32_t padding)
 {
+  	u_int32_t count = 0;
     u_int8_t byte;
     int32_t i, j, end = 0;
 	wmem_strbuf_append_printf(strbuf,"b'");
     for (i = 0; i < bytelen; i++) 
 	{
 		if(i == bytelen-1) /* padding applies */
-			end = padding;
+		{
+			end = padding;			
+		}
 		else
-			end = 0;
+		{
+			end = 0;			
+		}
         for (j = 7; j >= end; j--) 
 		{
             byte = (bitstring[i] >> j) & 1;
             wmem_strbuf_append_printf(strbuf, "%u", byte);
+			count += byte;
         }
     }
 	wmem_strbuf_append_printf(strbuf,"'");
+	return count;
 }
 
 void
@@ -7821,7 +7831,7 @@ dissect_iec61850_MMSpdu(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 
 /*--- End of included file: packet-iec61850-fn.c ---*/
-#line 332 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 342 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 
 /*
 * Dissect iec61850 PDUs inside a PPDU.
@@ -10631,7 +10641,7 @@ void proto_register_iec61850(void) {
         NULL, HFILL }},
 
 /*--- End of included file: packet-iec61850-hfarr.c ---*/
-#line 405 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 415 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	/* List of subtrees */
@@ -10859,7 +10869,7 @@ void proto_register_iec61850(void) {
     &ett_iec61850_FileAttributes,
 
 /*--- End of included file: packet-iec61850-ettarr.c ---*/
-#line 411 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 421 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	static ei_register_info ei_mms[] = {

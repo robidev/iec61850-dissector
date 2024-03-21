@@ -46,6 +46,11 @@ struct _tree_data {
 	u_int32_t offset;
 	asn1_ctx_t *actx;
 	u_int8_t * request;
+	int32_t listOfAccessResult;
+	u_int32_t itemIndex;
+	u_int16_t optflds;
+	u_int32_t inclusion;
+	u_int32_t elements;
 } typedef tree_data;
 
 static wmem_map_t *iec61850_request_hash = NULL;
@@ -143,6 +148,22 @@ static int32_t hf_iec61850_Health = -1;
 static int32_t hf_iec61850_dir = -1;
 static int32_t hf_iec61850_serviceType = -1;
 static int32_t hf_iec61850_errorCode = -1;
+
+static int32_t hf_iec61850_RptID = -1;
+static int32_t hf_iec61850_OptFlds = -1;
+static int32_t hf_iec61850_SeqNum = -1;
+static int32_t hf_iec61850_TimeOfEntry = -1;
+static int32_t hf_iec61850_DatSet = -1;
+static int32_t hf_iec61850_BufOvfl = -1;
+static int32_t hf_iec61850_EntryID = -1;
+static int32_t hf_iec61850_ConfRev = -1;
+static int32_t hf_iec61850_SubSeqNum = -1;
+static int32_t hf_iec61850_MoreSegmentsFollow = -1;
+static int32_t hf_iec61850_Inclusion_bitstring = -1;
+static int32_t hf_iec61850_data_reference = -1;
+static int32_t hf_iec61850_values = -1;
+static int32_t hf_iec61850_ReasonCode = -1;
+static int32_t hf_iec61850_bit_string = -1;
 
 static int32_t ett_iec61850 = -1;
 
@@ -462,6 +483,62 @@ static int32_t * const BinaryStep_bits[] = {
 	NULL
 };
 
+static int32_t * const OptFlds_bits[] = {
+	&hf_iec61850_OptFlds80,
+	&hf_iec61850_OptFlds40,
+	&hf_iec61850_OptFlds20,
+	&hf_iec61850_OptFlds10,
+	&hf_iec61850_OptFlds8,
+	&hf_iec61850_OptFlds4,
+	&hf_iec61850_OptFlds2,
+	&hf_iec61850_OptFlds1,
+	&hf_iec61850_OptFlds0080,
+	&hf_iec61850_OptFlds0040,
+	NULL
+};
+
+static int32_t * const TrgOps_bits[] = {
+	&hf_iec61850_ReasonCode80,
+	&hf_iec61850_ReasonCode40,
+	&hf_iec61850_ReasonCode20,
+	&hf_iec61850_ReasonCode10,
+	&hf_iec61850_ReasonCode8,
+	&hf_iec61850_ReasonCode4,
+	&hf_iec61850_ReasonCode2,
+	NULL
+};
+
+static int32_t * const RPT_fields[] = {
+	&hf_iec61850_RptID,						/* 0   0x8000 */
+	&hf_iec61850_OptFlds,					/* 1   0x4000*/
+	&hf_iec61850_SeqNum,					/* 2   0x2000*/
+	&hf_iec61850_TimeOfEntry,				/* 3   0x1000*/
+	&hf_iec61850_DatSet,					/* 4   0x0800*/
+	&hf_iec61850_BufOvfl,					/* 5   0x0400*/
+	&hf_iec61850_EntryID,					/* 6   0x0200*/
+	&hf_iec61850_ConfRev,					/* 7   0x0100*/
+	&hf_iec61850_SubSeqNum,					/* 8   0x0080*/
+	&hf_iec61850_MoreSegmentsFollow,		/* 9   0x0040*/
+	&hf_iec61850_Inclusion_bitstring,		/* 10  0x0020 - 1*/
+	&hf_iec61850_data_reference,			/* 11  0x0010*/
+	&hf_iec61850_values,					/* 12  0x0008 - 2*/
+	&hf_iec61850_ReasonCode,				/* 13  0x0004*/
+	NULL
+};
+
+static int32_t RPT_optFlds_lookup[] = {
+	0x0000,	/*0 reserved*/
+	0x2000,	/*1 sequence*/
+	0x1000,	/*2 report time*/
+	0x0004,	/*3 reason for inc*/
+	0x0800,	/*4 datasetname*/
+	0x0010, /*5 data-ref*/
+	0x0400,	/*6 buf-ovl*/
+	0x0200,	/*7 entryid*/
+	0x0100,	/*8 conf-rev*/
+	0x00c0	/*9 segmentation*/
+};
+
 void proto_tree_print_tree(proto_node *node, void * data)
 {
 	proto_tree *tree;
@@ -488,7 +565,17 @@ void proto_tree_print_tree(proto_node *node, void * data)
 				proto_tree_add_expert_format(tree, pdata->actx->pinfo, &ei_iec61850_failed_resp,tvb, offset, -1, 
 					"Failed to perform operation on %s", pdata->request );
 			}
-
+			if(g_str_equal(pdata->request,"CmdTerm")) /* CMDTERM*/
+			{
+				if(g_str_equal(fi->hfinfo->name,"listOfAccessResult"))
+				{
+					pdata->listOfAccessResult = 1;
+				}
+				if(g_str_equal(fi->hfinfo->name,"AccessResult"))
+				{
+					
+				}
+			}
 			switch(fi->hfinfo->type)
 			{
 				case FT_NONE:
@@ -499,8 +586,7 @@ void proto_tree_print_tree(proto_node *node, void * data)
 						g_str_equal(fi->hfinfo->name, "initiate-ResponsePDU") ||
 						g_str_equal(fi->hfinfo->name, "structure") ||
 						g_str_equal(fi->hfinfo->name, "read") ||
-						g_str_equal(fi->hfinfo->name, "write") 
-						)
+						g_str_equal(fi->hfinfo->name, "write") )
 					{
 						break;
 					}
@@ -519,6 +605,97 @@ void proto_tree_print_tree(proto_node *node, void * data)
 				case FT_UINT8:
 				case FT_UINT16:
 				case FT_UINT32:
+					if(g_str_equal(pdata->request,"RPT")) /* REPORT */
+					{
+						if(g_str_equal(fi->hfinfo->name,"listOfAccessResult"))
+						{
+							pdata->listOfAccessResult = 1;
+						}
+						if(pdata->listOfAccessResult && g_str_equal(fi->hfinfo->name,"AccessResult"))
+						{
+							int fieldname = fi->hfinfo->id;
+							int fieldslen = (sizeof(RPT_fields)/sizeof(RPT_fields[0]))-1;
+							if(pdata->itemIndex == 0)
+							{
+								fieldname = *RPT_fields[pdata->itemIndex];
+								item = proto_tree_add_item(tree, fieldname,tvb, offset, fi->length,  0);
+								pdata->itemIndex++;
+							}
+							else if(pdata->itemIndex == 1 && tvb_reported_length_remaining(tvb, offset) >= 5) /* optflds */
+							{
+								int32_t i = 0;
+								int32_t optfieldslen = (sizeof(RPT_optFlds_lookup)/sizeof(RPT_optFlds_lookup[0]));
+								u_int16_t tmp = tvb_get_guint16(tvb, offset+3, BIG_ENDIAN);
+
+								/* calculate included fields (mandatory and optional) */
+								pdata->optflds = 0xc028; /* mandatory fields */
+								for(i = 0; i < optfieldslen; i++)
+								{
+									u_int16_t btmsk = (0x8000>>i);
+									if(tmp & btmsk) /* optfld bit is 1*/
+									{
+										pdata->optflds |= RPT_optFlds_lookup[i];
+									}
+								}
+								/* display the optional fields item itself */
+								fieldname = *RPT_fields[pdata->itemIndex];
+								item = proto_tree_add_item(tree, fieldname,tvb, offset, fi->length,  0);
+								pdata->itemIndex++;
+							}
+							else
+							{
+								/* calcualte all fields after optional fields */
+								if(pdata->itemIndex > 1 && pdata->itemIndex < fieldslen) /* index > 1 and < array length */
+								{
+									while((pdata->optflds & (0x2000>>(pdata->itemIndex-2))) == 0) /* skip the first 2 items, check if optional field should be included */
+									{
+										pdata->itemIndex++;
+									}
+
+									/* an included (optional) field found */
+									if(pdata->itemIndex == 11 || pdata->itemIndex == 12 || pdata->itemIndex == 13)
+									{
+										if(pdata->elements > 0)
+										{
+											fieldname = *RPT_fields[pdata->itemIndex];
+											item = proto_tree_add_item(tree, fieldname,tvb, offset, fi->length,  0);
+											pdata->elements--;	
+											if(pdata->elements == 0)
+											{
+												/* advance to next field, and keep track of the addressed fields by setting that bit to zero */
+												pdata->optflds &= ~(0x2000>>(pdata->itemIndex-2));
+												pdata->elements = pdata->inclusion;
+											}
+										}
+										else
+										{
+											ws_warning("no report inclusions to include (empty report!)");
+										}
+									}
+									else 
+									{
+										/* advance to next field, and keep track of the addressed fields by setting that bit to zero */
+										pdata->optflds &= ~(0x2000>>(pdata->itemIndex-2));
+
+										if(pdata->itemIndex < fieldslen)
+										{
+										fieldname = *RPT_fields[pdata->itemIndex];
+										item = proto_tree_add_item(tree, fieldname,tvb, offset, fi->length,  0);											
+										}
+									}
+								}
+							}
+							break;
+
+
+				
+
+
+
+
+								
+						}
+					}
 					if(!g_str_equal(fi->hfinfo->name, "Padding"))
 					{
 						item = proto_tree_add_uint(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.uinteger); 
@@ -606,6 +783,42 @@ void proto_tree_print_tree(proto_node *node, void * data)
 						if(g_str_has_suffix(pdata->request,"$ctlVal"))
 						{
 							dissect_ber_bitstring(1, pdata->actx, tree, tvb, offset-1, BinaryStep_bits, (fi->length * 8), fi->hfinfo->id, ett_iec61850, NULL);
+							break;
+						}
+						if(g_str_has_suffix(pdata->request,"$OptFlds"))
+						{
+							proto_tree_add_bitmask_list(tree, tvb, offset, 2, OptFlds_bits, BIG_ENDIAN);
+							break;
+						}
+						if(g_str_has_suffix(pdata->request,"$TrgOps"))
+						{
+							dissect_ber_bitstring(1, pdata->actx, tree, tvb, offset-1, TrgOps_bits, (fi->length * 8), fi->hfinfo->id, ett_iec61850, NULL);
+							break;
+						}
+
+						if(g_str_equal(pdata->request,"RPT") && pdata->listOfAccessResult == 1 )
+						{
+							if(pdata->itemIndex-1 == 1) /* optflds */
+							{
+								proto_tree_add_bitmask_list(tree, tvb, offset, 2, OptFlds_bits, BIG_ENDIAN);
+								break;
+							}
+							if(pdata->itemIndex == 13) /* trgops */
+							{
+								proto_tree_add_bitmask_list(tree, tvb, offset, 1, TrgOps_bits, BIG_ENDIAN);
+								break;
+							}
+							wmem_strbuf_t *strbuf;
+							u_int32_t count = 0;
+							u_int32_t padding = tvb_get_guint8(tvb, offset-1);
+							strbuf = wmem_strbuf_new(pdata->actx->pinfo->pool, "");
+							count = print_bytes(strbuf,fi->value.value.bytes->data,fi->length, padding);
+							if(pdata->itemIndex == 10) /* inclusion */
+							{
+								pdata->inclusion = count;
+								pdata->elements = pdata->inclusion;
+							}				
+							item = proto_tree_add_string(tree, hf_iec61850_bit_string,tvb, offset, fi->length, wmem_strbuf_get_str(strbuf));
 							break;
 						}
 					}
@@ -905,6 +1118,10 @@ int32_t Unconfirmed_RPT(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ct
 		data.offset = subtree->finfo->start;
 		data.actx = actx;
 		data.request = "RPT";
+		data.listOfAccessResult = 0;
+		data.itemIndex = 0;
+		data.optflds = 0;
+		data.inclusion = 0;
 		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
 	}
 	return 1;
@@ -927,6 +1144,8 @@ int32_t CommandTerm(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t 
 		data.offset = subtree->finfo->start;
 		data.actx = actx;
 		data.request = "CmdTerm";
+		data.listOfAccessResult = 0;
+		data.itemIndex = 0;
 		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
 	}
 	return 1;
@@ -1827,8 +2046,8 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 		{ 
 			&hf_iec61850_Unconfirmed,
       		{ 
-				"Unconfirmed", 			
-				"iec61850.unconfirmed", 
+				"Unconfirmed RPT", 			
+				"iec61850.unconfirmedrpt", 
         		FT_NONE, 				
 				BASE_NONE, 				
 				NULL, 					
@@ -2396,6 +2615,19 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 				HFILL 				
 			}
 		},
+		{ 
+			&hf_iec61850_bit_string,
+      		{ 
+				"bit-string", 			
+				"iec61850.bitstring", 
+        		FT_STRING, 			
+				BASE_NONE, 			
+				NULL, 				
+				0,					
+        		NULL, 				
+				HFILL 				
+			}
+		},
 		{ &hf_iec61850_QualityC0,
 		{ "Validity", "iec61850.validity",
 			FT_UINT8, BASE_HEX, VALS(enum_Validity), 0xC0,
@@ -2532,43 +2764,43 @@ OptFlds - bitstring
 */
 		{ &hf_iec61850_OptFlds80,
 		{ "Reserved", "iec61850.reserved",
-			FT_BOOLEAN, 8, NULL, 0x80,
+			FT_BOOLEAN, 16, NULL, 0x8000,
 			NULL, HFILL }},
 		{ &hf_iec61850_OptFlds40,
 		{ "sequence-number", "iec61850.sequence-number",
-			FT_BOOLEAN, 8, NULL, 0x40,
+			FT_BOOLEAN, 16, NULL, 0x4000,
 			NULL, HFILL }},
 		{ &hf_iec61850_OptFlds20,
 		{ "report-time-stamp", "iec61850.report-time-stamp",
-			FT_BOOLEAN, 8, NULL, 0x20,
+			FT_BOOLEAN, 16, NULL, 0x2000,
 			NULL, HFILL }},
 		{ &hf_iec61850_OptFlds10,
 		{ "reason-for-inclusion", "iec61850.reason-for-inclusion",
-			FT_BOOLEAN, 8, NULL, 0x10,
+			FT_BOOLEAN, 16, NULL, 0x1000,
 			NULL, HFILL }},
 		{ &hf_iec61850_OptFlds8,
 		{ "data-set-name", "iec61850.data-set-name",
-			FT_BOOLEAN, 8, NULL, 0x8,
+			FT_BOOLEAN, 16, NULL, 0x0800,
 			NULL, HFILL }},
 		{ &hf_iec61850_OptFlds4,
 		{ "data-reference", "iec61850.data-reference",
-			FT_BOOLEAN, 8, NULL, 0x4,
+			FT_BOOLEAN, 16, NULL, 0x0400,
 			NULL, HFILL }},
 		{ &hf_iec61850_OptFlds2,
 		{ "buffer-overflow", "iec61850.buffer-overflow",
-			FT_BOOLEAN, 8, NULL, 0x2,
+			FT_BOOLEAN, 16, NULL, 0x0200,
 			NULL, HFILL }},
 		{ &hf_iec61850_OptFlds1,
 		{ "entryID", "iec61850.entryid",
-			FT_BOOLEAN, 8, NULL, 0x1,
+			FT_BOOLEAN, 16, NULL, 0x0100,
 			NULL, HFILL }},
 		{ &hf_iec61850_OptFlds0080,
 		{ "conf-revision", "iec61850.conf-revision",
-			FT_BOOLEAN, 8, NULL, 0x80,
+			FT_BOOLEAN, 16, NULL, 0x0080,
 			NULL, HFILL }},
 		{ &hf_iec61850_OptFlds0040,
 		{ "segmentation", "iec61850.segmentation",
-			FT_BOOLEAN, 8, NULL, 0x40,
+			FT_BOOLEAN, 16, NULL, 0x0040,
 			NULL, HFILL }},
 /*
 DBPos
@@ -2617,6 +2849,79 @@ hf_iec61850_BinaryStepC
 		{ "ErrorCode", "iec61850.errorcode",
 			FT_UINT8, BASE_DEC, VALS(enum_ServiceError), 0,
 			NULL, HFILL }},
+/* RPT fields*/
+		/* Shall be present */
+		{ &hf_iec61850_RptID,
+		{ "RptID", "iec61850.rptid",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		/* Shall be present */
+		{ &hf_iec61850_OptFlds,
+		{ "OptFlds", "iec61850.optflds",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		/* Shall be present if OptFlds.sequence-number is TRUE */
+		{ &hf_iec61850_SeqNum,
+		{ "SeqNum", "iec61850.seqnum",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		/* Shall be present if OptFlds.report-time-stamp is TRUE */
+		{ &hf_iec61850_TimeOfEntry,
+		{ "TimeOfEntry", "iec61850.timeofentry",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		/* Shall be present if OptFlds.data-set-name is TRUE */
+		{ &hf_iec61850_DatSet,
+		{ "DatSet", "iec61850.datset",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		/* Shall be present if OptFlds.buffer-overflow is TRUE */
+		{ &hf_iec61850_BufOvfl,
+		{ "BufOvfl", "iec61850.bufovfl",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		/* Shall be present if OptFlds.entryID is TRUE */
+		{ &hf_iec61850_EntryID,
+		{ "EntryID", "iec61850.entryid",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		/* Shall be present if OptFlds.conf-rev is TRUE */
+		{ &hf_iec61850_ConfRev,
+		{ "ConfRev", "iec61850.confrev",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		/* Shall be present if OptFlds.segmentation is TRUE */
+		{ &hf_iec61850_SubSeqNum,
+		{ "SubSeqNum", "iec61850.subseqnum",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		/* Shall be present if OptFlds.segmentation is TRUE */
+		{ &hf_iec61850_MoreSegmentsFollow,
+		{ "MoreSegmentsFollow", "iec61850.moresegmentsfollow",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		/* Shall be present */
+		{ &hf_iec61850_Inclusion_bitstring,
+		{ "Inclusion-bitstring", "iec61850.inclusionbitstring",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		/* Shall be present if OptFlds.data-reference is TRUE */
+		{ &hf_iec61850_data_reference,
+		{ "data-reference", "iec61850.datareference",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		/* See AccessResult for value(s) */
+		{ &hf_iec61850_values,
+		{ "value(s)", "iec61850.values",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		/* Shall be present if OptFlds.reason-for-inclusion is TRUE */
+		{ &hf_iec61850_ReasonCode,
+		{ "ReasonCode(s)", "iec61850.reasoncodes",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+
+
     };
 
 	/* List of subtrees */

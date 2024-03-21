@@ -53,7 +53,7 @@ u_int8_t* private_data_get_preCinfo(asn1_ctx_t *actx);
 void private_data_add_moreCinfo_id(asn1_ctx_t *actx, tvbuff_t *tvb);
 void private_data_add_moreCinfo_float(asn1_ctx_t *actx, tvbuff_t *tvb);
 u_int8_t* private_data_get_moreCinfo(asn1_ctx_t *actx);
-
+u_int32_t print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_t bytelen, u_int32_t padding);
 
 
 
