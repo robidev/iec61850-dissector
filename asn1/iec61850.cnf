@@ -185,7 +185,7 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 	u_int8_t * timestring;
 
 	ws_assert(actx->pinfo->pool);
-	timestring = wmem_alloc0(actx->pinfo->pool, BUFFER_SIZE_MORE );
+	timestring = wmem_alloc0(actx->pinfo->pool, IEC61850_BUFFER_SIZE_MORE );
 	ws_assert(timestring);
 
 	len = tvb_reported_length_remaining(tvb, offset);
@@ -211,7 +211,7 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 	ptime = abs_time_to_str(actx->pinfo->pool, &ts, ABSOLUTE_TIME_UTC, TRUE);
 
 	quality = tvb_get_guint8(tvb, offset+7);
-	snprintf(timestring, BUFFER_SIZE_MORE, "%s,q:%02x", ptime, quality);
+	snprintf(timestring, IEC61850_BUFFER_SIZE_MORE, "%s,q:%02x", ptime, quality);
 
 	if(hf_index > 0)
 	{
@@ -239,7 +239,7 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 		{
 			private_data_add_moreCinfo_domainid(actx,tvb);
 		}
-		else //if (hf_index == hf_iec61850_itemId)
+		else /* if (hf_index == hf_iec61850_itemId) */
 		{
 			private_data_add_moreCinfo_itemid(actx,tvb);
 		}

@@ -20,27 +20,27 @@
 #ifndef PACKET_IEC61850_H
 #define PACKET_IEC61850_H
 
-#define BUFFER_SIZE_PRE 10
-#define BUFFER_SIZE_MORE 1024
+#define IEC61850_BUFFER_SIZE_PRE 10
+#define IEC61850_BUFFER_SIZE_MORE 1024
 
+/* container for all relevant IEC-61850 specific data obtained during disection */
 typedef struct iec61850_private_data_t
 {
-	u_int8_t preCinfo[BUFFER_SIZE_PRE];
-	u_int8_t moreCinfo[BUFFER_SIZE_MORE];
-	int32_t MMSpdu;
-    int32_t Service;//confirmed/unconfirmed
-	int32_t AccessResult; // success/failure
-	int32_t VariableAccessSpecification; //RPT/CMDTerm
-	int32_t AlternateAccess; // alternate access defined
-	int32_t ObjectName;//0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific)
-	int32_t objectScope;////0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific)
-	int32_t objectClass;//VariableName,NamedVariable, journal
-	int32_t Success;//
-	int32_t DataType; //array, struct, bool, bit-string, int, uint, float, octet, vis-string, bin-time, bcd, boolarr, mmsstring, utctime
-    int32_t indent;
-	int32_t invokeID;
-	int32_t DataAccessError;
-
+	u_int8_t *preCinfo;
+	u_int8_t *moreCinfo;
+	int32_t MMSpdu;							/* type of request */
+    int32_t Service;						/* confirmed/unconfirmed */
+	int32_t AccessResult; 					/* success/failure */
+	int32_t VariableAccessSpecification;	/* RPT or CMDTerm */
+	int32_t AlternateAccess; 				/* alternate access defined */
+	int32_t ObjectName;						/* 0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific) */
+	int32_t objectScope;					/* 0,1,2 (VMD-SPECIFIC,domain-specific,aa-specific) */
+	int32_t objectClass;					/* VariableName,NamedVariable, journal */
+	int32_t Success;						/* true or false */
+	int32_t DataType; 						/* array, struct, bool, bit-string, int, uint, float, octet, vis-string, bin-time, bcd, boolarr, mmsstring, utctime */
+    int32_t indent;							/* depth during printing */
+	int32_t invokeID;						/* id of request and response */
+	int32_t DataAccessError;				/* error code of response */
 } iec61850_private_data_t;
 
 
@@ -48,12 +48,13 @@ typedef struct iec61850_private_data_t
 iec61850_private_data_t* iec61850_get_private_data(asn1_ctx_t *actx);
 /* Helper function to test presence of private data struct */
 int32_t iec61850_has_private_data(asn1_ctx_t *actx);
-void private_data_add_preCinfo(asn1_ctx_t *actx, u_int32_t val);
-u_int8_t* private_data_get_preCinfo(asn1_ctx_t *actx);
-void private_data_add_moreCinfo_id(asn1_ctx_t *actx, tvbuff_t *tvb);
-void private_data_add_moreCinfo_float(asn1_ctx_t *actx, tvbuff_t *tvb);
-u_int8_t* private_data_get_moreCinfo(asn1_ctx_t *actx);
-u_int32_t print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_t bytelen, u_int32_t padding);
+/* Get the session id added to a packet, for printing in the packet-view info-column */
+u_int8_t* iec61850_private_data_get_preCinfo(asn1_ctx_t *actx);
+/* Get the information added to a packet, for printing in the packet-view info-column */
+u_int8_t* iec61850_private_data_get_moreCinfo(asn1_ctx_t *actx);
+
+/* Create a text string of zeros and ones, based on an array of bytes. Returns the number of '1' bits */
+u_int32_t iec61850_print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_t bytelen, u_int32_t padding);
 
 
 
@@ -61,7 +62,7 @@ u_int32_t print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_t bytelen
 #line 1 "./wireshark_dissector/asn1/packet-iec61850-exp.h"
 
 /*--- End of included file: packet-iec61850-exp.h ---*/
-#line 52 "./wireshark_dissector/asn1/packet-iec61850-template.h"
+#line 53 "./wireshark_dissector/asn1/packet-iec61850-template.h"
 
 #endif  /* PACKET_IEC61850_H */
 

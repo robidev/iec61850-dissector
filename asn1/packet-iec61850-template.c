@@ -57,7 +57,7 @@ static expert_field ei_mms_zero_pdu = EI_INIT;
 
 static int32_t use_iec61850_mapping = TRUE;
 
-void proto_update_iec61850_settings(void);
+static void proto_update_iec61850_settings(void);
 static int32_t dissect_acse_EXTERNALt(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
 static int32_t dissect_acse_AP_title_stub(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
 static int32_t dissect_acse_AP_invocation_identifier_stub(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
@@ -79,6 +79,8 @@ iec61850_private_data_t* iec61850_get_private_data(asn1_ctx_t *actx)
 		return private_data;
 	else {
 		private_data = wmem_new0(pinfo->pool, iec61850_private_data_t);
+		private_data->preCinfo = wmem_alloc0(pinfo->pool, IEC61850_BUFFER_SIZE_PRE);
+		private_data->moreCinfo = wmem_alloc0(pinfo->pool, IEC61850_BUFFER_SIZE_MORE);
 		p_add_proto_data(pinfo->pool, pinfo, proto_iec61850, pinfo->curr_layer_num, private_data);
 		return private_data;
 	}
@@ -91,113 +93,113 @@ int32_t iec61850_has_private_data(asn1_ctx_t *actx)
 	return (p_get_proto_data(pinfo->pool, pinfo, proto_iec61850, pinfo->curr_layer_num) != NULL);
 }
 
-void
+static void
 private_data_add_preCinfo(asn1_ctx_t *actx, u_int32_t val)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	snprintf(private_data->preCinfo, BUFFER_SIZE_PRE, "%02d ", val);
+	snprintf(private_data->preCinfo, IEC61850_BUFFER_SIZE_PRE, "%02d ", val);
 	private_data->invokeID = val;
 }
 
 u_int8_t*
-private_data_get_preCinfo(asn1_ctx_t *actx)
+iec61850_private_data_get_preCinfo(asn1_ctx_t *actx)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	return private_data->preCinfo;
 }
 
-void
+static void
 private_data_add_moreCinfo_domainid(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
-				tvb, 2, tvb_get_guint8(tvb, 1), ENC_STRING), BUFFER_SIZE_MORE);
-	(void) g_strlcat(private_data->moreCinfo, "/", BUFFER_SIZE_MORE);
+				tvb, 2, tvb_get_guint8(tvb, 1), ENC_STRING), IEC61850_BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, "/", IEC61850_BUFFER_SIZE_MORE);
 }
 
-void
+static void
 private_data_add_moreCinfo_itemid(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
-				tvb, 2, tvb_get_guint8(tvb, 1), ENC_STRING), BUFFER_SIZE_MORE);
-	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+				tvb, 2, tvb_get_guint8(tvb, 1), ENC_STRING), IEC61850_BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
 }
 
-void
+static void
 private_data_add_moreCinfo_vmd(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	(void) g_strlcat(private_data->moreCinfo, "<", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, "<", IEC61850_BUFFER_SIZE_MORE);
 	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
-				tvb, 0, tvb_reported_length_remaining(tvb, 0), ENC_STRING), BUFFER_SIZE_MORE);
-	(void) g_strlcat(private_data->moreCinfo, "> ", BUFFER_SIZE_MORE);
+				tvb, 0, tvb_reported_length_remaining(tvb, 0), ENC_STRING), IEC61850_BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, "> ", IEC61850_BUFFER_SIZE_MORE);
 }
 
-void
+static void
 private_data_add_moreCinfo_domain(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 
 	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
-				tvb, 0, tvb_reported_length_remaining(tvb, 0), ENC_STRING), BUFFER_SIZE_MORE);
-	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+				tvb, 0, tvb_reported_length_remaining(tvb, 0), ENC_STRING), IEC61850_BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
 	
 }
 
-void
+static void
 private_data_add_moreCinfo_float(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
 	packet_info *pinfo = actx->pinfo;
-	u_int8_t *tmp = wmem_alloc0(pinfo->pool, BUFFER_SIZE_MORE );
+	u_int8_t *tmp = wmem_alloc0(pinfo->pool, IEC61850_BUFFER_SIZE_MORE );
 
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	snprintf(tmp, BUFFER_SIZE_MORE, "%f", tvb_get_ieee_float(tvb, 1, ENC_BIG_ENDIAN));
+	snprintf(tmp, IEC61850_BUFFER_SIZE_MORE, "%f", tvb_get_ieee_float(tvb, 1, ENC_BIG_ENDIAN));
 
-	(void) g_strlcat(private_data->moreCinfo, tmp, BUFFER_SIZE_MORE);
-	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, tmp, IEC61850_BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
 }
 
-void
+static void
 private_data_add_moreCinfo_int(asn1_ctx_t *actx, int32_t val)
 {
 	packet_info *pinfo = actx->pinfo;
-	u_int8_t *tmp = wmem_alloc0(pinfo->pool, BUFFER_SIZE_MORE );
+	u_int8_t *tmp = wmem_alloc0(pinfo->pool, IEC61850_BUFFER_SIZE_MORE );
 
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	snprintf(tmp, BUFFER_SIZE_MORE,
+	snprintf(tmp, IEC61850_BUFFER_SIZE_MORE,
 				"%i", val);
-	(void) g_strlcat(private_data->moreCinfo, tmp, BUFFER_SIZE_MORE);			
-	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, tmp, IEC61850_BUFFER_SIZE_MORE);			
+	(void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
 }
 
-void
+static void
 private_data_add_moreCinfo_str(asn1_ctx_t *actx, u_int8_t* str)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	(void) g_strlcat(private_data->moreCinfo, str, BUFFER_SIZE_MORE);
-	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, str, IEC61850_BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
 }
 
-void
+static void
 private_data_add_moreCinfo_vstr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	(void) g_strlcat(private_data->moreCinfo, "\"", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, "\"", IEC61850_BUFFER_SIZE_MORE);
 	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
-				tvb, offset, tvb_reported_length_remaining(tvb, offset), ENC_STRING), BUFFER_SIZE_MORE);
-	(void) g_strlcat(private_data->moreCinfo, "\" ", BUFFER_SIZE_MORE);
+				tvb, offset, tvb_reported_length_remaining(tvb, offset), ENC_STRING), IEC61850_BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, "\" ", IEC61850_BUFFER_SIZE_MORE);
 }
 
-void
+static void
 private_data_add_moreCinfo_enum(asn1_ctx_t *actx, int32_t value, const value_string * enum_list)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	(void) g_strlcat(private_data->moreCinfo, try_val_to_str(value, enum_list), BUFFER_SIZE_MORE);
-	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, try_val_to_str(value, enum_list), IEC61850_BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
 }
 
-int32_t is_text(u_int8_t * str)
+static int32_t is_text(u_int8_t * str)
 {
 	if(g_str_is_ascii(str))
 	{
@@ -214,7 +216,7 @@ int32_t is_text(u_int8_t * str)
 	return 0;
 }
 
-void
+static void
 private_data_add_moreCinfo_ostr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 {
 	u_int8_t * ostr = NULL;
@@ -227,27 +229,27 @@ private_data_add_moreCinfo_ostr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 	{
 		int32_t i;
 		u_int8_t temp[4] = "";
-		(void) g_strlcat(private_data->moreCinfo, "'", BUFFER_SIZE_MORE);
+		(void) g_strlcat(private_data->moreCinfo, "'", IEC61850_BUFFER_SIZE_MORE);
 		for (i = 0; i < len; i ++) 
 		{
 			snprintf(temp, sizeof(temp),"%02x", ostr[i]);
-			(void) g_strlcat(private_data->moreCinfo, temp, BUFFER_SIZE_MORE);
+			(void) g_strlcat(private_data->moreCinfo, temp, IEC61850_BUFFER_SIZE_MORE);
 		}
-		(void) g_strlcat(private_data->moreCinfo, "'", BUFFER_SIZE_MORE);
+		(void) g_strlcat(private_data->moreCinfo, "'", IEC61850_BUFFER_SIZE_MORE);
 
 		if(is_text(ostr) == TRUE)
 		{
-			(void) g_strlcat(private_data->moreCinfo, "( ", BUFFER_SIZE_MORE);
-			(void) g_strlcat(private_data->moreCinfo, ostr, BUFFER_SIZE_MORE);
-			(void) g_strlcat(private_data->moreCinfo, " )", BUFFER_SIZE_MORE);
+			(void) g_strlcat(private_data->moreCinfo, "( ", IEC61850_BUFFER_SIZE_MORE);
+			(void) g_strlcat(private_data->moreCinfo, ostr, IEC61850_BUFFER_SIZE_MORE);
+			(void) g_strlcat(private_data->moreCinfo, " )", IEC61850_BUFFER_SIZE_MORE);
 		}
-		(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+		(void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
 	}
  	else
-		(void) g_strlcat(private_data->moreCinfo, "'' ", BUFFER_SIZE_MORE);
+		(void) g_strlcat(private_data->moreCinfo, "'' ", IEC61850_BUFFER_SIZE_MORE);
 }
 
-u_int32_t print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_t bytelen, u_int32_t padding)
+u_int32_t iec61850_print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_t bytelen, u_int32_t padding)
 {
   	u_int32_t count = 0;
     u_int8_t byte;
@@ -274,7 +276,7 @@ u_int32_t print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_t bytelen
 	return count;
 }
 
-void
+static void
 private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 {
 	packet_info *pinfo = actx->pinfo;
@@ -285,7 +287,7 @@ private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 	if(berlength < 1)
 	{
 		ws_warning("could not decode bitstring, ber length too small");
-    	(void) g_strlcat(private_data->moreCinfo, "b'' ", BUFFER_SIZE_MORE); // it may be valid to leave the field length zero, implying all data is zero
+    	(void) g_strlcat(private_data->moreCinfo, "b'' ", IEC61850_BUFFER_SIZE_MORE); // it may be valid to leave the field length zero, implying all data is zero
 		return;
 	}
 	u_int32_t padding = tvb_get_guint8(tvb, 0);
@@ -299,37 +301,37 @@ private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 	int32_t i;
 	wmem_strbuf_t *strbuf;
 	strbuf = wmem_strbuf_new(pinfo->pool, "");
-	print_bytes(strbuf,bitstring,bytelen, padding);
+	iec61850_print_bytes(strbuf,bitstring,bytelen, padding);
 
-	(void) g_strlcat(private_data->moreCinfo, wmem_strbuf_get_str(strbuf), BUFFER_SIZE_MORE);
-	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, wmem_strbuf_get_str(strbuf), IEC61850_BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
 }
 
 
-void
+static void
 private_data_add_moreCinfo_bool(asn1_ctx_t *actx, int32_t boolean)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	(void) g_strlcat(private_data->moreCinfo, boolean? "true" : "false", BUFFER_SIZE_MORE);
-	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, boolean? "true" : "false", IEC61850_BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
 }
 
-void
+static void
 private_data_add_moreCinfo_structure(asn1_ctx_t *actx, int32_t dir)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	(void) g_strlcat(private_data->moreCinfo, dir? "{ " : "} ", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, dir? "{ " : "} ", IEC61850_BUFFER_SIZE_MORE);
 }
 
-void
+static void
 private_data_add_moreCinfo_array(asn1_ctx_t *actx, int32_t dir)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	(void) g_strlcat(private_data->moreCinfo, dir? "[ " : "] ", BUFFER_SIZE_MORE);
+	(void) g_strlcat(private_data->moreCinfo, dir? "[ " : "] ", IEC61850_BUFFER_SIZE_MORE);
 }
 
 u_int8_t*
-private_data_get_moreCinfo(asn1_ctx_t *actx)
+iec61850_private_data_get_moreCinfo(asn1_ctx_t *actx)
 {
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 	return private_data->moreCinfo;
@@ -353,6 +355,9 @@ dissect_iec61850(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, voi
 
 	proto_item *mms_item=NULL;
 	proto_tree *mms_tree=NULL;
+
+	ws_assert(tvb);
+	ws_assert(pinfo);
 
 	/* only dissect MMS, and return immediately */
 	if(use_iec61850_mapping == FALSE)
@@ -460,7 +465,7 @@ void proto_reg_handoff_iec61850(void) {
 	register_ber_oid_dissector("1.0.9506.2.1", dissect_iec61850, proto_iec61850,"iec61850-abstract-syntax-version1(1)");
 }
 
-void proto_update_iec61850_settings(void)
+static void proto_update_iec61850_settings(void)
 {
 
 }

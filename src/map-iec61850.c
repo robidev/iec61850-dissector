@@ -69,7 +69,7 @@ static int32_t hf_iec61850_GetServerDirectory = -1;
 static int32_t hf_iec61850_GetLogicalDeviceDirectory = -1;
 static int32_t hf_iec61850_GetLogicalNodeDirectory = -1;
 static int32_t hf_iec61850_GetJournalDirectory = -1;
-static int32_t hf_iec61850_GetNameList_response = -1;
+static int32_t hf_iec61850_GetNameList = -1;
 static int32_t hf_iec61850_GetDataValue = -1;
 static int32_t hf_iec61850_SetDataValue = -1;
 
@@ -178,37 +178,6 @@ static proto_item *get_iec61850_item(tvbuff_t *tvb, proto_tree *parent_tree, con
 static void store_invoke_data(packet_info *pinfo, u_int32_t invokeID, iec61850_value_req * data);
 static iec61850_value_req *load_invoke_data(packet_info *pinfo, u_int32_t invokeID);
 static void free_invoke_data(packet_info *pinfo, u_int32_t invokeID);
-
-int32_t Unconfirmed_RPT(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
-int32_t CommandTerm(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
-
-int32_t Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
-int32_t Reject(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
-int32_t Associate(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
-int32_t Cancel(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
-int32_t Release(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
-int32_t Associate_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
-int32_t Cancel_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
-int32_t Release_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
-/* confirmed PDU */
-int32_t GetServerDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
-int32_t GetLogicalDeviceDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
-int32_t GetLogicalNodeDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
-int32_t GetJournalDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx);
-int32_t GetNameList_response(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, iec61850_value_req *val);
-int32_t GetDataDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
-int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res, iec61850_value_req * val);
-int32_t SetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res, iec61850_value_req * val);
-int32_t GetDataSetDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
-int32_t CreateDataSet(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
-int32_t DeleteDataSet(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
-int32_t QueryLog(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
-int32_t SetFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
-int32_t GetFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
-int32_t FileRead(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
-int32_t FileClose(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
-int32_t DeleteFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
-int32_t GetServerDirectory_FILE(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res);
 
 static hf_register_info * g_mms_hf;
 
@@ -510,36 +479,36 @@ static int32_t * const TrgOps_bits[] = {
 
 static int32_t * const RPT_fields[] = {
 	&hf_iec61850_RptID,						/* 0   0x8000 */
-	&hf_iec61850_OptFlds,					/* 1   0x4000*/
-	&hf_iec61850_SeqNum,					/* 2   0x2000*/
-	&hf_iec61850_TimeOfEntry,				/* 3   0x1000*/
-	&hf_iec61850_DatSet,					/* 4   0x0800*/
-	&hf_iec61850_BufOvfl,					/* 5   0x0400*/
-	&hf_iec61850_EntryID,					/* 6   0x0200*/
-	&hf_iec61850_ConfRev,					/* 7   0x0100*/
-	&hf_iec61850_SubSeqNum,					/* 8   0x0080*/
-	&hf_iec61850_MoreSegmentsFollow,		/* 9   0x0040*/
+	&hf_iec61850_OptFlds,					/* 1   0x4000 */
+	&hf_iec61850_SeqNum,					/* 2   0x2000 */
+	&hf_iec61850_TimeOfEntry,				/* 3   0x1000 */
+	&hf_iec61850_DatSet,					/* 4   0x0800 */
+	&hf_iec61850_BufOvfl,					/* 5   0x0400 */
+	&hf_iec61850_EntryID,					/* 6   0x0200 */
+	&hf_iec61850_ConfRev,					/* 7   0x0100 */
+	&hf_iec61850_SubSeqNum,					/* 8   0x0080 */
+	&hf_iec61850_MoreSegmentsFollow,		/* 9   0x0040 */
 	&hf_iec61850_Inclusion_bitstring,		/* 10  0x0020 - 1*/
-	&hf_iec61850_data_reference,			/* 11  0x0010*/
+	&hf_iec61850_data_reference,			/* 11  0x0010 */
 	&hf_iec61850_values,					/* 12  0x0008 - 2*/
-	&hf_iec61850_ReasonCode,				/* 13  0x0004*/
+	&hf_iec61850_ReasonCode,				/* 13  0x0004 */
 	NULL
 };
 
 static int32_t RPT_optFlds_lookup[] = {
-	0x0000,	/*0 reserved*/
-	0x2000,	/*1 sequence*/
-	0x1000,	/*2 report time*/
-	0x0004,	/*3 reason for inc*/
-	0x0800,	/*4 datasetname*/
-	0x0010, /*5 data-ref*/
-	0x0400,	/*6 buf-ovl*/
-	0x0200,	/*7 entryid*/
-	0x0100,	/*8 conf-rev*/
-	0x00c0	/*9 segmentation*/
+	0x0000,	/* 0 reserved */
+	0x2000,	/* 1 sequence */
+	0x1000,	/* 2 report time */
+	0x0004,	/* 3 reason for inc */
+	0x0800,	/* 4 datasetname */
+	0x0010, /* 5 data-ref */
+	0x0400,	/* 6 buf-ovl */
+	0x0200,	/* 7 entryid */
+	0x0100,	/* 8 conf-rev */
+	0x00c0	/* 9 segmentation */
 };
 
-void proto_tree_print_tree(proto_node *node, void * data)
+static void proto_tree_print_tree(proto_node *node, void * data)
 {
 	proto_tree *tree;
 	tvbuff_t *tvb;
@@ -555,292 +524,282 @@ void proto_tree_print_tree(proto_node *node, void * data)
 
 	offset =  fi->start - pdata->offset;
 
-	if(fi != NULL && fi->hfinfo != NULL)
+	if(fi->hfinfo != NULL && fi->hfinfo->name != NULL)
 	{
-		if(fi->hfinfo->name != NULL)
+		/* set expert info to display failed requests */
+		if(g_str_equal(fi->hfinfo->name, "failure"))
 		{
-			/* set expert info to display failed requests */
-			if(g_str_equal(fi->hfinfo->name, "failure"))
+			proto_tree_add_expert_format(tree, pdata->actx->pinfo, &ei_iec61850_failed_resp,tvb, offset, -1, 
+				"Failed to perform operation on %s", pdata->request );
+		}
+		if(g_str_equal(pdata->request,"CmdTerm")) /* CMDTERM*/
+		{
+			if(g_str_equal(fi->hfinfo->name,"listOfAccessResult"))
 			{
-				proto_tree_add_expert_format(tree, pdata->actx->pinfo, &ei_iec61850_failed_resp,tvb, offset, -1, 
-					"Failed to perform operation on %s", pdata->request );
+				pdata->listOfAccessResult = 1;
 			}
-			if(g_str_equal(pdata->request,"CmdTerm")) /* CMDTERM*/
+			if(g_str_equal(fi->hfinfo->name,"AccessResult"))
 			{
-				if(g_str_equal(fi->hfinfo->name,"listOfAccessResult"))
-				{
-					pdata->listOfAccessResult = 1;
-				}
-				if(g_str_equal(fi->hfinfo->name,"AccessResult"))
-				{
-					
-				}
+				
 			}
-			switch(fi->hfinfo->type)
-			{
-				case FT_NONE:
-					/* filter out some entries that are redundant */
-					if(g_str_equal(fi->hfinfo->name, "confirmed-RequestPDU") || 
-						g_str_equal(fi->hfinfo->name, "confirmed-ResponsePDU") ||
-						g_str_equal(fi->hfinfo->name, "initiate-RequestPDU") ||
-						g_str_equal(fi->hfinfo->name, "initiate-ResponsePDU") ||
-						g_str_equal(fi->hfinfo->name, "structure") ||
-						g_str_equal(fi->hfinfo->name, "read") ||
-						g_str_equal(fi->hfinfo->name, "write") )
+		}
+		switch(fi->hfinfo->type)
+		{
+			case FT_NONE:
+				/* filter out some entries that are redundant */
+				if(g_str_equal(fi->hfinfo->name, "confirmed-RequestPDU") || 
+					g_str_equal(fi->hfinfo->name, "confirmed-ResponsePDU") ||
+					g_str_equal(fi->hfinfo->name, "initiate-RequestPDU") ||
+					g_str_equal(fi->hfinfo->name, "initiate-ResponsePDU") ||
+					g_str_equal(fi->hfinfo->name, "structure") ||
+					g_str_equal(fi->hfinfo->name, "read") ||
+					g_str_equal(fi->hfinfo->name, "write") )
+				{
+					break;
+				}
+				item = proto_tree_add_item(tree, fi->hfinfo->id,tvb, offset, fi->length,  0); 
+				break;
+			case FT_BOOLEAN:
+				u_int32_t boolean = 0;
+				u_int32_t bitmask = 1;
+				if(fi->hfinfo->bitmask)/* if a bitmask exists, use that value */
+					bitmask = fi->hfinfo->bitmask;
+				if(fi->value.value.uinteger) /* if value is non-zero, set bool to bitmask */
+					boolean = bitmask;
+
+				item = proto_tree_add_boolean(tree, fi->hfinfo->id, tvb, offset, fi->length, boolean ); 
+				break;
+			case FT_UINT8:
+			case FT_UINT16:
+			case FT_UINT32:
+				if(g_str_equal(pdata->request,"RPT")) /* REPORT */
+				{
+					if(g_str_equal(fi->hfinfo->name,"listOfAccessResult"))
 					{
+						pdata->listOfAccessResult = 1;
+					}
+					if(pdata->listOfAccessResult && g_str_equal(fi->hfinfo->name,"AccessResult"))
+					{
+						int fieldname = fi->hfinfo->id;
+						int fieldslen = (sizeof(RPT_fields)/sizeof(RPT_fields[0]))-1;
+						if(pdata->itemIndex == 0)
+						{
+							fieldname = *RPT_fields[pdata->itemIndex];
+							item = proto_tree_add_item(tree, fieldname,tvb, offset, fi->length,  0);
+							pdata->itemIndex++;
+						}
+						else if(pdata->itemIndex == 1 && tvb_reported_length_remaining(tvb, offset) >= 5) /* optflds */
+						{
+							int32_t i = 0;
+							int32_t optfieldslen = (sizeof(RPT_optFlds_lookup)/sizeof(RPT_optFlds_lookup[0]));
+							u_int16_t tmp = tvb_get_guint16(tvb, offset+3, BIG_ENDIAN);
+
+							/* calculate included fields (mandatory and optional) */
+							pdata->optflds = 0xc028; /* mandatory fields */
+							for(i = 0; i < optfieldslen; i++)
+							{
+								u_int16_t btmsk = (0x8000>>i);
+								if(tmp & btmsk) /* optfld bit is 1*/
+								{
+									pdata->optflds |= RPT_optFlds_lookup[i];
+								}
+							}
+							/* display the optional fields item itself */
+							fieldname = *RPT_fields[pdata->itemIndex];
+							item = proto_tree_add_item(tree, fieldname,tvb, offset, fi->length,  0);
+							pdata->itemIndex++;
+						}
+						else
+						{
+							/* calcualte all fields after optional fields */
+							if(pdata->itemIndex > 1 && pdata->itemIndex < fieldslen) /* index > 1 and < array length */
+							{
+								while((pdata->optflds & (0x2000>>(pdata->itemIndex-2))) == 0) /* skip the first 2 items, check if optional field should be included */
+								{
+									pdata->itemIndex++;
+								}
+
+								/* an included (optional) field found */
+								if(pdata->itemIndex == 11 || pdata->itemIndex == 12 || pdata->itemIndex == 13)
+								{
+									if(pdata->elements > 0)
+									{
+										fieldname = *RPT_fields[pdata->itemIndex];
+										item = proto_tree_add_item(tree, fieldname,tvb, offset, fi->length,  0);
+										pdata->elements--;	
+										if(pdata->elements == 0)
+										{
+											/* advance to next field, and keep track of the addressed fields by setting that bit to zero */
+											pdata->optflds &= ~(0x2000>>(pdata->itemIndex-2));
+											pdata->elements = pdata->inclusion;
+										}
+									}
+									else
+									{
+										ws_warning("no report inclusions to include (empty report!)");
+									}
+								}
+								else 
+								{
+									/* advance to next field, and keep track of the addressed fields by setting that bit to zero */
+									pdata->optflds &= ~(0x2000>>(pdata->itemIndex-2));
+
+									if(pdata->itemIndex < fieldslen)
+									{
+									fieldname = *RPT_fields[pdata->itemIndex];
+									item = proto_tree_add_item(tree, fieldname,tvb, offset, fi->length,  0);											
+									}
+								}
+							}
+						}
 						break;
 					}
-					item = proto_tree_add_item(tree, fi->hfinfo->id,tvb, offset, fi->length,  0); 
-					break;
-				case FT_BOOLEAN:
-					u_int32_t boolean = 0;
-					u_int32_t bitmask = 1;
-					if(fi->hfinfo->bitmask)/* if a bitmask exists, use that value */
-						bitmask = fi->hfinfo->bitmask;
-					if(fi->value.value.uinteger) /* if value is non-zero, set bool to bitmask */
-						boolean = bitmask;
-
-					item = proto_tree_add_boolean(tree, fi->hfinfo->id, tvb, offset, fi->length, boolean ); 
-					break;
-				case FT_UINT8:
-				case FT_UINT16:
-				case FT_UINT32:
-					if(g_str_equal(pdata->request,"RPT")) /* REPORT */
-					{
-						if(g_str_equal(fi->hfinfo->name,"listOfAccessResult"))
-						{
-							pdata->listOfAccessResult = 1;
-						}
-						if(pdata->listOfAccessResult && g_str_equal(fi->hfinfo->name,"AccessResult"))
-						{
-							int fieldname = fi->hfinfo->id;
-							int fieldslen = (sizeof(RPT_fields)/sizeof(RPT_fields[0]))-1;
-							if(pdata->itemIndex == 0)
-							{
-								fieldname = *RPT_fields[pdata->itemIndex];
-								item = proto_tree_add_item(tree, fieldname,tvb, offset, fi->length,  0);
-								pdata->itemIndex++;
-							}
-							else if(pdata->itemIndex == 1 && tvb_reported_length_remaining(tvb, offset) >= 5) /* optflds */
-							{
-								int32_t i = 0;
-								int32_t optfieldslen = (sizeof(RPT_optFlds_lookup)/sizeof(RPT_optFlds_lookup[0]));
-								u_int16_t tmp = tvb_get_guint16(tvb, offset+3, BIG_ENDIAN);
-
-								/* calculate included fields (mandatory and optional) */
-								pdata->optflds = 0xc028; /* mandatory fields */
-								for(i = 0; i < optfieldslen; i++)
-								{
-									u_int16_t btmsk = (0x8000>>i);
-									if(tmp & btmsk) /* optfld bit is 1*/
-									{
-										pdata->optflds |= RPT_optFlds_lookup[i];
-									}
-								}
-								/* display the optional fields item itself */
-								fieldname = *RPT_fields[pdata->itemIndex];
-								item = proto_tree_add_item(tree, fieldname,tvb, offset, fi->length,  0);
-								pdata->itemIndex++;
-							}
-							else
-							{
-								/* calcualte all fields after optional fields */
-								if(pdata->itemIndex > 1 && pdata->itemIndex < fieldslen) /* index > 1 and < array length */
-								{
-									while((pdata->optflds & (0x2000>>(pdata->itemIndex-2))) == 0) /* skip the first 2 items, check if optional field should be included */
-									{
-										pdata->itemIndex++;
-									}
-
-									/* an included (optional) field found */
-									if(pdata->itemIndex == 11 || pdata->itemIndex == 12 || pdata->itemIndex == 13)
-									{
-										if(pdata->elements > 0)
-										{
-											fieldname = *RPT_fields[pdata->itemIndex];
-											item = proto_tree_add_item(tree, fieldname,tvb, offset, fi->length,  0);
-											pdata->elements--;	
-											if(pdata->elements == 0)
-											{
-												/* advance to next field, and keep track of the addressed fields by setting that bit to zero */
-												pdata->optflds &= ~(0x2000>>(pdata->itemIndex-2));
-												pdata->elements = pdata->inclusion;
-											}
-										}
-										else
-										{
-											ws_warning("no report inclusions to include (empty report!)");
-										}
-									}
-									else 
-									{
-										/* advance to next field, and keep track of the addressed fields by setting that bit to zero */
-										pdata->optflds &= ~(0x2000>>(pdata->itemIndex-2));
-
-										if(pdata->itemIndex < fieldslen)
-										{
-										fieldname = *RPT_fields[pdata->itemIndex];
-										item = proto_tree_add_item(tree, fieldname,tvb, offset, fi->length,  0);											
-										}
-									}
-								}
-							}
-							break;
-
-
-				
-
-
-
-
-								
-						}
-					}
-					if(!g_str_equal(fi->hfinfo->name, "Padding"))
-					{
-						item = proto_tree_add_uint(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.uinteger); 
-					}
-					break;
-				case FT_CHAR:
-				case FT_INT8:
-				case FT_INT16:
-				case FT_INT32:
-					if(g_str_equal(fi->hfinfo->name, "integer"))
-					{
-						if(g_str_has_suffix(pdata->request,"$ctlModel"))
-						{
-							dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_ctlModel, NULL);
-							break;
-						}
-						if(g_str_has_suffix(pdata->request,"$orCat"))
-						{
-							dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_orCat, NULL);
-							break;						
-						}
-						if(g_str_has_suffix(pdata->request,"Beh$stVal"))
-						{
-							dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_Beh, NULL);
-							break;						
-						}
-						if(g_str_has_suffix(pdata->request,"Mod$stVal"))
-						{
-							dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_Mod, NULL);
-							break;						
-						}
-						if(g_str_has_suffix(pdata->request,"Health$stVal"))
-						{
-							dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_Health, NULL);
-							break;						
-						}
-						if(g_str_has_suffix(pdata->request,"serviceType"))
-						{
-							dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_serviceType, NULL);
-							break;						
-						}
-						if(g_str_has_suffix(pdata->request,"errorCode"))
-						{
-							dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_errorCode, NULL);
-							break;						
-						}
-						if( g_str_has_suffix(pdata->request,"$dirGeneral") || 
-							g_str_has_suffix(pdata->request,"$dirPhsA") || 
-							g_str_has_suffix(pdata->request,"$dirPhsB") ||
-							g_str_has_suffix(pdata->request,"$dirPhsC") ||
-							g_str_has_suffix(pdata->request,"$dirNeut"))
-						{
-							dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_dir, NULL);
-							break;						
-						}
-					}
-					item = proto_tree_add_int(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.sinteger); 
-					break;
-				case FT_STRING:
-					item = proto_tree_add_string(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.string);
-					if(g_str_equal(fi->hfinfo->name, "utc-time"))
-					{
-						proto_tree_add_bitmask_list(tree, tvb, offset+7, 1, TimeQuality_bits, ENC_BIG_ENDIAN);						
-					}
-					break;
-				case FT_BYTES:
+				}
+				if(!g_str_equal(fi->hfinfo->name, "Padding"))
 				{
-					if(g_str_equal(fi->hfinfo->name, "bit-string"))
+					item = proto_tree_add_uint(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.uinteger); 
+				}
+				break;
+			case FT_CHAR:
+			case FT_INT8:
+			case FT_INT16:
+			case FT_INT32:
+				if(g_str_equal(fi->hfinfo->name, "integer"))
+				{
+					if(g_str_has_suffix(pdata->request,"$ctlModel"))
 					{
-						if(g_str_has_suffix(pdata->request,"$q"))
-						{
-							dissect_ber_bitstring(1, pdata->actx, tree, tvb, offset-1, Quality_bits, (fi->length * 8), fi->hfinfo->id, ett_iec61850, NULL);
-							break;
-						}
-						if(g_str_has_suffix(pdata->request,"$Oper$Check") || g_str_has_suffix(pdata->request,"$SBOw$Check"))
-						{
-							dissect_ber_bitstring(1, pdata->actx, tree, tvb, offset-1, Check_bits, (fi->length * 8), fi->hfinfo->id, ett_iec61850, NULL);
-							break;
-						}
-						if(g_str_has_suffix(pdata->request,"$stVal") || g_str_has_suffix(pdata->request,"$subVal"))
-						{
-							dissect_ber_bitstring(1, pdata->actx, tree, tvb, offset-1, DBPos_bits, (fi->length * 8), fi->hfinfo->id, ett_iec61850, NULL);
-							break;
-						}							
-						if(g_str_has_suffix(pdata->request,"$ctlVal"))
-						{
-							dissect_ber_bitstring(1, pdata->actx, tree, tvb, offset-1, BinaryStep_bits, (fi->length * 8), fi->hfinfo->id, ett_iec61850, NULL);
-							break;
-						}
-						if(g_str_has_suffix(pdata->request,"$OptFlds"))
+						dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_ctlModel, NULL);
+						break;
+					}
+					if(g_str_has_suffix(pdata->request,"$orCat"))
+					{
+						dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_orCat, NULL);
+						break;						
+					}
+					if(g_str_has_suffix(pdata->request,"Beh$stVal"))
+					{
+						dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_Beh, NULL);
+						break;						
+					}
+					if(g_str_has_suffix(pdata->request,"Mod$stVal"))
+					{
+						dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_Mod, NULL);
+						break;						
+					}
+					if(g_str_has_suffix(pdata->request,"Health$stVal"))
+					{
+						dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_Health, NULL);
+						break;						
+					}
+					if(g_str_has_suffix(pdata->request,"serviceType"))
+					{
+						dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_serviceType, NULL);
+						break;						
+					}
+					if(g_str_has_suffix(pdata->request,"errorCode"))
+					{
+						dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_errorCode, NULL);
+						break;						
+					}
+					if( g_str_has_suffix(pdata->request,"$dirGeneral") || 
+						g_str_has_suffix(pdata->request,"$dirPhsA") || 
+						g_str_has_suffix(pdata->request,"$dirPhsB") ||
+						g_str_has_suffix(pdata->request,"$dirPhsC") ||
+						g_str_has_suffix(pdata->request,"$dirNeut"))
+					{
+						dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_dir, NULL);
+						break;						
+					}
+				}
+				item = proto_tree_add_int(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.sinteger); 
+				break;
+			case FT_STRING:
+				item = proto_tree_add_string(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.string);
+				if(g_str_equal(fi->hfinfo->name, "utc-time"))
+				{
+					proto_tree_add_bitmask_list(tree, tvb, offset+7, 1, TimeQuality_bits, ENC_BIG_ENDIAN);						
+				}
+				break;
+			case FT_BYTES:
+			{
+				if(g_str_equal(fi->hfinfo->name, "bit-string"))
+				{
+					if(g_str_has_suffix(pdata->request,"$q"))
+					{
+						dissect_ber_bitstring(1, pdata->actx, tree, tvb, offset-1, Quality_bits, (fi->length * 8), fi->hfinfo->id, ett_iec61850, NULL);
+						break;
+					}
+					if(g_str_has_suffix(pdata->request,"$Oper$Check") || g_str_has_suffix(pdata->request,"$SBOw$Check"))
+					{
+						dissect_ber_bitstring(1, pdata->actx, tree, tvb, offset-1, Check_bits, (fi->length * 8), fi->hfinfo->id, ett_iec61850, NULL);
+						break;
+					}
+					if(g_str_has_suffix(pdata->request,"$stVal") || g_str_has_suffix(pdata->request,"$subVal"))
+					{
+						dissect_ber_bitstring(1, pdata->actx, tree, tvb, offset-1, DBPos_bits, (fi->length * 8), fi->hfinfo->id, ett_iec61850, NULL);
+						break;
+					}							
+					if(g_str_has_suffix(pdata->request,"$ctlVal"))
+					{
+						dissect_ber_bitstring(1, pdata->actx, tree, tvb, offset-1, BinaryStep_bits, (fi->length * 8), fi->hfinfo->id, ett_iec61850, NULL);
+						break;
+					}
+					if(g_str_has_suffix(pdata->request,"$OptFlds"))
+					{
+						proto_tree_add_bitmask_list(tree, tvb, offset, 2, OptFlds_bits, BIG_ENDIAN);
+						break;
+					}
+					if(g_str_has_suffix(pdata->request,"$TrgOps"))
+					{
+						dissect_ber_bitstring(1, pdata->actx, tree, tvb, offset-1, TrgOps_bits, (fi->length * 8), fi->hfinfo->id, ett_iec61850, NULL);
+						break;
+					}
+
+					if(g_str_equal(pdata->request,"RPT") && pdata->listOfAccessResult == 1 )
+					{
+						if(pdata->itemIndex-1 == 1) /* optflds */
 						{
 							proto_tree_add_bitmask_list(tree, tvb, offset, 2, OptFlds_bits, BIG_ENDIAN);
 							break;
 						}
-						if(g_str_has_suffix(pdata->request,"$TrgOps"))
+						if(pdata->itemIndex == 13) /* trgops */
 						{
-							dissect_ber_bitstring(1, pdata->actx, tree, tvb, offset-1, TrgOps_bits, (fi->length * 8), fi->hfinfo->id, ett_iec61850, NULL);
+							proto_tree_add_bitmask_list(tree, tvb, offset, 1, TrgOps_bits, BIG_ENDIAN);
 							break;
 						}
-
-						if(g_str_equal(pdata->request,"RPT") && pdata->listOfAccessResult == 1 )
+						wmem_strbuf_t *strbuf;
+						u_int32_t count = 0;
+						u_int32_t padding = tvb_get_guint8(tvb, offset-1);
+						strbuf = wmem_strbuf_new(pdata->actx->pinfo->pool, "");
+						count = iec61850_print_bytes(strbuf,fi->value.value.bytes->data,fi->length, padding);
+						if(pdata->itemIndex == 10) /* inclusion */
 						{
-							if(pdata->itemIndex-1 == 1) /* optflds */
-							{
-								proto_tree_add_bitmask_list(tree, tvb, offset, 2, OptFlds_bits, BIG_ENDIAN);
-								break;
-							}
-							if(pdata->itemIndex == 13) /* trgops */
-							{
-								proto_tree_add_bitmask_list(tree, tvb, offset, 1, TrgOps_bits, BIG_ENDIAN);
-								break;
-							}
-							wmem_strbuf_t *strbuf;
-							u_int32_t count = 0;
-							u_int32_t padding = tvb_get_guint8(tvb, offset-1);
-							strbuf = wmem_strbuf_new(pdata->actx->pinfo->pool, "");
-							count = print_bytes(strbuf,fi->value.value.bytes->data,fi->length, padding);
-							if(pdata->itemIndex == 10) /* inclusion */
-							{
-								pdata->inclusion = count;
-								pdata->elements = pdata->inclusion;
-							}				
-							item = proto_tree_add_string(tree, hf_iec61850_bit_string,tvb, offset, fi->length, wmem_strbuf_get_str(strbuf));
-							break;
-						}
-					}
-					if(g_str_equal(fi->hfinfo->name, "floating-point"))
-					{
-						proto_tree_add_bytes_format_value(tree, fi->hfinfo->id,tvb, offset, fi->value.value.bytes->len, fi->value.value.bytes->data, "%f",tvb_get_ieee_float(tvb, 1, ENC_BIG_ENDIAN) );
+							pdata->inclusion = count;
+							pdata->elements = pdata->inclusion;
+						}				
+						item = proto_tree_add_string(tree, hf_iec61850_bit_string,tvb, offset, fi->length, wmem_strbuf_get_str(strbuf));
 						break;
 					}
-
-					proto_tree_add_bytes(tree, fi->hfinfo->id,tvb, offset, fi->value.value.bytes->len, fi->value.value.bytes->data);//,"%s",wmem_strbuf_get_str(strbuf));
+				}
+				if(g_str_equal(fi->hfinfo->name, "floating-point"))
+				{
+					proto_tree_add_bytes_format_value(tree, fi->hfinfo->id,tvb, offset, fi->value.value.bytes->len, fi->value.value.bytes->data, "%f",tvb_get_ieee_float(tvb, 1, ENC_BIG_ENDIAN) );
 					break;
 				}
-				default:
-					ws_warning("%d, type: %d (UNKNOWN)", pdata->level, fi->hfinfo->type); break;
+
+				proto_tree_add_bytes(tree, fi->hfinfo->id,tvb, offset, fi->value.value.bytes->len, fi->value.value.bytes->data);//,"%s",wmem_strbuf_get_str(strbuf));
+				break;
 			}
-		}
-		else
-		{
-			ws_warning("unnamed item: %i, type: %d", pdata->level, fi->hfinfo->type);
+			default:
+				ws_warning("%d, type: %d (UNKNOWN)", pdata->level, fi->hfinfo->type); break;
 		}
 	}
-    
+	else
+	{
+		ws_warning("cannot parse item in tree: %i", pdata->level);
+	}
+
+    /* recurse trough all items in the tree, depth-first*/
 	if (node->first_child != NULL ) 
 	{
 		pdata->level++;
@@ -858,25 +817,567 @@ void proto_tree_print_tree(proto_node *node, void * data)
 	}
 }
 
+static int32_t dissect_iec61850_mmstree(proto_tree *subtree, tvbuff_t *tvb, asn1_ctx_t *actx, u_int8_t * request)
+{
+	tree_data data;
+	if(g_mms_tree == NULL)
+	{
+		return -1;
+	}
+
+	data.tree = subtree;
+	data.offset = subtree->finfo->start;
+	data.tvb = tvb;
+	data.actx = actx;
+	data.request = request;
+
+	data.level =1;
+	data.listOfAccessResult = 0;
+	data.itemIndex = 0;
+	data.optflds = 0;
+	data.inclusion = 0;
+	proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
+	return 0;
+}
+
+static int32_t Unconfirmed_RPT(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
+{
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s", "Unconfirmed ", iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "RPT");
+	return 1;
+}
+
+static int32_t CommandTerm(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
+{
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s", "Unconfirmed-CommandTermination ", iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "CmdTerm");
+	return 1;
+}
+
+static int32_t Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
+{
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Error, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Error", iec61850_private_data_get_moreCinfo(actx) );
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t Reject(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
+{
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Reject, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Reject", iec61850_private_data_get_moreCinfo(actx) );
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t Associate(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
+{
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Associate, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s %s", "Associate", res? "res" : "req", iec61850_private_data_get_moreCinfo(actx) );
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t Cancel(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
+{/* abort */ 
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Cancel, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s %s", "Cancel", res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t Release(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
+{
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Release, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s %s", "Release", res? "res" : "req" , iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t Associate_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
+{
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Associate, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Associate-Error", iec61850_private_data_get_moreCinfo(actx) );
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t Cancel_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
+{
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Cancel_Error, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Cancel-Error",iec61850_private_data_get_moreCinfo(actx) );
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t Release_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
+{
+	proto_item *subitem;
+	proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_Release_Error, tvb, offset, -1, ENC_NA);
+		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Release-Error",iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t GetNameList(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res, iec61850_value_req *val)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	u_int8_t * serviceName;
+	int32_t hf_name;
+
+	if(res == 0) /* request */
+	{
+		iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+		u_int8_t * request = "";
+		ws_assert(private_data);
+		ws_assert(val);
+		request = (u_int8_t *)wmem_strbuf_get_str(val->data);
+
+		val->serviceName = "GetNameList";
+		val->hf_name = hf_iec61850_GetNameList;
+
+		if(private_data->objectScope == 0)/* VMD-SPECIFIC */
+		{
+			val->serviceName = "GetServerDirectory";
+			val->hf_name = hf_iec61850_GetServerDirectory;
+		}
+		else if(private_data->objectScope == 1)/* domainspecific */
+		{
+			if(private_data->objectClass == 0)
+			{
+				if(g_strrstr(request,"/") == NULL || g_str_has_suffix(request, "/")) /* if the whole device is requested it is a GetLogicalDeviceDirectory */
+				{
+					val->serviceName = "GetLogicalDeviceDirectory";
+					val->hf_name = hf_iec61850_GetLogicalDeviceDirectory;
+				}
+				if(g_strrstr(request,"/") && !g_str_has_suffix(request, "/")) /* if a specific logical node is requested, it is a GetLogicalNodeDirecotry */
+				{
+					val->serviceName = "GetLogicalNodeDirectory";
+					val->hf_name = hf_iec61850_GetLogicalNodeDirectory;										
+				}
+			}
+			if(private_data->objectClass == 2)
+			{
+				val->serviceName = "GetDataSetDirectory";
+				val->hf_name = hf_iec61850_GetDataSetDirectory;
+			}
+			if(private_data->objectClass == 8)
+			{
+				val->serviceName = "GetJournalDirectory";
+				val->hf_name = hf_iec61850_GetJournalDirectory;
+			}
+		}
+		else if(private_data->objectScope == 2)/* aa-specific */
+		{
+			val->serviceName = "GetLogicalDeviceDirectory";
+			val->hf_name = hf_iec61850_GetLogicalDeviceDirectory;
+		}
+	}
+
+	if(val == NULL)
+	{
+		serviceName = "GetNameList";
+		hf_name = hf_iec61850_GetNameList;
+	}
+	else
+	{
+		serviceName = val->serviceName;
+		hf_name = val->hf_name;
+	}
+	subitem = proto_tree_add_item(item, hf_name, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), serviceName,res? "res" : "req", 
+		iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	if(val != NULL)
+		dissect_iec61850_mmstree(subtree, tvb, actx, (u_int8_t *)wmem_strbuf_get_str(val->data));
+	else
+		dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t GetDataDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
+{/* also GetDataDefinition */
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_GetDataDirectory, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "GetDataDirectory", 
+		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res, iec61850_value_req * val)
+{ 
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+
+	u_int8_t * fieldName = "GetDataValue";
+	u_int8_t * request = "";
+	int32_t hf_name = hf_iec61850_GetDataValue;
+
+	ws_assert(private_data);
+
+	if(val != NULL)
+		request = (u_int8_t *)wmem_strbuf_get_str(val->data);
+
+	if(g_strrstr(request,"$BR$") || g_strrstr(request,"$RP$"))//GetBRCBValues,GetURCBValues,
+	{
+		fieldName = "GetRCBValues";
+		hf_name = hf_iec61850_GetRCBValues;
+	}
+	if(g_strrstr(request,"$GO$") )//GetGoCBValues, GetGsCBValues
+	{
+		fieldName = "GetGCBValues";
+		hf_name = hf_iec61850_GetRCBValues;
+	}
+	if(g_strrstr(request,"$SG$") )//GetEditSGValue,GetSGCBValues,
+	{
+		fieldName = "GetSGCBValues";
+		hf_name = hf_iec61850_GetSGCBValues;
+	}
+	if(g_strrstr(request,"$LG$") )//GetLCBValues,GetLogStatusValues,
+	{
+		fieldName = "GetLCBValues";
+		hf_name = hf_iec61850_GetLCBValues;
+	}
+	if(g_str_has_suffix(request,"$SBO") )//Select,
+	{
+		fieldName = "Select";
+		hf_name = hf_iec61850_Select;
+		if(g_str_has_suffix(private_data->moreCinfo, "\"\" "))
+			private_data->Success = 0; //empty SBO means failure
+	}
+	/*
+	the read request Variable AccessSpecification shall specify alternateAccess. 
+	The accessSelection of the alternate access specification shall specify component. 
+	The value of the component shall be the value of the functional constraint being specified.
+	*/
+	if(private_data->AlternateAccess == 1)//GetAllDataValues(alternate access),
+	{
+		fieldName = "GetAllDataValues";
+		hf_name = hf_iec61850_GetAllDataValues;
+	}
+	/*
+	specificationWithResult Shall be TRUE
+	variableAccessSpecification Shall be constrained to variableListName
+	*/
+	if(private_data->VariableAccessSpecification == 1) //GetDataSetValues
+	{
+		fieldName = "GetDataSetValues";
+		hf_name = hf_iec61850_GetDataSetValues;
+	}
+	
+	subitem = proto_tree_add_item(item, hf_name, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s %s",	iec61850_private_data_get_preCinfo(actx), fieldName, 
+		res? "res" : "req", 
+		res? (private_data->Success? "Success" : "Failure") : "", 
+		iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	if(val != NULL)
+	{
+		val->serviceName = fieldName;
+		dissect_iec61850_mmstree(subtree, tvb, actx, (u_int8_t *)wmem_strbuf_get_str(val->data));
+	}
+	else
+		dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t SetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res, iec61850_value_req * val)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+	u_int8_t * fieldName = "SetDataValue";
+	u_int8_t * request = "";
+	int32_t hf_name = hf_iec61850_SetDataValue;
+
+	ws_assert(private_data);
+
+	if(val != NULL)
+		request = (u_int8_t *)wmem_strbuf_get_str(val->data);
+
+	if(g_strrstr(request,"$BR$") || g_strrstr(request,"$RP$"))//SetBRCBValues,SetURCBValues,
+	{
+		fieldName = "SetRCBValues";
+		hf_name = hf_iec61850_SetRCBValues;
+	}
+	if(g_strrstr(request,"$GO$") )//SetGoCBValues, SetGsCBValues
+	{
+		fieldName = "SetGCBValues";
+		hf_name = hf_iec61850_SetGCBValues;
+	}
+	if(g_strrstr(request,"$SG$") )//SelectActiveSG,SelectEditSG,SetEditSGValue,ConfirmEditSGValues
+	{
+		fieldName = "SetSGCBValues";
+		hf_name = hf_iec61850_SetSGCBValues;
+	}
+	if(g_strrstr(request,"$LG$") )//SetLCBValues
+	{
+		fieldName = "SetLCBValues";
+		hf_name = hf_iec61850_SetLCBValues;
+	}
+	if(private_data->VariableAccessSpecification == 1) //SetDataSetValues
+	{
+		fieldName = "SetDataSetValues";
+		hf_name = hf_iec61850_SetDataSetValues;
+	}
+	if(g_strrstr(request,"$SBOw ") )//SelectWithValue, 
+	{
+		fieldName = "SelectWithValue";
+		hf_name = hf_iec61850_SelectWithValue;
+	}
+	if(g_strrstr(request,"$Cancel ") )//Cancel,
+	{
+		fieldName = "Cancel";
+		hf_name = hf_iec61850_OperCancel;
+	}
+	if(g_strrstr(request,"$Oper ") )// Operate,TimeActivatedOperate
+	{
+		fieldName = "Operate";
+		hf_name = hf_iec61850_Operate;
+	}
+
+	subitem = proto_tree_add_item(item, hf_name, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s %s",	iec61850_private_data_get_preCinfo(actx), fieldName, 
+		res? "res" : "req", 
+		res? (private_data->Success? "Success" : "Failure") : "", 
+		iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	if(val != NULL)
+	{
+		val->serviceName = fieldName;
+		dissect_iec61850_mmstree(subtree, tvb, actx, (u_int8_t *)wmem_strbuf_get_str(val->data));
+	}
+	else
+		dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t GetDataSetDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_GetDataSetDirectory, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "GetDataSetDirectory", 
+		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t CreateDataSet(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_CreateDataSet, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "CreateDataSet", 
+		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t DeleteDataSet(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_DeleteDataSet, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "DeleteDataSet", 
+		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t QueryLog(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_QueryLog, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "QueryLog", 
+		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t SetFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_SetFile, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "SetFile", 
+		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t GetFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_GetFile, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "GetFile", 
+		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t FileRead(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_FileRead, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "FileRead", 
+		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t FileClose(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_FileClose, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "FileClose", 
+		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t DeleteFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_DeleteFile, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "DeleteFile", 
+		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
+static int32_t GetServerDirectory_FILE(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
+{
+	proto_item *subitem;
+    proto_tree *subtree=NULL;
+	subitem = proto_tree_add_item(item, hf_iec61850_GetServerDirectory_FILE, tvb, offset, -1, ENC_NA);
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "GetServerDirectory(FILE)", 
+		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
+	subtree = proto_item_add_subtree(subitem, ett_iec61850);
+
+	dissect_iec61850_mmstree(subtree, tvb, actx, "");
+
+	return 1;
+}
+
 int32_t map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx, proto_tree *parent_tree, proto_tree *mms_tree, const int32_t proto_iec61850)
 {
 	u_int32_t offset = 0;
-	u_int32_t old_offset;
 	int32_t level = 1;
 	u_int32_t decoded = 0;
 	iec61850_value_req sessiondata;
-	iec61850_value_req * sessiondata_request = &sessiondata;
-	g_mms_tree = mms_tree;
 
-	if(tvb_reported_length_remaining(tvb, offset) > 0) /* while for multiple PDU in 1 packet (may be possible...) */
+	sessiondata.data = NULL;
+	sessiondata.serviceName = "";
+	sessiondata.hf_name = -1;
+
+	g_mms_tree = mms_tree; /* assign global mms tree pointer */
+
+	if(tvb_reported_length_remaining(tvb, offset) > 0) /* while for multiple PDU in 1 packet (may be possible?...) */
 	{
 		proto_item *item;
-		old_offset=offset;
 		
 		iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-		ws_assert(private_data);
+		ws_assert(private_data); /* check if we could retrieve, or create private_data */
 
-		if(private_data->MMSpdu == 1)/* load request data for response */
+		iec61850_value_req * sessiondata_request = &sessiondata;
+		if(private_data->MMSpdu == 1)/* load request data for response, NULL if not found */
 		{
 			sessiondata_request = load_invoke_data(pinfo, private_data->invokeID);
 		}
@@ -892,56 +1393,7 @@ int32_t map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx,
 				{
 					case 1:/* GetNameList -> GetLogicalNodeDirectory, GetLogicalDeviceDirectory, GetServerDirectory */
 						item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
-						if(private_data->MMSpdu == 0) /* request */
-						{
-							if(private_data->objectScope == 0)/* VMD-SPECIFIC */
-							{
-								decoded = GetServerDirectory(tvb, offset, item, actx);
-								sessiondata_request->serviceName = "GetServerDirectory";
-								sessiondata_request->hf_name = hf_iec61850_GetServerDirectory;
-							}
-							else if(private_data->objectScope == 1)/* domainspecific */
-							{
-								if(private_data->objectClass == 0)
-								{
-									u_int8_t * request = (u_int8_t *)wmem_strbuf_get_str(sessiondata_request->data);
-									if(g_strrstr(request,"/") == NULL || g_str_has_suffix(request, "/")) /* if the whole device is requested it is a GetLogicalDeviceDirectory */
-									{
-										decoded = GetLogicalDeviceDirectory(tvb, offset, item, actx);
-										sessiondata_request->serviceName = "GetLogicalDeviceDirectory";
-										sessiondata_request->hf_name = hf_iec61850_GetLogicalDeviceDirectory;
-									}
-									if(g_strrstr(request,"/") && !g_str_has_suffix(request, "/")) /* if a specific logical node is requested, it is a GetLogicalNodeDirecotry */
-									{
-										decoded = GetLogicalNodeDirectory(tvb, offset, item, actx);
-										sessiondata_request->serviceName = "GetLogicalNodeDirectory";
-										sessiondata_request->hf_name = hf_iec61850_GetLogicalNodeDirectory;										
-									}
-								}
-								if(private_data->objectClass == 2)
-								{
-									decoded = GetDataSetDirectory(tvb, offset, item, actx, 0);
-									sessiondata_request->serviceName = "GetDataSetDirectory";
-									sessiondata_request->hf_name = hf_iec61850_GetDataSetDirectory;
-								}
-								if(private_data->objectClass == 8)
-								{
-									decoded = GetJournalDirectory(tvb, offset, item, actx);
-									sessiondata_request->serviceName = "GetJournalDirectory";
-									sessiondata_request->hf_name = hf_iec61850_GetJournalDirectory;
-								}
-							}
-							else /* aa-specific */
-							{
-								decoded = GetLogicalDeviceDirectory(tvb, offset, item, actx);
-								sessiondata_request->serviceName = "GetLogicalDeviceDirectory";
-								sessiondata_request->hf_name = hf_iec61850_GetLogicalDeviceDirectory;
-							}
-						}
-						else /* response */
-						{
-							decoded = GetNameList_response(tvb, offset, item, actx, sessiondata_request);
-						}
+						decoded = GetNameList(tvb, offset, item, actx, private_data->MMSpdu, sessiondata_request);
 						break;
 					case 4://read -> GetDataValue
 						item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
@@ -965,7 +1417,7 @@ int32_t map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx,
 						break;
 					case 13://		DeleteDataSet			DeleteNamedVariableList
 						item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
-						decoded = CreateDataSet(tvb, offset, item, actx, private_data->MMSpdu);
+						decoded = DeleteDataSet(tvb, offset, item, actx, private_data->MMSpdu);
 						break;
 					case 65:// ReadJournal -> QueryLogByTime, QueryLogAfter
 						item = get_iec61850_item(tvb,parent_tree,proto_iec61850);
@@ -1095,814 +1547,8 @@ int32_t map_iec61850_packet(tvbuff_t *tvb, packet_info *pinfo, asn1_ctx_t *actx,
 		{
 			store_invoke_data(pinfo, private_data->invokeID, &sessiondata);
 		}
-		/* if(offset == old_offset)????ERROR?? */
-
 	}
     return decoded;
-}
-
-int32_t Unconfirmed_RPT(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{
-	proto_item *subitem;
-	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s", "Unconfirmed ", private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "RPT";
-		data.listOfAccessResult = 0;
-		data.itemIndex = 0;
-		data.optflds = 0;
-		data.inclusion = 0;
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-	return 1;
-}
-
-int32_t CommandTerm(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{
-	proto_item *subitem;
-	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s", "Unconfirmed-CommandTermination ", private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "CmdTerm";
-		data.listOfAccessResult = 0;
-		data.itemIndex = 0;
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-	return 1;
-}
-
-int32_t Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{
-	proto_item *subitem;
-	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Error, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Error", private_data_get_moreCinfo(actx) );
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t Reject(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{
-	proto_item *subitem;
-	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Reject, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Reject", private_data_get_moreCinfo(actx) );
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t Associate(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{
-	proto_item *subitem;
-	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Associate, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s %s", "Associate", res? "res" : "req", private_data_get_moreCinfo(actx) );
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t Cancel(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{/* abort */ 
-	proto_item *subitem;
-	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Cancel, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s %s", "Cancel", res? "res" : "req", private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t Release(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{
-	proto_item *subitem;
-	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Release, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s %s", "Release", res? "res" : "req" , private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t Associate_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{
-	proto_item *subitem;
-	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Associate, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Associate-Error", private_data_get_moreCinfo(actx) );
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t Cancel_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{
-	proto_item *subitem;
-	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Cancel_Error, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Cancel-Error",private_data_get_moreCinfo(actx) );
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t Release_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{
-	proto_item *subitem;
-	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Release_Error, tvb, offset, -1, ENC_NA);
-		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Release-Error",private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t GetServerDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_GetServerDirectory, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetServerDirectory req", 
-		private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t GetLogicalDeviceDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_GetLogicalDeviceDirectory, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetLogicalDeviceDirectory req", 
-		private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t GetLogicalNodeDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_GetLogicalNodeDirectory, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetLogicalNodeDirectory req", 
-		private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t GetJournalDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_GetJournalDirectory, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s",	private_data_get_preCinfo(actx), "GetJournalDirectory req", 
-		private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t GetNameList_response(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, iec61850_value_req *val)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	u_int8_t * serviceName = NULL;
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	int32_t hf_name;
-	if(val != NULL && val->serviceName != NULL)
-	{
-		serviceName = val->serviceName;
-		hf_name = val->hf_name;
-	}
-	else
-	{
-		serviceName = "GetNameList";
-		hf_name = hf_iec61850_GetNameList_response;
-	}
-
-	subitem = proto_tree_add_item(item, hf_name, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s%s %s",	private_data_get_preCinfo(actx), serviceName," res", 
-		private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		if(val != NULL)
-			data.request = (u_int8_t *)wmem_strbuf_get_str(val->data);
-		else
-			data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t GetDataDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{/* also GetDataDefinition */
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_GetDataDirectory, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	private_data_get_preCinfo(actx), "GetDataDirectory", 
-		res? "res" : "req", private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res, iec61850_value_req * val)
-{ 
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-
-	u_int8_t * fieldName = "GetDataValue";
-	u_int8_t * request = "";
-	int32_t hf_name = hf_iec61850_GetDataValue;
-
-	if(val != NULL)
-		request = (u_int8_t *)wmem_strbuf_get_str(val->data);
-
-	if(g_strrstr(request,"$BR$") || g_strrstr(request,"$RP$"))//GetBRCBValues,GetURCBValues,
-	{
-		fieldName = "GetRCBValues";
-		hf_name = hf_iec61850_GetRCBValues;
-	}
-	if(g_strrstr(request,"$GO$") )//GetGoCBValues, GetGsCBValues
-	{
-		fieldName = "GetGCBValues";
-		hf_name = hf_iec61850_GetRCBValues;
-	}
-	if(g_strrstr(request,"$SG$") )//GetEditSGValue,GetSGCBValues,
-	{
-		fieldName = "GetSGCBValues";
-		hf_name = hf_iec61850_GetSGCBValues;
-	}
-	if(g_strrstr(request,"$LG$") )//GetLCBValues,GetLogStatusValues,
-	{
-		fieldName = "GetLCBValues";
-		hf_name = hf_iec61850_GetLCBValues;
-	}
-	if(g_str_has_suffix(request,"$SBO") )//Select,
-	{
-		fieldName = "Select";
-		hf_name = hf_iec61850_Select;
-		if(g_str_has_suffix(private_data->moreCinfo, "\"\" "))
-			private_data->Success = 0; //empty SBO means failure
-	}
-	/*
-	the read request Variable AccessSpecification shall specify alternateAccess. 
-	The accessSelection of the alternate access specification shall specify component. 
-	The value of the component shall be the value of the functional constraint being specified.
-	*/
-	if(private_data->AlternateAccess == 1)//GetAllDataValues(alternate access),
-	{
-		fieldName = "GetAllDataValues";
-		hf_name = hf_iec61850_GetAllDataValues;
-	}
-	/*
-	specificationWithResult Shall be TRUE
-	variableAccessSpecification Shall be constrained to variableListName
-	*/
-	if(private_data->VariableAccessSpecification == 1) //GetDataSetValues
-	{
-		fieldName = "GetDataSetValues";
-		hf_name = hf_iec61850_GetDataSetValues;
-	}
-	
-	subitem = proto_tree_add_item(item, hf_name, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s %s",	private_data_get_preCinfo(actx), fieldName, 
-		res? "res" : "req", 
-		res? (private_data->Success? "Success" : "Failure") : "", 
-		private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		if(val != NULL)
-		{
-			val->serviceName = fieldName;
-			data.request = (u_int8_t *)wmem_strbuf_get_str(val->data);
-		}
-		else
-			data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t SetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res, iec61850_value_req * val)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	u_int8_t * fieldName = "SetDataValue";
-	u_int8_t * request = "";
-	int32_t hf_name = hf_iec61850_SetDataValue;
-
-	if(val != NULL)
-		request = (u_int8_t *)wmem_strbuf_get_str(val->data);
-
-	if(g_strrstr(request,"$BR$") || g_strrstr(request,"$RP$"))//SetBRCBValues,SetURCBValues,
-	{
-		fieldName = "SetRCBValues";
-		hf_name = hf_iec61850_SetRCBValues;
-	}
-	if(g_strrstr(request,"$GO$") )//SetGoCBValues, SetGsCBValues
-	{
-		fieldName = "SetGCBValues";
-		hf_name = hf_iec61850_SetGCBValues;
-	}
-	if(g_strrstr(request,"$SG$") )//SelectActiveSG,SelectEditSG,SetEditSGValue,ConfirmEditSGValues
-	{
-		fieldName = "SetSGCBValues";
-		hf_name = hf_iec61850_SetSGCBValues;
-	}
-	if(g_strrstr(request,"$LG$") )//SetLCBValues
-	{
-		fieldName = "SetLCBValues";
-		hf_name = hf_iec61850_SetLCBValues;
-	}
-	if(private_data->VariableAccessSpecification == 1) //SetDataSetValues
-	{
-		fieldName = "SetDataSetValues";
-		hf_name = hf_iec61850_SetDataSetValues;
-	}
-	if(g_strrstr(request,"$SBOw ") )//SelectWithValue, 
-	{
-		fieldName = "SelectWithValue";
-		hf_name = hf_iec61850_SelectWithValue;
-	}
-	if(g_strrstr(request,"$Cancel ") )//Cancel,
-	{
-		fieldName = "Cancel";
-		hf_name = hf_iec61850_OperCancel;
-	}
-	if(g_strrstr(request,"$Oper ") )// Operate,TimeActivatedOperate
-	{
-		fieldName = "Operate";
-		hf_name = hf_iec61850_Operate;
-	}
-
-	subitem = proto_tree_add_item(item, hf_name, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s %s",	private_data_get_preCinfo(actx), fieldName, 
-		res? "res" : "req", 
-		res? (private_data->Success? "Success" : "Failure") : "", 
-		private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		if(val != NULL)
-		{
-			val->serviceName = fieldName;
-			data.request = (u_int8_t *)wmem_strbuf_get_str(val->data);			
-		}
-		else
-			data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t GetDataSetDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_GetDataSetDirectory, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	private_data_get_preCinfo(actx), "GetDataSetDirectory", 
-		res? "res" : "req", private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t CreateDataSet(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_CreateDataSet, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	private_data_get_preCinfo(actx), "CreateDataSet", 
-		res? "res" : "req", private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t DeleteDataSet(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_DeleteDataSet, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	private_data_get_preCinfo(actx), "DeleteDataSet", 
-		res? "res" : "req", private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t QueryLog(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_QueryLog, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	private_data_get_preCinfo(actx), "QueryLog", 
-		res? "res" : "req", private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t SetFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_SetFile, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	private_data_get_preCinfo(actx), "SetFile", 
-		res? "res" : "req", private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t GetFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_GetFile, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	private_data_get_preCinfo(actx), "GetFile", 
-		res? "res" : "req", private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t FileRead(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_FileRead, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	private_data_get_preCinfo(actx), "FileRead", 
-		res? "res" : "req", private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t FileClose(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_FileClose, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	private_data_get_preCinfo(actx), "FileClose", 
-		res? "res" : "req", private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t DeleteFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_DeleteFile, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	private_data_get_preCinfo(actx), "DeleteFile", 
-		res? "res" : "req", private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
-}
-
-int32_t GetServerDirectory_FILE(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{
-	proto_item *subitem;
-    proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_GetServerDirectory_FILE, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	private_data_get_preCinfo(actx), "GetServerDirectory(FILE)", 
-		res? "res" : "req", private_data_get_moreCinfo(actx));
-	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-
-	if(g_mms_tree != NULL)
-	{
-		tree_data data;
-		data.level =1;
-		data.tree = subtree;
-		data.tvb = tvb;
-		data.offset = subtree->finfo->start;
-		data.actx = actx;
-		data.request = "";
-		proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
-	}
-
-	return 1;
 }
 
 /*
@@ -2213,7 +1859,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 			}
 		},
 		{ 
-			&hf_iec61850_GetNameList_response,
+			&hf_iec61850_GetNameList,
       		{ 
 				"GetNameList", 			
 				"iec61850.getnamelist", 
