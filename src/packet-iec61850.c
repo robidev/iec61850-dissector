@@ -995,8 +995,11 @@ iec61850_private_data_t* iec61850_get_private_data(asn1_ctx_t *actx)
 	packet_info *pinfo = actx->pinfo;
 	iec61850_private_data_t *private_data = (iec61850_private_data_t *)p_get_proto_data(pinfo->pool, pinfo, proto_iec61850, pinfo->curr_layer_num);
 	if(private_data != NULL )
+	{
 		return private_data;
-	else {
+	}
+	else 
+	{
 		private_data = wmem_new0(pinfo->pool, iec61850_private_data_t);
 		private_data->preCinfo = wmem_alloc0(pinfo->pool, IEC61850_BUFFER_SIZE_PRE);
 		private_data->moreCinfo = wmem_alloc0(pinfo->pool, IEC61850_BUFFER_SIZE_MORE);
@@ -1086,8 +1089,7 @@ private_data_add_moreCinfo_int(asn1_ctx_t *actx, int32_t val)
 	u_int8_t *tmp = wmem_alloc0(pinfo->pool, IEC61850_BUFFER_SIZE_MORE );
 
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	snprintf(tmp, IEC61850_BUFFER_SIZE_MORE,
-				"%i", val);
+	snprintf(tmp, IEC61850_BUFFER_SIZE_MORE,"%i", val);
 	(void) g_strlcat(private_data->moreCinfo, tmp, IEC61850_BUFFER_SIZE_MORE);			
 	(void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
 }
@@ -1120,9 +1122,9 @@ private_data_add_moreCinfo_enum(asn1_ctx_t *actx, int32_t value, const value_str
 
 static int32_t is_text(u_int8_t * str)
 {
+	int32_t i = 0;
 	if(g_str_is_ascii(str))
 	{
-		int32_t i = 0;
 		for(i = 0; i < strlen(str); i++)
 		{
 			if( str[i] < 0x20)
@@ -1138,6 +1140,8 @@ static int32_t is_text(u_int8_t * str)
 static void
 private_data_add_moreCinfo_ostr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 {
+	int32_t i;
+	u_int8_t temp[4] = "";
 	u_int8_t * ostr = NULL;
 	size_t len;
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
@@ -1146,8 +1150,6 @@ private_data_add_moreCinfo_ostr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 	len = strlen(ostr);
 	if(len > 0)
 	{
-		int32_t i;
-		u_int8_t temp[4] = "";
 		(void) g_strlcat(private_data->moreCinfo, "'", IEC61850_BUFFER_SIZE_MORE);
 		for (i = 0; i < len; i ++) 
 		{
@@ -1173,6 +1175,7 @@ u_int32_t iec61850_print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_
   	u_int32_t count = 0;
     u_int8_t byte;
     int32_t i, j, end = 0;
+
 	wmem_strbuf_append_printf(strbuf,"b'");
     for (i = 0; i < bytelen; i++) 
 	{
@@ -1198,8 +1201,10 @@ u_int32_t iec61850_print_bytes(wmem_strbuf_t *strbuf, u_int8_t *bitstring, size_
 static void
 private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 {
+	wmem_strbuf_t *strbuf;
+	u_int8_t *bitstring;
 	packet_info *pinfo = actx->pinfo;
-
+	
 	size_t bytelen = 0;
 	size_t berlength = tvb_reported_length_remaining(tvb, 0)-1;
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
@@ -1215,10 +1220,8 @@ private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 		ws_warning("could not decode bitstring, padding value too large");
 		return;
 	}
-	u_int8_t *bitstring = tvb_get_bits_array(actx->pinfo->pool,tvb, 8, (berlength*8)-padding,&bytelen, ENC_BIG_ENDIAN);
+	bitstring = tvb_get_bits_array(actx->pinfo->pool,tvb, 8, (berlength*8)-padding,&bytelen, ENC_BIG_ENDIAN);
 
-	int32_t i;
-	wmem_strbuf_t *strbuf;
 	strbuf = wmem_strbuf_new(pinfo->pool, "");
 	iec61850_print_bytes(strbuf,bitstring,bytelen, padding);
 
@@ -7833,7 +7836,7 @@ dissect_iec61850_MMSpdu(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 
 /*--- End of included file: packet-iec61850-fn.c ---*/
-#line 344 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 347 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 
 /*
 * Dissect iec61850 PDUs inside a PPDU.
@@ -7845,6 +7848,7 @@ dissect_iec61850(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, voi
 	int32_t old_offset;
 	int32_t decoded = 0;
 	int32_t error = 0;
+	asn1_ctx_t asn1_ctx;
 
 	proto_item *mms_item=NULL;
 	proto_tree *mms_tree=NULL;
@@ -7861,7 +7865,6 @@ dissect_iec61850(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, voi
 		return tvb_captured_length(tvb);
 	}
 
-	asn1_ctx_t asn1_ctx;
 	asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
 
 	col_clear(pinfo->cinfo, COL_INFO);
@@ -7877,24 +7880,28 @@ dissect_iec61850(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, voi
 		old_offset=offset;
 		/* parse mms similar to mms disector to retrieve all relevant values for mapping, and store in private data */
 		offset=dissect_iec61850_MMSpdu(FALSE, tvb, offset, &asn1_ctx , mms_tree, -1);
-		if(offset == old_offset){
+		if(offset == old_offset)
+		{
 			proto_tree_add_expert(mms_tree, pinfo, &ei_mms_zero_pdu, tvb, offset, -1);
 			error = 1;
 			break;
 		}
 	}
 	if(error == 0)/* if mms is parsed without issue, try to map to iec61850 pdu's */
+	{
 		decoded = map_iec61850_packet(tvb, pinfo, &asn1_ctx, parent_tree, mms_tree, proto_iec61850);
+	}
 	if(decoded == 1)/* if we decoded an IEC-61850 PDU succesfull */
 	{
 		col_set_str(pinfo->cinfo, COL_PROTOCOL, "IEC-61850");
 	}
 	else /*  not an IEC-61850 PDU, so remove IEC-61850 data from this packet, and dissect as mms */
 	{
-		proto_item_set_hidden(mms_item);
-		col_clear(pinfo->cinfo, COL_INFO);
 		dissector_handle_t mms_dissector = find_dissector( "mms" );
 		ws_assert(mms_dissector);
+
+		proto_item_set_hidden(mms_item); /* hide the iec61850 mms layer, as the mms disector will add its own*/
+		col_clear(pinfo->cinfo, COL_INFO);
 		call_dissector(mms_dissector, tvb, pinfo, parent_tree);
 	}
 
@@ -7903,7 +7910,8 @@ dissect_iec61850(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, voi
 
 
 /*--- proto_register_iec61850 -------------------------------------------*/
-void proto_register_iec61850(void) {
+void proto_register_iec61850(void) 
+{
 
 	/* List of fields */
 	static hf_register_info hf[] =
@@ -10646,7 +10654,7 @@ void proto_register_iec61850(void) {
         NULL, HFILL }},
 
 /*--- End of included file: packet-iec61850-hfarr.c ---*/
-#line 420 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 428 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	/* List of subtrees */
@@ -10874,7 +10882,7 @@ void proto_register_iec61850(void) {
     &ett_iec61850_FileAttributes,
 
 /*--- End of included file: packet-iec61850-ettarr.c ---*/
-#line 426 "./wireshark_dissector/asn1/packet-iec61850-template.c"
+#line 434 "./wireshark_dissector/asn1/packet-iec61850-template.c"
 	};
 
 	static ei_register_info ei_mms[] = {
@@ -10884,6 +10892,7 @@ void proto_register_iec61850(void) {
 	};
 
 	expert_module_t* expert_mms;
+	module_t * iec61850_module;
 
 	/* Register mms protocol */
 	proto_mms = proto_register_protocol(PNAME_MMS, PSNAME_MMS, PFNAME_MMS);
@@ -10901,8 +10910,8 @@ void proto_register_iec61850(void) {
 	/* disector register */
 	register_dissector("iec61850", dissect_iec61850, proto_iec61850);
 
-	/* setting */
-    module_t * iec61850_module = prefs_register_protocol(proto_iec61850, proto_update_iec61850_settings);
+	/* setting to enable/disable the IEC-61850 mapping on MMS */
+    iec61850_module = prefs_register_protocol(proto_iec61850, proto_update_iec61850_settings);
 
     prefs_register_bool_preference(iec61850_module, "use_iec61850_mapping",
                                  "Use IEC-61850 mapping to decode MMS stream",
@@ -10912,7 +10921,8 @@ void proto_register_iec61850(void) {
 
 
 /*--- proto_reg_handoff_iec61850 --- */
-void proto_reg_handoff_iec61850(void) {
+void proto_reg_handoff_iec61850(void) 
+{
 	register_ber_oid_dissector("1.0.9506.2.3", dissect_iec61850, proto_iec61850,"IEC61850");
 	register_ber_oid_dissector("1.0.9506.2.1", dissect_iec61850, proto_iec61850,"iec61850-abstract-syntax-version1(1)");
 }

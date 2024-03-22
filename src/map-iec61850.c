@@ -646,8 +646,8 @@ static void proto_tree_print_tree(proto_node *node, void * data)
 
 									if(pdata->itemIndex < fieldslen)
 									{
-									fieldname = *RPT_fields[pdata->itemIndex];
-									item = proto_tree_add_item(tree, fieldname,tvb, offset, fi->length,  0);											
+										fieldname = *RPT_fields[pdata->itemIndex];
+										item = proto_tree_add_item(tree, fieldname,tvb, offset, fi->length,  0);											
 									}
 								}
 							}
@@ -711,6 +711,7 @@ static void proto_tree_print_tree(proto_node *node, void * data)
 						break;						
 					}
 				}
+				/* default case for integer */
 				item = proto_tree_add_int(tree, fi->hfinfo->id,tvb, offset, fi->length,  fi->value.value.sinteger); 
 				break;
 			case FT_STRING:
@@ -757,6 +758,9 @@ static void proto_tree_print_tree(proto_node *node, void * data)
 
 					if(g_str_equal(pdata->request,"RPT") && pdata->listOfAccessResult == 1 )
 					{
+						wmem_strbuf_t *strbuf;
+						u_int32_t count = 0;
+						u_int32_t padding = 0;
 						if(pdata->itemIndex-1 == 1) /* optflds */
 						{
 							proto_tree_add_bitmask_list(tree, tvb, offset, 2, OptFlds_bits, BIG_ENDIAN);
@@ -767,9 +771,7 @@ static void proto_tree_print_tree(proto_node *node, void * data)
 							proto_tree_add_bitmask_list(tree, tvb, offset, 1, TrgOps_bits, BIG_ENDIAN);
 							break;
 						}
-						wmem_strbuf_t *strbuf;
-						u_int32_t count = 0;
-						u_int32_t padding = tvb_get_guint8(tvb, offset-1);
+						padding = tvb_get_guint8(tvb, offset-1);
 						strbuf = wmem_strbuf_new(pdata->actx->pinfo->pool, "");
 						count = iec61850_print_bytes(strbuf,fi->value.value.bytes->data,fi->length, padding);
 						if(pdata->itemIndex == 10) /* inclusion */
@@ -836,15 +838,15 @@ static int32_t dissect_iec61850_mmstree(proto_tree *subtree, tvbuff_t *tvb, asn1
 	data.itemIndex = 0;
 	data.optflds = 0;
 	data.inclusion = 0;
+
 	proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
 	return 0;
 }
 
 static int32_t Unconfirmed_RPT(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
 {
-	proto_item *subitem;
 	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
 		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s", "Unconfirmed ", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
@@ -855,9 +857,8 @@ static int32_t Unconfirmed_RPT(tvbuff_t *tvb, int32_t offset, proto_item *item, 
 
 static int32_t CommandTerm(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
 {
-	proto_item *subitem;
 	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
 		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s", "Unconfirmed-CommandTermination ", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
@@ -868,9 +869,8 @@ static int32_t CommandTerm(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1
 
 static int32_t Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
 {
-	proto_item *subitem;
 	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Error, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_Error, tvb, offset, -1, ENC_NA);
 		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Error", iec61850_private_data_get_moreCinfo(actx) );
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
@@ -881,9 +881,8 @@ static int32_t Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t
 
 static int32_t Reject(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
 {
-	proto_item *subitem;
 	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Reject, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_Reject, tvb, offset, -1, ENC_NA);
 		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Reject", iec61850_private_data_get_moreCinfo(actx) );
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
@@ -894,9 +893,8 @@ static int32_t Reject(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_
 
 static int32_t Associate(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
 {
-	proto_item *subitem;
 	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Associate, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_Associate, tvb, offset, -1, ENC_NA);
 		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s %s", "Associate", res? "res" : "req", iec61850_private_data_get_moreCinfo(actx) );
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
@@ -906,10 +904,9 @@ static int32_t Associate(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_c
 }
 
 static int32_t Cancel(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
-{/* abort */ 
-	proto_item *subitem;
+{/* abort? */ 
 	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Cancel, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_Cancel, tvb, offset, -1, ENC_NA);
 		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s %s", "Cancel", res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
@@ -920,9 +917,8 @@ static int32_t Cancel(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_
 
 static int32_t Release(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
 {
-	proto_item *subitem;
 	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Release, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_Release, tvb, offset, -1, ENC_NA);
 		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s %s", "Release", res? "res" : "req" , iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
@@ -933,9 +929,8 @@ static int32_t Release(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx
 
 static int32_t Associate_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
 {
-	proto_item *subitem;
 	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Associate, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_Associate, tvb, offset, -1, ENC_NA);
 		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Associate-Error", iec61850_private_data_get_moreCinfo(actx) );
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
@@ -946,9 +941,8 @@ static int32_t Associate_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, 
 
 static int32_t Cancel_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
 {
-	proto_item *subitem;
 	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Cancel_Error, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_Cancel_Error, tvb, offset, -1, ENC_NA);
 		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Cancel-Error",iec61850_private_data_get_moreCinfo(actx) );
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
@@ -959,9 +953,8 @@ static int32_t Cancel_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn
 
 static int32_t Release_Error(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
 {
-	proto_item *subitem;
 	proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_Release_Error, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_Release_Error, tvb, offset, -1, ENC_NA);
 		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s %s", "Release-Error",iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
@@ -1026,7 +1019,7 @@ static int32_t GetNameList(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1
 		}
 	}
 
-	if(val == NULL)
+	if(val == NULL)/* val == NULL only occurs when a response does not have an associated request*/
 	{
 		serviceName = "GetNameList";
 		hf_name = hf_iec61850_GetNameList;
@@ -1042,9 +1035,13 @@ static int32_t GetNameList(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
 
 	if(val != NULL)
+	{
 		dissect_iec61850_mmstree(subtree, tvb, actx, (u_int8_t *)wmem_strbuf_get_str(val->data));
+	}
 	else
+	{
 		dissect_iec61850_mmstree(subtree, tvb, actx, "");
+	}
 
 	return 1;
 }
@@ -1069,64 +1066,82 @@ static int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn
     proto_tree *subtree=NULL;
 	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 
-	u_int8_t * fieldName = "GetDataValue";
+	u_int8_t * serviceName = "GetDataValue";
 	u_int8_t * request = "";
 	int32_t hf_name = hf_iec61850_GetDataValue;
 
 	ws_assert(private_data);
 
 	if(val != NULL)
+	{
 		request = (u_int8_t *)wmem_strbuf_get_str(val->data);
+	}
 
-	if(g_strrstr(request,"$BR$") || g_strrstr(request,"$RP$"))//GetBRCBValues,GetURCBValues,
+	if(res == 0) /* request */
 	{
-		fieldName = "GetRCBValues";
-		hf_name = hf_iec61850_GetRCBValues;
+		if(g_strrstr(request,"$BR$") || g_strrstr(request,"$RP$"))//GetBRCBValues,GetURCBValues,
+		{
+			serviceName = "GetRCBValues";
+			hf_name = hf_iec61850_GetRCBValues;
+		}
+		if(g_strrstr(request,"$GO$") )//GetGoCBValues, GetGsCBValues
+		{
+			serviceName = "GetGCBValues";
+			hf_name = hf_iec61850_GetRCBValues;
+		}
+		if(g_strrstr(request,"$SG$") )//GetEditSGValue,GetSGCBValues,
+		{
+			serviceName = "GetSGCBValues";
+			hf_name = hf_iec61850_GetSGCBValues;
+		}
+		if(g_strrstr(request,"$LG$") )//GetLCBValues,GetLogStatusValues,
+		{
+			serviceName = "GetLCBValues";
+			hf_name = hf_iec61850_GetLCBValues;
+		}
+		if(g_str_has_suffix(request,"$SBO") )//Select,
+		{
+			serviceName = "Select";
+			hf_name = hf_iec61850_Select;
+			if(g_str_has_suffix(private_data->moreCinfo, "\"\" "))
+				private_data->Success = 0; //empty SBO means failure
+		}
+		/*
+		the read request Variable AccessSpecification shall specify alternateAccess. 
+		The accessSelection of the alternate access specification shall specify component. 
+		The value of the component shall be the value of the functional constraint being specified.
+		*/
+		if(private_data->AlternateAccess == 1)//GetAllDataValues(alternate access),
+		{
+			serviceName = "GetAllDataValues";
+			hf_name = hf_iec61850_GetAllDataValues;
+		}
+		/*
+		specificationWithResult Shall be TRUE
+		variableAccessSpecification Shall be constrained to variableListName
+		*/
+		if(private_data->VariableAccessSpecification == 1) //GetDataSetValues
+		{
+			serviceName = "GetDataSetValues";
+			hf_name = hf_iec61850_GetDataSetValues;
+		}
 	}
-	if(g_strrstr(request,"$GO$") )//GetGoCBValues, GetGsCBValues
+	else
 	{
-		fieldName = "GetGCBValues";
-		hf_name = hf_iec61850_GetRCBValues;
+		if(val == NULL) /* val == NULL only occurs when a response does not have an associated request*/
+		{
+			serviceName = "GetDataValue";
+			hf_name = hf_iec61850_GetNameList;
+		}
+		else
+		{
+			serviceName = val->serviceName;
+			hf_name = val->hf_name;
+		}
 	}
-	if(g_strrstr(request,"$SG$") )//GetEditSGValue,GetSGCBValues,
-	{
-		fieldName = "GetSGCBValues";
-		hf_name = hf_iec61850_GetSGCBValues;
-	}
-	if(g_strrstr(request,"$LG$") )//GetLCBValues,GetLogStatusValues,
-	{
-		fieldName = "GetLCBValues";
-		hf_name = hf_iec61850_GetLCBValues;
-	}
-	if(g_str_has_suffix(request,"$SBO") )//Select,
-	{
-		fieldName = "Select";
-		hf_name = hf_iec61850_Select;
-		if(g_str_has_suffix(private_data->moreCinfo, "\"\" "))
-			private_data->Success = 0; //empty SBO means failure
-	}
-	/*
-	the read request Variable AccessSpecification shall specify alternateAccess. 
-	The accessSelection of the alternate access specification shall specify component. 
-	The value of the component shall be the value of the functional constraint being specified.
-	*/
-	if(private_data->AlternateAccess == 1)//GetAllDataValues(alternate access),
-	{
-		fieldName = "GetAllDataValues";
-		hf_name = hf_iec61850_GetAllDataValues;
-	}
-	/*
-	specificationWithResult Shall be TRUE
-	variableAccessSpecification Shall be constrained to variableListName
-	*/
-	if(private_data->VariableAccessSpecification == 1) //GetDataSetValues
-	{
-		fieldName = "GetDataSetValues";
-		hf_name = hf_iec61850_GetDataSetValues;
-	}
-	
+
 	subitem = proto_tree_add_item(item, hf_name, tvb, offset, -1, ENC_NA);
-	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s %s",	iec61850_private_data_get_preCinfo(actx), fieldName, 
+	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s %s",	iec61850_private_data_get_preCinfo(actx), serviceName, 
 		res? "res" : "req", 
 		res? (private_data->Success? "Success" : "Failure") : "", 
 		iec61850_private_data_get_moreCinfo(actx));
@@ -1134,11 +1149,14 @@ static int32_t GetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn
 
 	if(val != NULL)
 	{
-		val->serviceName = fieldName;
+		val->serviceName = serviceName;
+		val->hf_name = hf_name;
 		dissect_iec61850_mmstree(subtree, tvb, actx, (u_int8_t *)wmem_strbuf_get_str(val->data));
 	}
 	else
+	{
 		dissect_iec61850_mmstree(subtree, tvb, actx, "");
+	}
 
 	return 1;
 }
@@ -1155,7 +1173,9 @@ static int32_t SetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn
 	ws_assert(private_data);
 
 	if(val != NULL)
+	{
 		request = (u_int8_t *)wmem_strbuf_get_str(val->data);
+	}
 
 	if(g_strrstr(request,"$BR$") || g_strrstr(request,"$RP$"))//SetBRCBValues,SetURCBValues,
 	{
@@ -1211,16 +1231,17 @@ static int32_t SetDataValue(tvbuff_t *tvb, int32_t offset, proto_item *item, asn
 		dissect_iec61850_mmstree(subtree, tvb, actx, (u_int8_t *)wmem_strbuf_get_str(val->data));
 	}
 	else
+	{
 		dissect_iec61850_mmstree(subtree, tvb, actx, "");
+	}
 
 	return 1;
 }
 
 static int32_t GetDataSetDirectory(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
 {
-	proto_item *subitem;
     proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_GetDataSetDirectory, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_GetDataSetDirectory, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "GetDataSetDirectory", 
 		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
@@ -1232,9 +1253,8 @@ static int32_t GetDataSetDirectory(tvbuff_t *tvb, int32_t offset, proto_item *it
 
 static int32_t CreateDataSet(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
 {
-	proto_item *subitem;
     proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_CreateDataSet, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_CreateDataSet, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "CreateDataSet", 
 		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
@@ -1246,9 +1266,8 @@ static int32_t CreateDataSet(tvbuff_t *tvb, int32_t offset, proto_item *item, as
 
 static int32_t DeleteDataSet(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
 {
-	proto_item *subitem;
     proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_DeleteDataSet, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_DeleteDataSet, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "DeleteDataSet", 
 		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
@@ -1260,9 +1279,8 @@ static int32_t DeleteDataSet(tvbuff_t *tvb, int32_t offset, proto_item *item, as
 
 static int32_t QueryLog(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
 {
-	proto_item *subitem;
     proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_QueryLog, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_QueryLog, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "QueryLog", 
 		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
@@ -1274,9 +1292,8 @@ static int32_t QueryLog(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ct
 
 static int32_t SetFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
 {
-	proto_item *subitem;
     proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_SetFile, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_SetFile, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "SetFile", 
 		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
@@ -1288,9 +1305,8 @@ static int32_t SetFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx
 
 static int32_t GetFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
 {
-	proto_item *subitem;
     proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_GetFile, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_GetFile, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "GetFile", 
 		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
@@ -1302,9 +1318,8 @@ static int32_t GetFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx
 
 static int32_t FileRead(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
 {
-	proto_item *subitem;
     proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_FileRead, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_FileRead, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "FileRead", 
 		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
@@ -1316,9 +1331,8 @@ static int32_t FileRead(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ct
 
 static int32_t FileClose(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
 {
-	proto_item *subitem;
     proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_FileClose, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_FileClose, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "FileClose", 
 		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
@@ -1330,9 +1344,8 @@ static int32_t FileClose(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_c
 
 static int32_t DeleteFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
 {
-	proto_item *subitem;
     proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_DeleteFile, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_DeleteFile, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "DeleteFile", 
 		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
@@ -1344,9 +1357,8 @@ static int32_t DeleteFile(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_
 
 static int32_t GetServerDirectory_FILE(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx, int32_t res)
 {
-	proto_item *subitem;
     proto_tree *subtree=NULL;
-	subitem = proto_tree_add_item(item, hf_iec61850_GetServerDirectory_FILE, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_GetServerDirectory_FILE, tvb, offset, -1, ENC_NA);
 	col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s %s %s",	iec61850_private_data_get_preCinfo(actx), "GetServerDirectory(FILE)", 
 		res? "res" : "req", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
@@ -1560,7 +1572,8 @@ static int32_t iec61850_equal(gconstpointer v, gconstpointer w)
 	const iec61850_key_req *v2 = (const iec61850_key_req *)w;
 
 	if (v1->conversation == v2->conversation &&
-	    v1->invokeID == v2->invokeID ) {
+	    v1->invokeID == v2->invokeID ) 
+	{
 		return 1;
 	}
 	return 0;
@@ -1587,7 +1600,8 @@ static proto_item *get_iec61850_item(tvbuff_t *tvb, proto_tree *parent_tree, con
 {
 	proto_item *item=NULL;
 	proto_tree *tree=NULL;
-	if(parent_tree){
+	if(parent_tree)
+	{
 		item = proto_tree_add_item(parent_tree, proto_iec61850, tvb, 0, -1, ENC_NA);
 		tree = proto_item_add_subtree(item, ett_iec61850);
 	}
