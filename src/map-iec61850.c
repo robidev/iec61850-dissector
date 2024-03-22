@@ -56,7 +56,8 @@ struct _tree_data {
 static wmem_map_t *iec61850_request_hash = NULL;
 static proto_tree * g_mms_tree = NULL;
 
-static int32_t hf_iec61850_Unconfirmed = -1;
+static int32_t hf_iec61850_Unconfirmed_RPT = -1;
+static int32_t hf_iec61850_Unconfirmed_CmdTerm = -1;
 static int32_t hf_iec61850_Error = -1;
 static int32_t hf_iec61850_Reject = -1;
 static int32_t hf_iec61850_Associate = -1;
@@ -551,6 +552,8 @@ static void proto_tree_print_tree(proto_node *node, void * data)
 					g_str_equal(fi->hfinfo->name, "confirmed-ResponsePDU") ||
 					g_str_equal(fi->hfinfo->name, "initiate-RequestPDU") ||
 					g_str_equal(fi->hfinfo->name, "initiate-ResponsePDU") ||
+					g_str_equal(fi->hfinfo->name, "unconfirmed-PDU") ||
+					g_str_equal(fi->hfinfo->name, "informationReport") ||
 					g_str_equal(fi->hfinfo->name, "structure") ||
 					g_str_equal(fi->hfinfo->name, "read") ||
 					g_str_equal(fi->hfinfo->name, "write") )
@@ -846,10 +849,9 @@ static int32_t dissect_iec61850_mmstree(proto_tree *subtree, tvbuff_t *tvb, asn1
 static int32_t Unconfirmed_RPT(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
 {
 	proto_tree *subtree=NULL;
-	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed_RPT, tvb, offset, -1, ENC_NA);
 		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s", "Unconfirmed ", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 
 	dissect_iec61850_mmstree(subtree, tvb, actx, "RPT");
 	return 1;
@@ -858,10 +860,9 @@ static int32_t Unconfirmed_RPT(tvbuff_t *tvb, int32_t offset, proto_item *item, 
 static int32_t CommandTerm(tvbuff_t *tvb, int32_t offset, proto_item *item, asn1_ctx_t *actx)
 {
 	proto_tree *subtree=NULL;
-	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed, tvb, offset, -1, ENC_NA);
+	proto_item *subitem = proto_tree_add_item(item, hf_iec61850_Unconfirmed_CmdTerm, tvb, offset, -1, ENC_NA);
 		col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s%s", "Unconfirmed-CommandTermination ", iec61850_private_data_get_moreCinfo(actx));
 	subtree = proto_item_add_subtree(subitem, ett_iec61850);
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
 
 	dissect_iec61850_mmstree(subtree, tvb, actx, "CmdTerm");
 	return 1;
@@ -1704,10 +1705,23 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 
     static hf_register_info hf[] = {
 		{ 
-			&hf_iec61850_Unconfirmed,
+			&hf_iec61850_Unconfirmed_RPT,
       		{ 
-				"Unconfirmed RPT", 			
+				"Unconfirmed-Report", 			
 				"iec61850.unconfirmedrpt", 
+        		FT_NONE, 				
+				BASE_NONE, 				
+				NULL, 					
+				0,						
+        		NULL, 					
+				HFILL 					
+			}
+		},
+		{ 
+			&hf_iec61850_Unconfirmed_CmdTerm,
+      		{ 
+				"Unconfirmed-CommandTermination", 			
+				"iec61850.unconfirmedcmdterm", 
         		FT_NONE, 				
 				BASE_NONE, 				
 				NULL, 					
@@ -2291,7 +2305,7 @@ void register_iec61850_mappings(const int32_t parent, hf_register_info * mms_hf)
 		{ &hf_iec61850_QualityC0,
 		{ "Validity", "iec61850.validity",
 			FT_UINT8, BASE_HEX, VALS(enum_Validity), 0xC0,
-			"Validity", HFILL }},
+			NULL, HFILL }},
 		{ &hf_iec61850_Quality20,
 		{ "Overflow", "iec61850.overflow",
 			FT_BOOLEAN, 8, NULL, 0x20,
