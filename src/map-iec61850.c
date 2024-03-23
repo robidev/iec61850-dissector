@@ -553,6 +553,7 @@ static int32_t * const LastAppError_fields[] = {
 	NULL
 };
 
+/* the main recursive function to map IEC-61850 fields onto the parsed MMS tree */
 static void proto_tree_print_tree(proto_node *node, void * data)
 {
 	proto_tree *tree;
