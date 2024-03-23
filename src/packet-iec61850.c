@@ -1202,7 +1202,7 @@ uint32_t iec61850_print_bytes(wmem_strbuf_t *strbuf, const uint8_t *bitstring, s
 }
 
 static void
-private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
+private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset _U_)
 {
     wmem_strbuf_t *strbuf;
     uint8_t *bitstring;

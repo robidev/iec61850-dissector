@@ -637,7 +637,7 @@ static void proto_tree_print_tree(proto_node *node, void * data)
                         {
                             int32_t i = 0;
                             int32_t optfieldslen = (sizeof(RPT_optFlds_lookup)/sizeof(RPT_optFlds_lookup[0]));
-                            uint16_t tmp = tvb_get_guint16(tvb, offset+3, BIG_ENDIAN);
+                            uint16_t tmp = tvb_get_guint16(tvb, offset+3, ENC_BIG_ENDIAN);
 
                             /* calculate included fields (mandatory and optional) */
                             pdata->optflds = 0xc028; /* mandatory fields */
@@ -891,7 +891,7 @@ static void proto_tree_print_tree(proto_node *node, void * data)
                     }
                     if(g_str_has_suffix(pdata->request,"$OptFlds"))
                     {
-                        proto_tree_add_bitmask_list(tree, tvb, offset, 2, OptFlds_bits, BIG_ENDIAN);
+                        proto_tree_add_bitmask_list(tree, tvb, offset, 2, OptFlds_bits, ENC_BIG_ENDIAN);
                         break;
                     }
                     if(g_str_has_suffix(pdata->request,"$TrgOps"))
@@ -907,12 +907,12 @@ static void proto_tree_print_tree(proto_node *node, void * data)
                         uint32_t padding = 0;
                         if(pdata->itemIndex-1 == 1) /* optflds */
                         {
-                            proto_tree_add_bitmask_list(tree, tvb, offset, 2, OptFlds_bits, BIG_ENDIAN);
+                            proto_tree_add_bitmask_list(tree, tvb, offset, 2, OptFlds_bits, ENC_BIG_ENDIAN);
                             break;
                         }
                         if(pdata->itemIndex == 13) /* trgops */
                         {
-                            proto_tree_add_bitmask_list(tree, tvb, offset, 1, TrgOps_bits, BIG_ENDIAN);
+                            proto_tree_add_bitmask_list(tree, tvb, offset, 1, TrgOps_bits, ENC_BIG_ENDIAN);
                             break;
                         }
                         padding = tvb_get_guint8(tvb, offset-1);
@@ -931,7 +931,7 @@ static void proto_tree_print_tree(proto_node *node, void * data)
                          /*listOfVariable_array[pdata->elements] == CmdTerm and itemIndex == Check */
                         if(pdata->listOfVariable_array[pdata->elements] == 1 && pdata->itemIndex == 8)
                         {
-                            proto_tree_add_bitmask_list(tree, tvb, offset, 1, Check_bits, BIG_ENDIAN);
+                            proto_tree_add_bitmask_list(tree, tvb, offset, 1, Check_bits, ENC_BIG_ENDIAN);
                             break;
                         }
                     }
