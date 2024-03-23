@@ -71,311 +71,313 @@ AlterEventEnrollment-Response/currentState/state    ABBREV=alterEventEnrollment-
 
 
 #.FN_BODY ApplicationReference/ap-title
-	offset=dissect_acse_AP_title_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ap_title);
+    offset=dissect_acse_AP_title_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ap_title);
 
 #.FN_BODY ApplicationReference/ap-invocation-id
-	offset=dissect_acse_AP_invocation_identifier_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ap_invocation_id);
+    offset=dissect_acse_AP_invocation_identifier_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ap_invocation_id);
 
 #.FN_BODY ApplicationReference/ae-qualifier
-	offset=dissect_acse_AE_qualifier_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ae_qualifier);
+    offset=dissect_acse_AE_qualifier_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ae_qualifier);
 
 #.FN_BODY ApplicationReference/ae-invocation-id
-	offset=dissect_acse_AE_invocation_identifier_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ae_invocation_id);
+    offset=dissect_acse_AE_invocation_identifier_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ae_invocation_id);
 
 #.FN_BODY ObjectName VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 
 %(DEFAULT_BODY)s
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->ObjectName = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->ObjectName = branch_taken;
 
 #.FN_BODY ConfirmedServiceRequest VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 
 %(DEFAULT_BODY)s
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->Service = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->Service = branch_taken;
 
 #.FN_BODY ConfirmedServiceResponse VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 
 %(DEFAULT_BODY)s
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->Service = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->Service = branch_taken;
 
 #.FN_BODY VariableAccessSpecification VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 
 %(DEFAULT_BODY)s
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->VariableAccessSpecification = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->VariableAccessSpecification = branch_taken;
 
 #.FN_BODY UnconfirmedService VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 
 %(DEFAULT_BODY)s
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->Service = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->Service = branch_taken;
 
 #.FN_BODY MMSpdu VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 
 %(DEFAULT_BODY)s
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->MMSpdu = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->MMSpdu = branch_taken;
 
 #.FN_BODY TimeOfDay
 
-	u_int32_t len;
-	u_int32_t milliseconds;
-	u_int16_t days;
-	u_int8_t *	ptime;
-	nstime_t ts;
+    uint32_t len;
+    uint32_t milliseconds;
+    uint16_t days;
+    uint8_t *	ptime;
+    nstime_t ts;
 
-	len = tvb_reported_length_remaining(tvb, offset);
+    len = tvb_reported_length_remaining(tvb, offset);
 
-	if(len == 4)
-	{
-		milliseconds = tvb_get_ntohl(tvb, offset);
-		ptime = signed_time_msecs_to_str(actx->pinfo->pool, milliseconds);
+    if(len == 4)
+    {
+        milliseconds = tvb_get_ntohl(tvb, offset);
+        ptime = signed_time_msecs_to_str(actx->pinfo->pool, milliseconds);
 
-		if(hf_index > 0)
-		{
-			proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
-		}
-		return offset;
-	}
+        if(hf_index > 0)
+        {
+            proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
+        }
+        return offset;
+    }
 
-	if(len == 6)
-	{
-		milliseconds = tvb_get_ntohl(tvb, offset);
-		days = tvb_get_ntohs(tvb, offset+4);
+    if(len == 6)
+    {
+        milliseconds = tvb_get_ntohl(tvb, offset);
+        days = tvb_get_ntohs(tvb, offset+4);
 
-		/* 5113 days between 01-01-1970 and 01-01-1984 */
-		/* 86400 seconds in one day */
+        /* 5113 days between 01-01-1970 and 01-01-1984 */
+        /* 86400 seconds in one day */
 
-		ts.secs = (days + 5113) * 86400 + milliseconds / 1000;
-		ts.nsecs = (milliseconds %% 1000) * 1000000U;
+        ts.secs = (days + 5113) * 86400 + milliseconds / 1000;
+        ts.nsecs = (milliseconds %% 1000) * 1000000U;
 
-		ptime = abs_time_to_str(actx->pinfo->pool, &ts, ABSOLUTE_TIME_UTC, TRUE);
-		if(hf_index > 0)
-		{
-			proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
-		}
-		private_data_add_moreCinfo_str(actx, ptime);
-		return offset;
-	}
+        ptime = abs_time_to_str(actx->pinfo->pool, &ts, ABSOLUTE_TIME_UTC, TRUE);
+        if(hf_index > 0)
+        {
+            proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
+        }
+        private_data_add_moreCinfo_str(actx, ptime);
+        return offset;
+    }
 
-	proto_tree_add_expert_format(tree, actx->pinfo, &ei_iec61850_mal_timeofday_encoding,
-			tvb, offset, len, "BER Error: malformed TimeOfDay encoding, length must be 4 or 6 bytes");
-	if(hf_index > 0)
-	{
-		proto_tree_add_string(tree, hf_index, tvb, offset, len, "????");
-	}
+    proto_tree_add_expert_format(tree, actx->pinfo, &ei_iec61850_mal_timeofday_encoding,
+            tvb, offset, len, "BER Error: malformed TimeOfDay encoding, length must be 4 or 6 bytes");
+    if(hf_index > 0)
+    {
+        proto_tree_add_string(tree, hf_index, tvb, offset, len, "????");
+    }
 
 #.FN_BODY UtcTime
 
-	u_int8_t quality;
-	u_int32_t len;
-	u_int32_t seconds;
-	u_int32_t	fraction;
-	u_int32_t nanoseconds;
-	nstime_t ts;
-	u_int8_t *	ptime;
-	u_int8_t * timestring;
+    uint8_t quality;
+    uint32_t len;
+    uint32_t seconds;
+    uint32_t	fraction;
+    uint32_t nanoseconds;
+    nstime_t ts;
+    uint8_t *	ptime;
+    uint8_t * timestring;
 
-	ws_assert(actx->pinfo->pool);
-	timestring = wmem_alloc0(actx->pinfo->pool, IEC61850_BUFFER_SIZE_MORE );
-	ws_assert(timestring);
+    ws_assert(actx->pinfo->pool);
+    timestring = wmem_alloc0(actx->pinfo->pool, IEC61850_BUFFER_SIZE_MORE );
+    ws_assert(timestring);
 
-	len = tvb_reported_length_remaining(tvb, offset);
+    len = tvb_reported_length_remaining(tvb, offset);
 
-	if(len != 8)
-	{
-		proto_tree_add_expert_format(tree, actx->pinfo, &ei_iec61850_mal_utctime_encoding,
-				tvb, offset, len, "BER Error: malformed IEC61850 UTCTime encoding, length must be 8 bytes");
-		if(hf_index > 0)
-		{
-			proto_tree_add_string(tree, hf_index, tvb, offset, len, "????");
-		}
-		return offset;
-	}
+    if(len != 8)
+    {
+        proto_tree_add_expert_format(tree, actx->pinfo, &ei_iec61850_mal_utctime_encoding,
+                tvb, offset, len, "BER Error: malformed IEC61850 UTCTime encoding, length must be 8 bytes");
+        if(hf_index > 0)
+        {
+            proto_tree_add_string(tree, hf_index, tvb, offset, len, "????");
+        }
+        return offset;
+    }
 
-	seconds = tvb_get_ntohl(tvb, offset);
-	fraction = tvb_get_ntoh24(tvb, offset+4) * 0x100; /* Only 3 bytes are recommended */
-	nanoseconds = (u_int32_t)( ((u_int64_t)fraction * G_GUINT64_CONSTANT(1000000000)) / G_GUINT64_CONSTANT(0x100000000) ) ;
+    seconds = tvb_get_ntohl(tvb, offset);
+    fraction = tvb_get_ntoh24(tvb, offset+4) * 0x100; /* Only 3 bytes are recommended */
+    nanoseconds = (uint32_t)( ((uint64_t)fraction * G_GUINT64_CONSTANT(1000000000)) / G_GUINT64_CONSTANT(0x100000000) ) ;
 
-	ts.secs = seconds;
-	ts.nsecs = nanoseconds;
+    ts.secs = seconds;
+    ts.nsecs = nanoseconds;
 
-	ptime = abs_time_to_str(actx->pinfo->pool, &ts, ABSOLUTE_TIME_UTC, TRUE);
+    ptime = abs_time_to_str(actx->pinfo->pool, &ts, ABSOLUTE_TIME_UTC, TRUE);
 
-	quality = tvb_get_guint8(tvb, offset+7);
-	snprintf(timestring, IEC61850_BUFFER_SIZE_MORE, "%s,q:%02x", ptime, quality);
+    quality = tvb_get_guint8(tvb, offset+7);
+    snprintf(timestring, IEC61850_BUFFER_SIZE_MORE, "%s,q:%02x", ptime, quality);
 
-	if(hf_index > 0)
-	{
-		proto_tree_add_string(tree, hf_index, tvb, offset, len, timestring);
-	}
-	private_data_add_moreCinfo_str(actx, timestring);
+    if(hf_index > 0)
+    {
+        proto_tree_add_string(tree, hf_index, tvb, offset, len, timestring);
+    }
+    private_data_add_moreCinfo_str(actx, timestring);
 
 
 #.FN_BODY Unsigned32 VAL_PTR=&val
-	u_int32_t val;
+    uint32_t val;
 %(DEFAULT_BODY)s
-	if (hf_index == hf_iec61850_invokeID)
-		private_data_add_preCinfo(actx, val);
+    if (hf_index == hf_iec61850_invokeID)
+    {
+        private_data_add_preCinfo(actx, val);
+    }
 
 #.FN_BODY FloatingPoint
 %(DEFAULT_BODY)s
-	private_data_add_moreCinfo_float(actx, tvb);
+    private_data_add_moreCinfo_float(actx, tvb);
 
 #.FN_BODY Identifier
-	int32_t offset_id = offset;
+    int32_t offset_id = offset;
 %(DEFAULT_BODY)s
-	if (tvb_get_guint8(tvb, offset_id) == 0x1a)
-	{
-		if (hf_index == hf_iec61850_domainId) 
-		{
-			private_data_add_moreCinfo_domainid(actx,tvb);
-		}
-		else /* if (hf_index == hf_iec61850_itemId) */
-		{
-			private_data_add_moreCinfo_itemid(actx,tvb);
-		}
-	}
-	else if (hf_index == hf_iec61850_vmd_specific)
-	{
-		private_data_add_moreCinfo_vmd(actx,tvb);			
-	}
-	else
-	{
-		private_data_add_moreCinfo_domain(actx,tvb);
-	}
+    if (tvb_get_guint8(tvb, offset_id) == 0x1a)
+    {
+        if (hf_index == hf_iec61850_domainId) 
+        {
+            private_data_add_moreCinfo_domainid(actx,tvb);
+        }
+        else /* if (hf_index == hf_iec61850_itemId) */
+        {
+            private_data_add_moreCinfo_itemid(actx,tvb);
+        }
+    }
+    else if (hf_index == hf_iec61850_vmd_specific)
+    {
+        private_data_add_moreCinfo_vmd(actx,tvb);			
+    }
+    else
+    {
+        private_data_add_moreCinfo_domain(actx,tvb);
+    }
 
 #.FN_BODY GetNameList-Request/objectScope VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 
 %(DEFAULT_BODY)s
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->objectScope = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->objectScope = branch_taken;
 
 #.FN_BODY GetNameList-Request/extendedObjectClass/objectClass VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 
 %(DEFAULT_BODY)s
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->objectClass = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->objectClass = branch_taken;
 
 #.FN_BODY Data VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 
 %(DEFAULT_BODY)s
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->DataType = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->DataType = branch_taken;
 
 #.FN_BODY AccessResult VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 
 %(DEFAULT_BODY)s
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->Success = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->Success = branch_taken;
 
 #.FN_BODY Data/structure
-	private_data_add_moreCinfo_structure(actx, 1);
+    private_data_add_moreCinfo_structure(actx, 1);
 %(DEFAULT_BODY)s
-	private_data_add_moreCinfo_structure(actx, 0);
+    private_data_add_moreCinfo_structure(actx, 0);
 
 #.FN_BODY Data/array
-	private_data_add_moreCinfo_structure(actx, 1);
+    private_data_add_moreCinfo_array(actx, 1);
 %(DEFAULT_BODY)s
-	private_data_add_moreCinfo_structure(actx, 0);
+    private_data_add_moreCinfo_array(actx, 0);
 
 #.FN_BODY Data/boolean VAL_PTR=&val
-	int32_t val;
+    int32_t val;
 %(DEFAULT_BODY)s
 
-	private_data_add_moreCinfo_bool(actx, val);
+    private_data_add_moreCinfo_bool(actx, val);
 
 #.FN_BODY Data/unsigned VAL_PTR=&val
-	int32_t val;
+    int32_t val;
 %(DEFAULT_BODY)s
 
-	private_data_add_moreCinfo_int(actx, val);
+    private_data_add_moreCinfo_int(actx, val);
 
 #.FN_BODY Data/integer VAL_PTR=&val
-	int32_t val;
+    int32_t val;
 %(DEFAULT_BODY)s
 
-	private_data_add_moreCinfo_int(actx, val);
+    private_data_add_moreCinfo_int(actx, val);
 
 #.FN_BODY Data/bcd VAL_PTR=&val
-	int32_t val;
+    int32_t val;
 %(DEFAULT_BODY)s
 
-	private_data_add_moreCinfo_int(actx, val);
+    private_data_add_moreCinfo_int(actx, val);
 
 #.FN_BODY Data/octet-string
-	int32_t old_offset = offset;
+    int32_t old_offset = offset;
 %(DEFAULT_BODY)s
-	private_data_add_moreCinfo_ostr(actx, tvb, old_offset);
+    private_data_add_moreCinfo_ostr(actx, tvb, old_offset);
 
 #.FN_BODY Data/visible-string
-	int32_t old_offset = offset;
+    int32_t old_offset = offset;
 %(DEFAULT_BODY)s
-	private_data_add_moreCinfo_vstr(actx, tvb, old_offset);
+    private_data_add_moreCinfo_vstr(actx, tvb, old_offset);
 
 #.FN_BODY Data/bit-string
-	int32_t old_offset = offset;
+    int32_t old_offset = offset;
 %(DEFAULT_BODY)s
-	private_data_add_moreCinfo_bstr(actx, tvb, old_offset);
+    private_data_add_moreCinfo_bstr(actx, tvb, old_offset);
 
 #.FN_BODY DataAccessError VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 
 %(DEFAULT_BODY)s
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->DataAccessError = branch_taken;
-	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_DataAccessError_vals);
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->DataAccessError = branch_taken;
+    private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_DataAccessError_vals);
 
 #.FN_BODY Write-Response/_item VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 
 %(DEFAULT_BODY)s
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->Success = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->Success = branch_taken;
 
 #.FN_BODY AlternateAccess
 %(DEFAULT_BODY)s
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->AlternateAccess = 1;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->AlternateAccess = 1;
 
 #.FN_BODY ServiceError/errorClass/access VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 %(DEFAULT_BODY)s
-	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_access_vals);
+    private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_access_vals);
 
 #.FN_BODY ServiceError/errorClass/service VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 %(DEFAULT_BODY)s
-	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_service_vals);
+    private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_service_vals);
 
 #.FN_BODY ServiceError/errorClass/file VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 %(DEFAULT_BODY)s
-	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_file_vals);
+    private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_file_vals);
 
 #.FN_BODY ServiceError/errorClass/definition VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 %(DEFAULT_BODY)s
-	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_definition_vals);
+    private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_definition_vals);
 
 #.FN_BODY ServiceError/errorClass/initiate VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 %(DEFAULT_BODY)s
-	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_initiate_vals);
+    private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_initiate_vals);
 
 #.FN_BODY ServiceError/errorClass/conclude VAL_PTR=&branch_taken
-	int32_t branch_taken;
+    int32_t branch_taken;
 %(DEFAULT_BODY)s
-	private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_conclude_vals);
+    private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_conclude_vals);

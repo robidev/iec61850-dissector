@@ -12,6 +12,7 @@
 #ifndef MAP_IEC61850_H
 #define MAP_IEC61850_H
 
+#include <stdint.h>
 /* register all IEC-61850 elements for the disector table */
 void register_iec61850_mappings(const int32_t parent,hf_register_info * mms_hf);
 
