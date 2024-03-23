@@ -21,7 +21,6 @@
 #include "config.h"
 #define WS_LOG_DOMAIN "MMS-IEC61850"
 
-#include <stdio.h>
 #include <epan/packet.h>
 #include <epan/prefs.h>
 #include <epan/asn1.h>
@@ -33,8 +32,10 @@
 #include "packet-iec61850.h"
 #include "map-iec61850.h"
 
+#include <wsutil/wslog.h>
+
 #define PNAME  "IEC-61850 Protocol"
-#define PSNAME "IEC61850"
+#define PSNAME "IEC-61850"
 #define PFNAME "iec61850"
 
 #define PNAME_MMS  "MMS Protocol (IEC-61850)"
@@ -45,9 +46,10 @@ void proto_register_iec61850(void);
 void proto_reg_handoff_iec61850(void);
 
 /* Initialize the protocol and registered fields */
-static int proto_iec61850 = -1;
-static int proto_mms = -1;
+static int32_t proto_iec61850 = -1;
+static int32_t proto_mms = -1;
 
+static int32_t hf_iec61850_MMSpdu = -1;
 static int hf_iec61850_confirmed_RequestPDU = -1;  /* Confirmed_RequestPDU */
 static int hf_iec61850_confirmed_ResponsePDU = -1;  /* Confirmed_ResponsePDU */
 static int hf_iec61850_confirmed_ErrorPDU = -1;   /* Confirmed_ErrorPDU */
@@ -445,19 +447,19 @@ static int hf_iec61850_scopeOfDelete_02 = -1;     /* T_scopeOfDelete_02 */
 static int hf_iec61850_listOfTypeName = -1;       /* SEQUENCE_OF_ObjectName */
 static int hf_iec61850_listOfTypeName_item = -1;  /* ObjectName */
 static int hf_iec61850_success_01 = -1;           /* Data */
-static int hf_iec61850_array_01 = -1;             /* SEQUENCE_OF_Data */
+static int hf_iec61850_array_01 = -1;             /* T_array_01 */
 static int hf_iec61850_array_item = -1;           /* Data */
-static int hf_iec61850_structure_01 = -1;         /* SEQUENCE_OF_Data */
+static int hf_iec61850_structure_01 = -1;         /* T_structure_01 */
 static int hf_iec61850_structure_item = -1;       /* Data */
-static int hf_iec61850_boolean_01 = -1;           /* BOOLEAN */
-static int hf_iec61850_data_bit_string = -1;      /* BIT_STRING */
-static int hf_iec61850_integer_01 = -1;           /* INTEGER */
-static int hf_iec61850_unsigned_01 = -1;          /* INTEGER */
+static int hf_iec61850_boolean_01 = -1;           /* T_boolean */
+static int hf_iec61850_data_bit_string = -1;      /* T_data_bit_string */
+static int hf_iec61850_integer_01 = -1;           /* T_integer */
+static int hf_iec61850_unsigned_01 = -1;          /* T_unsigned */
 static int hf_iec61850_floating_point = -1;       /* FloatingPoint */
-static int hf_iec61850_data_octet_string = -1;    /* OCTET_STRING */
-static int hf_iec61850_data_visible_string = -1;  /* VisibleString */
+static int hf_iec61850_data_octet_string = -1;    /* T_data_octet_string */
+static int hf_iec61850_data_visible_string = -1;  /* T_data_visible_string */
 static int hf_iec61850_data_binary_time = -1;     /* TimeOfDay */
-static int hf_iec61850_bcd_01 = -1;               /* INTEGER */
+static int hf_iec61850_bcd_01 = -1;               /* T_bcd */
 static int hf_iec61850_booleanArray = -1;         /* BIT_STRING */
 static int hf_iec61850_objId_01 = -1;             /* OBJECT_IDENTIFIER */
 static int hf_iec61850_mMSString = -1;            /* MMSString */
@@ -853,6 +855,8 @@ static gint ett_iec61850_DeleteNamedType_Request = -1;
 static gint ett_iec61850_DeleteNamedType_Response = -1;
 static gint ett_iec61850_AccessResult = -1;
 static gint ett_iec61850_Data = -1;
+static gint ett_iec61850_T_array_01 = -1;
+static gint ett_iec61850_T_structure_01 = -1;
 static gint ett_iec61850_VariableAccessSpecification = -1;
 static gint ett_iec61850_T_listOfVariable_02 = -1;
 static gint ett_iec61850_T_listOfVariable_item_02 = -1;
@@ -955,12 +959,14 @@ static expert_field ei_iec61850_mal_timeofday_encoding = EI_INIT;
 static expert_field ei_iec61850_mal_utctime_encoding = EI_INIT;
 static expert_field ei_mms_zero_pdu = EI_INIT;
 
+static int32_t use_iec61850_mapping = TRUE;
 
-static int dissect_acse_EXTERNALt(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {  return offset; }
-static int dissect_acse_AP_title_stub(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {  return offset; }
-static int dissect_acse_AP_invocation_identifier_stub(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {  return offset; }
-static int dissect_acse_AE_qualifier_stub(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {  return offset; }
-static int dissect_acse_AE_invocation_identifier_stub(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {  return offset; }
+static void proto_update_iec61850_settings(void);
+static int32_t dissect_acse_EXTERNALt(bool implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
+static int32_t dissect_acse_AP_title_stub(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
+static int32_t dissect_acse_AP_invocation_identifier_stub(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
+static int32_t dissect_acse_AE_qualifier_stub(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
+static int32_t dissect_acse_AE_invocation_identifier_stub(int32_t implicit_tag _U_, tvbuff_t *tvb _U_, int32_t offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int32_t hf_index _U_) {  return offset; }
 
 /*****************************************************************************/
 /* Packet private data                                                       */
@@ -971,61 +977,274 @@ static int dissect_acse_AE_invocation_identifier_stub(gboolean implicit_tag _U_,
 /* Helper function to get or create the private data struct */
 iec61850_private_data_t* iec61850_get_private_data(asn1_ctx_t *actx)
 {
-	packet_info *pinfo = actx->pinfo;
-	iec61850_private_data_t *private_data = (iec61850_private_data_t *)p_get_proto_data(pinfo->pool, pinfo, proto_iec61850, pinfo->curr_layer_num);
-	if(private_data != NULL )
-		return private_data;
-	else {
-		private_data = wmem_new0(pinfo->pool, iec61850_private_data_t);
-		p_add_proto_data(pinfo->pool, pinfo, proto_iec61850, pinfo->curr_layer_num, private_data);
-		return private_data;
-	}
+    packet_info *pinfo = actx->pinfo;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t *)p_get_proto_data(pinfo->pool, pinfo, proto_iec61850, pinfo->curr_layer_num);
+    if(private_data != NULL )
+    {
+        return private_data;
+    }
+    else 
+    {
+        private_data = wmem_new0(pinfo->pool, iec61850_private_data_t);
+        private_data->preCinfo = wmem_alloc0(pinfo->pool, IEC61850_BUFFER_SIZE_PRE);
+        private_data->moreCinfo = wmem_alloc0(pinfo->pool, IEC61850_BUFFER_SIZE_MORE);
+        p_add_proto_data(pinfo->pool, pinfo, proto_iec61850, pinfo->curr_layer_num, private_data);
+        return private_data;
+    }
 }
 
 /* Helper function to test presence of private data struct */
-gboolean
-iec61850_has_private_data(asn1_ctx_t *actx)
+int32_t iec61850_has_private_data(asn1_ctx_t *actx)
 {
-	packet_info *pinfo = actx->pinfo;
-	return (p_get_proto_data(pinfo->pool, pinfo, proto_iec61850, pinfo->curr_layer_num) != NULL);
+    packet_info *pinfo = actx->pinfo;
+    return (p_get_proto_data(pinfo->pool, pinfo, proto_iec61850, pinfo->curr_layer_num) != NULL);
 }
 
-void
-private_data_add_preCinfo(asn1_ctx_t *actx, guint32 val)
+static void
+private_data_add_preCinfo(asn1_ctx_t *actx, uint32_t val)
 {
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	snprintf(private_data->preCinfo, BUFFER_SIZE_PRE, "%02d ", val);
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    snprintf(private_data->preCinfo, IEC61850_BUFFER_SIZE_PRE, "%02d ", val);
+    private_data->invokeID = val;
 }
 
-char*
-private_data_get_preCinfo(asn1_ctx_t *actx)
+uint8_t*
+iec61850_private_data_get_preCinfo(asn1_ctx_t *actx)
 {
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	return private_data->preCinfo;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    return private_data->preCinfo;
 }
 
-void
-private_data_add_moreCinfo_id(asn1_ctx_t *actx, tvbuff_t *tvb)
+static void
+private_data_add_moreCinfo_domainid(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	(void) g_strlcat(private_data->moreCinfo, " ", BUFFER_SIZE_MORE);
-	(void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
-				tvb, 2, tvb_get_guint8(tvb, 1), ENC_STRING), BUFFER_SIZE_MORE);
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    (void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
+                tvb, 2, tvb_get_guint8(tvb, 1), ENC_STRING), IEC61850_BUFFER_SIZE_MORE);
+    (void) g_strlcat(private_data->moreCinfo, "/", IEC61850_BUFFER_SIZE_MORE);
 }
 
-void
+static void
+private_data_add_moreCinfo_itemid(asn1_ctx_t *actx, tvbuff_t *tvb)
+{
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    (void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
+                tvb, 2, tvb_get_guint8(tvb, 1), ENC_STRING), IEC61850_BUFFER_SIZE_MORE);
+    (void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
+}
+
+static void
+private_data_add_moreCinfo_vmd(asn1_ctx_t *actx, tvbuff_t *tvb)
+{
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    (void) g_strlcat(private_data->moreCinfo, "<", IEC61850_BUFFER_SIZE_MORE);
+    (void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
+                tvb, 0, tvb_reported_length_remaining(tvb, 0), ENC_STRING), IEC61850_BUFFER_SIZE_MORE);
+    (void) g_strlcat(private_data->moreCinfo, "> ", IEC61850_BUFFER_SIZE_MORE);
+}
+
+static void
+private_data_add_moreCinfo_domain(asn1_ctx_t *actx, tvbuff_t *tvb)
+{
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+
+    (void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
+                tvb, 0, tvb_reported_length_remaining(tvb, 0), ENC_STRING), IEC61850_BUFFER_SIZE_MORE);
+    (void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
+    
+}
+
+static void
 private_data_add_moreCinfo_float(asn1_ctx_t *actx, tvbuff_t *tvb)
 {
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	snprintf(private_data->moreCinfo, BUFFER_SIZE_MORE,
-				" %f", tvb_get_ieee_float(tvb, 1, ENC_BIG_ENDIAN));
+    packet_info *pinfo = actx->pinfo;
+    uint8_t *tmp = wmem_alloc0(pinfo->pool, IEC61850_BUFFER_SIZE_MORE );
+
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    snprintf(tmp, IEC61850_BUFFER_SIZE_MORE, "%f", tvb_get_ieee_float(tvb, 1, ENC_BIG_ENDIAN));
+
+    (void) g_strlcat(private_data->moreCinfo, tmp, IEC61850_BUFFER_SIZE_MORE);
+    (void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
 }
 
-char*
-private_data_get_moreCinfo(asn1_ctx_t *actx)
+static void
+private_data_add_moreCinfo_int(asn1_ctx_t *actx, int32_t val)
 {
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	return private_data->moreCinfo;
+    packet_info *pinfo = actx->pinfo;
+    uint8_t *tmp = wmem_alloc0(pinfo->pool, IEC61850_BUFFER_SIZE_MORE );
+
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    snprintf(tmp, IEC61850_BUFFER_SIZE_MORE,"%i", val);
+    (void) g_strlcat(private_data->moreCinfo, tmp, IEC61850_BUFFER_SIZE_MORE);
+    (void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
+}
+
+static void
+private_data_add_moreCinfo_str(asn1_ctx_t *actx, uint8_t* str)
+{
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    (void) g_strlcat(private_data->moreCinfo, str, IEC61850_BUFFER_SIZE_MORE);
+    (void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
+}
+
+static void
+private_data_add_moreCinfo_vstr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
+{
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    (void) g_strlcat(private_data->moreCinfo, "\"", IEC61850_BUFFER_SIZE_MORE);
+    (void) g_strlcat(private_data->moreCinfo, tvb_get_string_enc(actx->pinfo->pool,
+                tvb, offset, tvb_reported_length_remaining(tvb, offset), ENC_STRING), IEC61850_BUFFER_SIZE_MORE);
+    (void) g_strlcat(private_data->moreCinfo, "\" ", IEC61850_BUFFER_SIZE_MORE);
+}
+
+static void
+private_data_add_moreCinfo_enum(asn1_ctx_t *actx, int32_t value, const value_string * enum_list)
+{
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    (void) g_strlcat(private_data->moreCinfo, try_val_to_str(value, enum_list), IEC61850_BUFFER_SIZE_MORE);
+    (void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
+}
+
+int32_t iec61850_octetstring_is_text(uint8_t * str)
+{
+    size_t i;
+    if(g_str_is_ascii(str))
+    {
+        for(i = 0; i < strlen(str); i++)
+        {
+            if( str[i] < 0x20)
+            {
+                return 0;
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
+
+static void
+private_data_add_moreCinfo_ostr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
+{
+    size_t i;
+    uint8_t temp[4] = "";
+    uint8_t * ostr = NULL;
+    size_t len;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+
+    ostr = tvb_get_string_enc(actx->pinfo->pool, tvb, offset, tvb_reported_length_remaining(tvb, offset), ENC_ASCII);
+    len = strlen(ostr);
+    if(len > 0)
+    {
+        (void) g_strlcat(private_data->moreCinfo, "'", IEC61850_BUFFER_SIZE_MORE);
+        for (i = 0; i < len; i ++) 
+        {
+            snprintf(temp, sizeof(temp),"%02x", ostr[i]);
+            (void) g_strlcat(private_data->moreCinfo, temp, IEC61850_BUFFER_SIZE_MORE);
+        }
+        (void) g_strlcat(private_data->moreCinfo, "'", IEC61850_BUFFER_SIZE_MORE);
+
+        if(iec61850_octetstring_is_text(ostr) == TRUE)
+        {
+            (void) g_strlcat(private_data->moreCinfo, "( ", IEC61850_BUFFER_SIZE_MORE);
+            (void) g_strlcat(private_data->moreCinfo, ostr, IEC61850_BUFFER_SIZE_MORE);
+            (void) g_strlcat(private_data->moreCinfo, " )", IEC61850_BUFFER_SIZE_MORE);
+        }
+        (void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
+    }
+    else
+    {
+        (void) g_strlcat(private_data->moreCinfo, "'' ", IEC61850_BUFFER_SIZE_MORE);
+    }
+}
+
+uint32_t iec61850_print_bytes(wmem_strbuf_t *strbuf, const uint8_t *bitstring, size_t bytelen, uint32_t padding)
+{
+      uint32_t count = 0;
+    uint8_t byte;
+    int32_t j, end;
+    size_t i;
+
+    wmem_strbuf_append_printf(strbuf,"b'");
+    for (i = 0; i < bytelen; i++) 
+    {
+        if(i == bytelen-1) /* padding applies */
+        {
+            end = padding;
+        }
+        else
+        {
+            end = 0;
+        }
+        for (j = 7; j >= end; j--) 
+        {
+            byte = (bitstring[i] >> j) & 1;
+            wmem_strbuf_append_printf(strbuf, "%u", byte);
+            count += byte;
+        }
+    }
+    wmem_strbuf_append_printf(strbuf,"'");
+    return count;
+}
+
+static void
+private_data_add_moreCinfo_bstr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
+{
+    wmem_strbuf_t *strbuf;
+    uint8_t *bitstring;
+    packet_info *pinfo = actx->pinfo;
+    
+    size_t bytelen = 0;
+    size_t berlength = tvb_reported_length_remaining(tvb, 0)-1;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    if(berlength < 1)
+    {
+        ws_warning("could not decode bitstring, ber length too small");
+        (void) g_strlcat(private_data->moreCinfo, "b'' ", IEC61850_BUFFER_SIZE_MORE); // it may be valid to leave the field length zero, implying all data is zero
+        return;
+    }
+    uint32_t padding = tvb_get_guint8(tvb, 0);
+    if(padding > 7)
+    {
+        ws_warning("could not decode bitstring, padding value too large");
+        return;
+    }
+    bitstring = tvb_get_bits_array(actx->pinfo->pool,tvb, 8, (berlength*8)-padding,&bytelen, ENC_BIG_ENDIAN);
+
+    strbuf = wmem_strbuf_new(pinfo->pool, "");
+    iec61850_print_bytes(strbuf,bitstring,bytelen, padding);
+
+    (void) g_strlcat(private_data->moreCinfo, wmem_strbuf_get_str(strbuf), IEC61850_BUFFER_SIZE_MORE);
+    (void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
+}
+
+
+static void
+private_data_add_moreCinfo_bool(asn1_ctx_t *actx, int32_t boolean)
+{
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    (void) g_strlcat(private_data->moreCinfo, boolean? "true" : "false", IEC61850_BUFFER_SIZE_MORE);
+    (void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
+}
+
+static void
+private_data_add_moreCinfo_structure(asn1_ctx_t *actx, int32_t dir)
+{
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    (void) g_strlcat(private_data->moreCinfo, dir? "{ " : "} ", IEC61850_BUFFER_SIZE_MORE);
+}
+
+static void
+private_data_add_moreCinfo_array(asn1_ctx_t *actx, int32_t dir)
+{
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    (void) g_strlcat(private_data->moreCinfo, dir? "[ " : "] ", IEC61850_BUFFER_SIZE_MORE);
+}
+
+uint8_t*
+iec61850_private_data_get_moreCinfo(asn1_ctx_t *actx)
+{
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    return private_data->moreCinfo;
 }
 
 /*****************************************************************************/
@@ -1044,6 +1263,7 @@ static int dissect_iec61850_VariableSpecification(bool implicit_tag _U_, tvbuff_
 static int dissect_iec61850_AlternateAccess(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_);
 
 /* Data -> Data/array -> Data */
+/* Data -> Data/structure -> Data */
 static int dissect_iec61850_Data(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_);
 
 
@@ -1052,12 +1272,14 @@ static int dissect_iec61850_Data(bool implicit_tag _U_, tvbuff_t *tvb _U_, int o
 
 static int
 dissect_iec61850_Unsigned32(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-	guint32 val;
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                &val);
+    uint32_t val;
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  &val);
 
-	if (hf_index == hf_iec61850_invokeID)
-		private_data_add_preCinfo(actx, val);
+    if (hf_index == hf_iec61850_invokeID)
+    {
+        private_data_add_preCinfo(actx, val);
+    }
 
 
   return offset;
@@ -1067,15 +1289,31 @@ dissect_iec61850_Unsigned32(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 static int
 dissect_iec61850_Identifier(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-	int offset_id = offset;
-  offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_VisibleString,
-                                            actx, tree, tvb, offset, hf_index,
-                                            NULL);
+    int32_t offset_id = offset;
+    offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_VisibleString,
+                                              actx, tree, tvb, offset, hf_index,
+                                              NULL);
 
-	if ((hf_index == hf_iec61850_domainId) || (hf_index == hf_iec61850_itemId)) {
-		if (tvb_get_guint8(tvb, offset_id) == 0x1a)
-			private_data_add_moreCinfo_id(actx,tvb);
-	}
+    if (tvb_get_guint8(tvb, offset_id) == 0x1a)
+    {
+        if (hf_index == hf_iec61850_domainId) 
+        {
+            private_data_add_moreCinfo_domainid(actx,tvb);
+        }
+        else /* if (hf_index == hf_iec61850_itemId) */
+        {
+            private_data_add_moreCinfo_itemid(actx,tvb);
+        }
+    }
+    else if (hf_index == hf_iec61850_vmd_specific)
+    {
+        private_data_add_moreCinfo_vmd(actx,tvb);
+    }
+    else
+    {
+        private_data_add_moreCinfo_domain(actx,tvb);
+    }
+
 
   return offset;
 }
@@ -1089,8 +1327,8 @@ static const ber_sequence_t T_domain_specific_sequence[] = {
 
 static int
 dissect_iec61850_T_domain_specific(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_domain_specific_sequence, hf_index, ett_iec61850_T_domain_specific);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_domain_specific_sequence, hf_index, ett_iec61850_T_domain_specific);
 
   return offset;
 }
@@ -1112,14 +1350,14 @@ static const ber_choice_t ObjectName_choice[] = {
 
 static int
 dissect_iec61850_ObjectName(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-	gint branch_taken;
+    int32_t branch_taken;
 
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 ObjectName_choice, hf_index, ett_iec61850_ObjectName,
-                                 &branch_taken);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   ObjectName_choice, hf_index, ett_iec61850_ObjectName,
+                                   &branch_taken);
 
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->ObjectName = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->ObjectName = branch_taken;
 
 
   return offset;
@@ -1139,9 +1377,9 @@ static int * const Transitions_bits[] = {
 
 static int
 dissect_iec61850_Transitions(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
-                                    Transitions_bits, 7, hf_index, ett_iec61850_Transitions,
-                                    NULL);
+    offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
+                                      Transitions_bits, 7, hf_index, ett_iec61850_Transitions,
+                                      NULL);
 
   return offset;
 }
@@ -1157,8 +1395,8 @@ static const ber_sequence_t AttachToEventCondition_sequence[] = {
 
 static int
 dissect_iec61850_AttachToEventCondition(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   AttachToEventCondition_sequence, hf_index, ett_iec61850_AttachToEventCondition);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     AttachToEventCondition_sequence, hf_index, ett_iec61850_AttachToEventCondition);
 
   return offset;
 }
@@ -1167,8 +1405,8 @@ dissect_iec61850_AttachToEventCondition(bool implicit_tag _U_, tvbuff_t *tvb _U_
 
 static int
 dissect_iec61850_Unsigned8(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -1177,7 +1415,7 @@ dissect_iec61850_Unsigned8(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset 
 
 static int
 dissect_iec61850_Priority(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Unsigned8(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Unsigned8(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -1186,7 +1424,7 @@ dissect_iec61850_Priority(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _
 
 static int
 dissect_iec61850_BOOLEAN(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
+    offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
 
   return offset;
 }
@@ -1205,8 +1443,8 @@ static const ber_sequence_t AttachToSemaphore_sequence[] = {
 
 static int
 dissect_iec61850_AttachToSemaphore(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   AttachToSemaphore_sequence, hf_index, ett_iec61850_AttachToSemaphore);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     AttachToSemaphore_sequence, hf_index, ett_iec61850_AttachToSemaphore);
 
   return offset;
 }
@@ -1226,9 +1464,9 @@ static const ber_choice_t Modifier_choice[] = {
 
 static int
 dissect_iec61850_Modifier(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 Modifier_choice, hf_index, ett_iec61850_Modifier,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   Modifier_choice, hf_index, ett_iec61850_Modifier,
+                                   NULL);
 
   return offset;
 }
@@ -1240,8 +1478,8 @@ static const ber_sequence_t SEQUENCE_OF_Modifier_sequence_of[1] = {
 
 static int
 dissect_iec61850_SEQUENCE_OF_Modifier(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      SEQUENCE_OF_Modifier_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_Modifier);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        SEQUENCE_OF_Modifier_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_Modifier);
 
   return offset;
 }
@@ -1250,14 +1488,14 @@ dissect_iec61850_SEQUENCE_OF_Modifier(bool implicit_tag _U_, tvbuff_t *tvb _U_, 
 
 static int
 dissect_iec61850_Status_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
+    offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
 
   return offset;
 }
 
 
 static const value_string iec61850_T_objectClass_vals[] = {
-  {   0, "nammedVariable" },
+  {   0, "namedVariable" },
   {   1, "scatteredAccess" },
   {   2, "namedVariableList" },
   {   3, "namedType" },
@@ -1275,8 +1513,14 @@ static const value_string iec61850_T_objectClass_vals[] = {
 
 static int
 dissect_iec61850_T_objectClass(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    int32_t branch_taken;
+
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  &branch_taken);
+
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->objectClass = branch_taken;
+
 
   return offset;
 }
@@ -1294,9 +1538,9 @@ static const ber_choice_t T_extendedObjectClass_choice[] = {
 
 static int
 dissect_iec61850_T_extendedObjectClass(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_extendedObjectClass_choice, hf_index, ett_iec61850_T_extendedObjectClass,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_extendedObjectClass_choice, hf_index, ett_iec61850_T_extendedObjectClass,
+                                   NULL);
 
   return offset;
 }
@@ -1305,7 +1549,7 @@ dissect_iec61850_T_extendedObjectClass(bool implicit_tag _U_, tvbuff_t *tvb _U_,
 
 static int
 dissect_iec61850_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -1327,9 +1571,15 @@ static const ber_choice_t T_objectScope_choice[] = {
 
 static int
 dissect_iec61850_T_objectScope(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_objectScope_choice, hf_index, ett_iec61850_T_objectScope,
-                                 NULL);
+    int32_t branch_taken;
+
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_objectScope_choice, hf_index, ett_iec61850_T_objectScope,
+                                   &branch_taken);
+
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->objectScope = branch_taken;
+
 
   return offset;
 }
@@ -1344,8 +1594,8 @@ static const ber_sequence_t GetNameList_Request_sequence[] = {
 
 static int
 dissect_iec61850_GetNameList_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetNameList_Request_sequence, hf_index, ett_iec61850_GetNameList_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetNameList_Request_sequence, hf_index, ett_iec61850_GetNameList_Request);
 
   return offset;
 }
@@ -1354,7 +1604,7 @@ dissect_iec61850_GetNameList_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, i
 
 static int
 dissect_iec61850_Identify_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -1379,8 +1629,8 @@ static const value_string iec61850_T_objectClass_01_vals[] = {
 
 static int
 dissect_iec61850_T_objectClass_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -1398,9 +1648,9 @@ static const ber_choice_t T_extendedObjectClass_01_choice[] = {
 
 static int
 dissect_iec61850_T_extendedObjectClass_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_extendedObjectClass_01_choice, hf_index, ett_iec61850_T_extendedObjectClass_01,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_extendedObjectClass_01_choice, hf_index, ett_iec61850_T_extendedObjectClass_01,
+                                   NULL);
 
   return offset;
 }
@@ -1415,8 +1665,8 @@ static const ber_sequence_t Rename_Request_sequence[] = {
 
 static int
 dissect_iec61850_Rename_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Rename_Request_sequence, hf_index, ett_iec61850_Rename_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Rename_Request_sequence, hf_index, ett_iec61850_Rename_Request);
 
   return offset;
 }
@@ -1425,9 +1675,9 @@ dissect_iec61850_Rename_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int of
 
 static int
 dissect_iec61850_VisibleString(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_VisibleString,
-                                            actx, tree, tvb, offset, hf_index,
-                                            NULL);
+    offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_VisibleString,
+                                              actx, tree, tvb, offset, hf_index,
+                                              NULL);
 
   return offset;
 }
@@ -1436,8 +1686,8 @@ dissect_iec61850_VisibleString(bool implicit_tag _U_, tvbuff_t *tvb _U_, int off
 
 static int
 dissect_iec61850_OCTET_STRING(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                       NULL);
+    offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                         NULL);
 
   return offset;
 }
@@ -1459,9 +1709,9 @@ static const ber_choice_t Address_choice[] = {
 
 static int
 dissect_iec61850_Address(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 Address_choice, hf_index, ett_iec61850_Address,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   Address_choice, hf_index, ett_iec61850_Address,
+                                   NULL);
 
   return offset;
 }
@@ -1476,8 +1726,8 @@ static const ber_sequence_t T_array_sequence[] = {
 
 static int
 dissect_iec61850_T_array(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_array_sequence, hf_index, ett_iec61850_T_array);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_array_sequence, hf_index, ett_iec61850_T_array);
 
   return offset;
 }
@@ -1491,8 +1741,8 @@ static const ber_sequence_t T_components_item_sequence[] = {
 
 static int
 dissect_iec61850_T_components_item(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_components_item_sequence, hf_index, ett_iec61850_T_components_item);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_components_item_sequence, hf_index, ett_iec61850_T_components_item);
 
   return offset;
 }
@@ -1504,8 +1754,8 @@ static const ber_sequence_t T_components_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_components(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_components_sequence_of, hf_index, ett_iec61850_T_components);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_components_sequence_of, hf_index, ett_iec61850_T_components);
 
   return offset;
 }
@@ -1519,8 +1769,8 @@ static const ber_sequence_t T_structure_sequence[] = {
 
 static int
 dissect_iec61850_T_structure(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_structure_sequence, hf_index, ett_iec61850_T_structure);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_structure_sequence, hf_index, ett_iec61850_T_structure);
 
   return offset;
 }
@@ -1529,8 +1779,8 @@ dissect_iec61850_T_structure(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offse
 
 static int
 dissect_iec61850_Integer32(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -1579,9 +1829,9 @@ dissect_iec61850_TypeSpecification(bool implicit_tag _U_, tvbuff_t *tvb _U_, int
   DISSECTOR_ASSERT(recursion_depth <= MAX_RECURSION_DEPTH);
   p_set_proto_depth(actx->pinfo, proto_id, recursion_depth + cycle_size);
 
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 TypeSpecification_choice, hf_index, ett_iec61850_TypeSpecification,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   TypeSpecification_choice, hf_index, ett_iec61850_TypeSpecification,
+                                   NULL);
 
   p_set_proto_depth(actx->pinfo, proto_id, recursion_depth);
   return offset;
@@ -1596,8 +1846,8 @@ static const ber_sequence_t T_variableDescription_sequence[] = {
 
 static int
 dissect_iec61850_T_variableDescription(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_variableDescription_sequence, hf_index, ett_iec61850_T_variableDescription);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_variableDescription_sequence, hf_index, ett_iec61850_T_variableDescription);
 
   return offset;
 }
@@ -1611,8 +1861,8 @@ static const ber_sequence_t T_indexRange_sequence[] = {
 
 static int
 dissect_iec61850_T_indexRange(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_indexRange_sequence, hf_index, ett_iec61850_T_indexRange);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_indexRange_sequence, hf_index, ett_iec61850_T_indexRange);
 
   return offset;
 }
@@ -1636,9 +1886,9 @@ static const ber_choice_t T_accessSelection_choice[] = {
 
 static int
 dissect_iec61850_T_accessSelection(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_accessSelection_choice, hf_index, ett_iec61850_T_accessSelection,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_accessSelection_choice, hf_index, ett_iec61850_T_accessSelection,
+                                   NULL);
 
   return offset;
 }
@@ -1652,8 +1902,8 @@ static const ber_sequence_t T_selectAlternateAccess_sequence[] = {
 
 static int
 dissect_iec61850_T_selectAlternateAccess(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_selectAlternateAccess_sequence, hf_index, ett_iec61850_T_selectAlternateAccess);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_selectAlternateAccess_sequence, hf_index, ett_iec61850_T_selectAlternateAccess);
 
   return offset;
 }
@@ -1667,8 +1917,8 @@ static const ber_sequence_t T_indexRange_01_sequence[] = {
 
 static int
 dissect_iec61850_T_indexRange_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_indexRange_01_sequence, hf_index, ett_iec61850_T_indexRange_01);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_indexRange_01_sequence, hf_index, ett_iec61850_T_indexRange_01);
 
   return offset;
 }
@@ -1692,9 +1942,9 @@ static const ber_choice_t T_selectAccess_choice[] = {
 
 static int
 dissect_iec61850_T_selectAccess(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_selectAccess_choice, hf_index, ett_iec61850_T_selectAccess,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_selectAccess_choice, hf_index, ett_iec61850_T_selectAccess,
+                                   NULL);
 
   return offset;
 }
@@ -1714,9 +1964,9 @@ static const ber_choice_t AlternateAccessSelection_choice[] = {
 
 static int
 dissect_iec61850_AlternateAccessSelection(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 AlternateAccessSelection_choice, hf_index, ett_iec61850_AlternateAccessSelection,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   AlternateAccessSelection_choice, hf_index, ett_iec61850_AlternateAccessSelection,
+                                   NULL);
 
   return offset;
 }
@@ -1730,8 +1980,8 @@ static const ber_sequence_t T_named_sequence[] = {
 
 static int
 dissect_iec61850_T_named(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_named_sequence, hf_index, ett_iec61850_T_named);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_named_sequence, hf_index, ett_iec61850_T_named);
 
   return offset;
 }
@@ -1751,9 +2001,9 @@ static const ber_choice_t AlternateAccess_item_choice[] = {
 
 static int
 dissect_iec61850_AlternateAccess_item(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 AlternateAccess_item_choice, hf_index, ett_iec61850_AlternateAccess_item,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   AlternateAccess_item_choice, hf_index, ett_iec61850_AlternateAccess_item,
+                                   NULL);
 
   return offset;
 }
@@ -1772,8 +2022,12 @@ dissect_iec61850_AlternateAccess(bool implicit_tag _U_, tvbuff_t *tvb _U_, int o
   DISSECTOR_ASSERT(recursion_depth <= MAX_RECURSION_DEPTH);
   p_set_proto_depth(actx->pinfo, proto_id, recursion_depth + cycle_size);
 
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      AlternateAccess_sequence_of, hf_index, ett_iec61850_AlternateAccess);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        AlternateAccess_sequence_of, hf_index, ett_iec61850_AlternateAccess);
+
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->AlternateAccess = 1;
+
 
   p_set_proto_depth(actx->pinfo, proto_id, recursion_depth);
   return offset;
@@ -1789,8 +2043,8 @@ static const ber_sequence_t ScatteredAccessDescription_item_sequence[] = {
 
 static int
 dissect_iec61850_ScatteredAccessDescription_item(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   ScatteredAccessDescription_item_sequence, hf_index, ett_iec61850_ScatteredAccessDescription_item);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     ScatteredAccessDescription_item_sequence, hf_index, ett_iec61850_ScatteredAccessDescription_item);
 
   return offset;
 }
@@ -1802,8 +2056,8 @@ static const ber_sequence_t ScatteredAccessDescription_sequence_of[1] = {
 
 static int
 dissect_iec61850_ScatteredAccessDescription(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      ScatteredAccessDescription_sequence_of, hf_index, ett_iec61850_ScatteredAccessDescription);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        ScatteredAccessDescription_sequence_of, hf_index, ett_iec61850_ScatteredAccessDescription);
 
   return offset;
 }
@@ -1836,9 +2090,9 @@ dissect_iec61850_VariableSpecification(bool implicit_tag _U_, tvbuff_t *tvb _U_,
   DISSECTOR_ASSERT(recursion_depth <= MAX_RECURSION_DEPTH);
   p_set_proto_depth(actx->pinfo, proto_id, recursion_depth + cycle_size);
 
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 VariableSpecification_choice, hf_index, ett_iec61850_VariableSpecification,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   VariableSpecification_choice, hf_index, ett_iec61850_VariableSpecification,
+                                   NULL);
 
   p_set_proto_depth(actx->pinfo, proto_id, recursion_depth);
   return offset;
@@ -1853,8 +2107,8 @@ static const ber_sequence_t T_listOfVariable_item_02_sequence[] = {
 
 static int
 dissect_iec61850_T_listOfVariable_item_02(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_listOfVariable_item_02_sequence, hf_index, ett_iec61850_T_listOfVariable_item_02);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_listOfVariable_item_02_sequence, hf_index, ett_iec61850_T_listOfVariable_item_02);
 
   return offset;
 }
@@ -1866,8 +2120,8 @@ static const ber_sequence_t T_listOfVariable_02_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfVariable_02(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfVariable_02_sequence_of, hf_index, ett_iec61850_T_listOfVariable_02);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfVariable_02_sequence_of, hf_index, ett_iec61850_T_listOfVariable_02);
 
   return offset;
 }
@@ -1887,14 +2141,14 @@ static const ber_choice_t VariableAccessSpecification_choice[] = {
 
 static int
 dissect_iec61850_VariableAccessSpecification(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-	gint branch_taken;
+    int32_t branch_taken;
 
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 VariableAccessSpecification_choice, hf_index, ett_iec61850_VariableAccessSpecification,
-                                 &branch_taken);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   VariableAccessSpecification_choice, hf_index, ett_iec61850_VariableAccessSpecification,
+                                   &branch_taken);
 
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->VariableAccessSpecification = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->VariableAccessSpecification = branch_taken;
 
 
   return offset;
@@ -1909,21 +2163,42 @@ static const ber_sequence_t Read_Request_sequence[] = {
 
 static int
 dissect_iec61850_Read_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Read_Request_sequence, hf_index, ett_iec61850_Read_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Read_Request_sequence, hf_index, ett_iec61850_Read_Request);
 
   return offset;
 }
 
 
-static const ber_sequence_t SEQUENCE_OF_Data_sequence_of[1] = {
-  { &hf_iec61850_listOfData_item, BER_CLASS_ANY/*choice*/, -1/*choice*/, BER_FLAGS_NOOWNTAG|BER_FLAGS_NOTCHKTAG, dissect_iec61850_Data },
+static const ber_sequence_t T_array_01_sequence_of[1] = {
+  { &hf_iec61850_array_item , BER_CLASS_ANY/*choice*/, -1/*choice*/, BER_FLAGS_NOOWNTAG|BER_FLAGS_NOTCHKTAG, dissect_iec61850_Data },
 };
 
 static int
-dissect_iec61850_SEQUENCE_OF_Data(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      SEQUENCE_OF_Data_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_Data);
+dissect_iec61850_T_array_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+    private_data_add_moreCinfo_array(actx, 1);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_array_01_sequence_of, hf_index, ett_iec61850_T_array_01);
+
+    private_data_add_moreCinfo_array(actx, 0);
+
+
+  return offset;
+}
+
+
+static const ber_sequence_t T_structure_01_sequence_of[1] = {
+  { &hf_iec61850_structure_item, BER_CLASS_ANY/*choice*/, -1/*choice*/, BER_FLAGS_NOOWNTAG|BER_FLAGS_NOTCHKTAG, dissect_iec61850_Data },
+};
+
+static int
+dissect_iec61850_T_structure_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+    private_data_add_moreCinfo_structure(actx, 1);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_structure_01_sequence_of, hf_index, ett_iec61850_T_structure_01);
+
+    private_data_add_moreCinfo_structure(actx, 0);
+
 
   return offset;
 }
@@ -1931,10 +2206,13 @@ dissect_iec61850_SEQUENCE_OF_Data(bool implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 
 static int
-dissect_iec61850_BIT_STRING(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
-                                    NULL, 0, hf_index, -1,
-                                    NULL);
+dissect_iec61850_T_boolean(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+    bool val;
+    offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, &val);
+
+
+    private_data_add_moreCinfo_bool(actx, val);
+
 
   return offset;
 }
@@ -1942,9 +2220,44 @@ dissect_iec61850_BIT_STRING(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 
 static int
-dissect_iec61850_INTEGER(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+dissect_iec61850_T_data_bit_string(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+    int32_t old_offset = offset;
+    offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
+                                      NULL, 0, hf_index, -1,
+                                      NULL);
+
+    private_data_add_moreCinfo_bstr(actx, tvb, old_offset);
+
+
+  return offset;
+}
+
+
+
+static int
+dissect_iec61850_T_integer(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+    int32_t val;
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  &val);
+
+
+    private_data_add_moreCinfo_int(actx, val);
+
+
+  return offset;
+}
+
+
+
+static int
+dissect_iec61850_T_unsigned(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+    int32_t val;
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  &val);
+
+
+    private_data_add_moreCinfo_int(actx, val);
+
 
   return offset;
 }
@@ -1953,10 +2266,39 @@ dissect_iec61850_INTEGER(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U
 
 static int
 dissect_iec61850_FloatingPoint(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                       NULL);
+    offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                         NULL);
 
-	private_data_add_moreCinfo_float(actx, tvb);
+    private_data_add_moreCinfo_float(actx, tvb);
+
+
+  return offset;
+}
+
+
+
+static int
+dissect_iec61850_T_data_octet_string(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+    int32_t old_offset = offset;
+    offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                         NULL);
+
+    private_data_add_moreCinfo_ostr(actx, tvb, old_offset);
+
+
+  return offset;
+}
+
+
+
+static int
+dissect_iec61850_T_data_visible_string(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+    int32_t old_offset = offset;
+    offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_VisibleString,
+                                              actx, tree, tvb, offset, hf_index,
+                                              NULL);
+
+    private_data_add_moreCinfo_vstr(actx, tvb, old_offset);
 
 
   return offset;
@@ -1967,53 +2309,79 @@ dissect_iec61850_FloatingPoint(bool implicit_tag _U_, tvbuff_t *tvb _U_, int off
 static int
 dissect_iec61850_TimeOfDay(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
 
-	guint32 len;
-	guint32 milliseconds;
-	guint16 days;
-	gchar *	ptime;
-	nstime_t ts;
+    uint32_t len;
+    uint32_t milliseconds;
+    uint16_t days;
+    uint8_t *	ptime;
+    nstime_t ts;
 
-	len = tvb_reported_length_remaining(tvb, offset);
+    len = tvb_reported_length_remaining(tvb, offset);
 
-	if(len == 4)
-	{
-		milliseconds = tvb_get_ntohl(tvb, offset);
-		ptime = signed_time_msecs_to_str(actx->pinfo->pool, milliseconds);
+    if(len == 4)
+    {
+        milliseconds = tvb_get_ntohl(tvb, offset);
+        ptime = signed_time_msecs_to_str(actx->pinfo->pool, milliseconds);
 
-		if(hf_index > 0)
-		{
-			proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
-		}
-		return offset;
-	}
+        if(hf_index > 0)
+        {
+            proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
+        }
+        return offset;
+    }
 
-	if(len == 6)
-	{
-		milliseconds = tvb_get_ntohl(tvb, offset);
-		days = tvb_get_ntohs(tvb, offset+4);
+    if(len == 6)
+    {
+        milliseconds = tvb_get_ntohl(tvb, offset);
+        days = tvb_get_ntohs(tvb, offset+4);
 
-		/* 5113 days between 01-01-1970 and 01-01-1984 */
-		/* 86400 seconds in one day */
+        /* 5113 days between 01-01-1970 and 01-01-1984 */
+        /* 86400 seconds in one day */
 
-		ts.secs = (days + 5113) * 86400 + milliseconds / 1000;
-		ts.nsecs = (milliseconds % 1000) * 1000000U;
+        ts.secs = (days + 5113) * 86400 + milliseconds / 1000;
+        ts.nsecs = (milliseconds % 1000) * 1000000U;
 
-		ptime = abs_time_to_str(actx->pinfo->pool, &ts, ABSOLUTE_TIME_UTC, TRUE);
-		if(hf_index > 0)
-		{
-			proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
-		}
+        ptime = abs_time_to_str(actx->pinfo->pool, &ts, ABSOLUTE_TIME_UTC, TRUE);
+        if(hf_index > 0)
+        {
+            proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
+        }
+        private_data_add_moreCinfo_str(actx, ptime);
+        return offset;
+    }
 
-		return offset;
-	}
+    proto_tree_add_expert_format(tree, actx->pinfo, &ei_iec61850_mal_timeofday_encoding,
+            tvb, offset, len, "BER Error: malformed TimeOfDay encoding, length must be 4 or 6 bytes");
+    if(hf_index > 0)
+    {
+        proto_tree_add_string(tree, hf_index, tvb, offset, len, "????");
+    }
 
-	proto_tree_add_expert_format(tree, actx->pinfo, &ei_iec61850_mal_timeofday_encoding,
-			tvb, offset, len, "BER Error: malformed TimeOfDay encoding, length must be 4 or 6 bytes");
-	if(hf_index > 0)
-	{
-		proto_tree_add_string(tree, hf_index, tvb, offset, len, "????");
-	}
 
+  return offset;
+}
+
+
+
+static int
+dissect_iec61850_T_bcd(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+    int32_t val;
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  &val);
+
+
+    private_data_add_moreCinfo_int(actx, val);
+
+
+  return offset;
+}
+
+
+
+static int
+dissect_iec61850_BIT_STRING(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+    offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
+                                      NULL, 0, hf_index, -1,
+                                      NULL);
 
   return offset;
 }
@@ -2022,7 +2390,7 @@ dissect_iec61850_TimeOfDay(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset 
 
 static int
 dissect_iec61850_OBJECT_IDENTIFIER(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_object_identifier(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
+    offset = dissect_ber_object_identifier(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
 
   return offset;
 }
@@ -2031,9 +2399,9 @@ dissect_iec61850_OBJECT_IDENTIFIER(bool implicit_tag _U_, tvbuff_t *tvb _U_, int
 
 static int
 dissect_iec61850_MMSString(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_UTF8String,
-                                            actx, tree, tvb, offset, hf_index,
-                                            NULL);
+    offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_UTF8String,
+                                              actx, tree, tvb, offset, hf_index,
+                                              NULL);
 
   return offset;
 }
@@ -2043,39 +2411,49 @@ dissect_iec61850_MMSString(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset 
 static int
 dissect_iec61850_UtcTime(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
 
-	guint32 len;
-	guint32 seconds;
-	guint32	fraction;
-	guint32 nanoseconds;
-	nstime_t ts;
-	gchar *	ptime;
+    uint8_t quality;
+    uint32_t len;
+    uint32_t seconds;
+    uint32_t	fraction;
+    uint32_t nanoseconds;
+    nstime_t ts;
+    uint8_t *	ptime;
+    uint8_t * timestring;
 
-	len = tvb_reported_length_remaining(tvb, offset);
+    ws_assert(actx->pinfo->pool);
+    timestring = wmem_alloc0(actx->pinfo->pool, IEC61850_BUFFER_SIZE_MORE );
+    ws_assert(timestring);
 
-	if(len != 8)
-	{
-		proto_tree_add_expert_format(tree, actx->pinfo, &ei_iec61850_mal_utctime_encoding,
-				tvb, offset, len, "BER Error: malformed IEC61850 UTCTime encoding, length must be 8 bytes");
-		if(hf_index > 0)
-		{
-			proto_tree_add_string(tree, hf_index, tvb, offset, len, "????");
-		}
-		return offset;
-	}
+    len = tvb_reported_length_remaining(tvb, offset);
 
-	seconds = tvb_get_ntohl(tvb, offset);
-	fraction = tvb_get_ntoh24(tvb, offset+4) * 0x100; /* Only 3 bytes are recommended */
-	nanoseconds = (guint32)( ((guint64)fraction * G_GUINT64_CONSTANT(1000000000)) / G_GUINT64_CONSTANT(0x100000000) ) ;
+    if(len != 8)
+    {
+        proto_tree_add_expert_format(tree, actx->pinfo, &ei_iec61850_mal_utctime_encoding,
+                tvb, offset, len, "BER Error: malformed IEC61850 UTCTime encoding, length must be 8 bytes");
+        if(hf_index > 0)
+        {
+            proto_tree_add_string(tree, hf_index, tvb, offset, len, "????");
+        }
+        return offset;
+    }
 
-	ts.secs = seconds;
-	ts.nsecs = nanoseconds;
+    seconds = tvb_get_ntohl(tvb, offset);
+    fraction = tvb_get_ntoh24(tvb, offset+4) * 0x100; /* Only 3 bytes are recommended */
+    nanoseconds = (uint32_t)( ((uint64_t)fraction * G_GUINT64_CONSTANT(1000000000)) / G_GUINT64_CONSTANT(0x100000000) ) ;
 
-	ptime = abs_time_to_str(actx->pinfo->pool, &ts, ABSOLUTE_TIME_UTC, TRUE);
+    ts.secs = seconds;
+    ts.nsecs = nanoseconds;
 
-	if(hf_index > 0)
-	{
-		proto_tree_add_string(tree, hf_index, tvb, offset, len, ptime);
-	}
+    ptime = abs_time_to_str(actx->pinfo->pool, &ts, ABSOLUTE_TIME_UTC, TRUE);
+
+    quality = tvb_get_guint8(tvb, offset+7);
+    snprintf(timestring, IEC61850_BUFFER_SIZE_MORE, "%s,q:%02x", ptime, quality);
+
+    if(hf_index > 0)
+    {
+        proto_tree_add_string(tree, hf_index, tvb, offset, len, timestring);
+    }
+    private_data_add_moreCinfo_str(actx, timestring);
 
 
 
@@ -2103,17 +2481,17 @@ static const value_string iec61850_Data_vals[] = {
 };
 
 static const ber_choice_t Data_choice[] = {
-  {   1, &hf_iec61850_array_01   , BER_CLASS_CON, 1, BER_FLAGS_IMPLTAG, dissect_iec61850_SEQUENCE_OF_Data },
-  {   2, &hf_iec61850_structure_01, BER_CLASS_CON, 2, BER_FLAGS_IMPLTAG, dissect_iec61850_SEQUENCE_OF_Data },
-  {   3, &hf_iec61850_boolean_01 , BER_CLASS_CON, 3, BER_FLAGS_IMPLTAG, dissect_iec61850_BOOLEAN },
-  {   4, &hf_iec61850_data_bit_string, BER_CLASS_CON, 4, BER_FLAGS_IMPLTAG, dissect_iec61850_BIT_STRING },
-  {   5, &hf_iec61850_integer_01 , BER_CLASS_CON, 5, BER_FLAGS_IMPLTAG, dissect_iec61850_INTEGER },
-  {   6, &hf_iec61850_unsigned_01, BER_CLASS_CON, 6, BER_FLAGS_IMPLTAG, dissect_iec61850_INTEGER },
+  {   1, &hf_iec61850_array_01   , BER_CLASS_CON, 1, BER_FLAGS_IMPLTAG, dissect_iec61850_T_array_01 },
+  {   2, &hf_iec61850_structure_01, BER_CLASS_CON, 2, BER_FLAGS_IMPLTAG, dissect_iec61850_T_structure_01 },
+  {   3, &hf_iec61850_boolean_01 , BER_CLASS_CON, 3, BER_FLAGS_IMPLTAG, dissect_iec61850_T_boolean },
+  {   4, &hf_iec61850_data_bit_string, BER_CLASS_CON, 4, BER_FLAGS_IMPLTAG, dissect_iec61850_T_data_bit_string },
+  {   5, &hf_iec61850_integer_01 , BER_CLASS_CON, 5, BER_FLAGS_IMPLTAG, dissect_iec61850_T_integer },
+  {   6, &hf_iec61850_unsigned_01, BER_CLASS_CON, 6, BER_FLAGS_IMPLTAG, dissect_iec61850_T_unsigned },
   {   7, &hf_iec61850_floating_point, BER_CLASS_CON, 7, BER_FLAGS_IMPLTAG, dissect_iec61850_FloatingPoint },
-  {   9, &hf_iec61850_data_octet_string, BER_CLASS_CON, 9, BER_FLAGS_IMPLTAG, dissect_iec61850_OCTET_STRING },
-  {  10, &hf_iec61850_data_visible_string, BER_CLASS_CON, 10, BER_FLAGS_IMPLTAG, dissect_iec61850_VisibleString },
+  {   9, &hf_iec61850_data_octet_string, BER_CLASS_CON, 9, BER_FLAGS_IMPLTAG, dissect_iec61850_T_data_octet_string },
+  {  10, &hf_iec61850_data_visible_string, BER_CLASS_CON, 10, BER_FLAGS_IMPLTAG, dissect_iec61850_T_data_visible_string },
   {  12, &hf_iec61850_data_binary_time, BER_CLASS_CON, 12, BER_FLAGS_IMPLTAG, dissect_iec61850_TimeOfDay },
-  {  13, &hf_iec61850_bcd_01     , BER_CLASS_CON, 13, BER_FLAGS_IMPLTAG, dissect_iec61850_INTEGER },
+  {  13, &hf_iec61850_bcd_01     , BER_CLASS_CON, 13, BER_FLAGS_IMPLTAG, dissect_iec61850_T_bcd },
   {  14, &hf_iec61850_booleanArray, BER_CLASS_CON, 14, BER_FLAGS_IMPLTAG, dissect_iec61850_BIT_STRING },
   {  15, &hf_iec61850_objId_01   , BER_CLASS_CON, 15, BER_FLAGS_IMPLTAG, dissect_iec61850_OBJECT_IDENTIFIER },
   {  16, &hf_iec61850_mMSString  , BER_CLASS_CON, 16, BER_FLAGS_IMPLTAG, dissect_iec61850_MMSString },
@@ -2130,11 +2508,30 @@ dissect_iec61850_Data(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, 
   DISSECTOR_ASSERT(recursion_depth <= MAX_RECURSION_DEPTH);
   p_set_proto_depth(actx->pinfo, proto_id, recursion_depth + cycle_size);
 
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 Data_choice, hf_index, ett_iec61850_Data,
-                                 NULL);
+    int32_t branch_taken;
+
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   Data_choice, hf_index, ett_iec61850_Data,
+                                   &branch_taken);
+
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->DataType = branch_taken;
+
 
   p_set_proto_depth(actx->pinfo, proto_id, recursion_depth);
+  return offset;
+}
+
+
+static const ber_sequence_t SEQUENCE_OF_Data_sequence_of[1] = {
+  { &hf_iec61850_listOfData_item, BER_CLASS_ANY/*choice*/, -1/*choice*/, BER_FLAGS_NOOWNTAG|BER_FLAGS_NOTCHKTAG, dissect_iec61850_Data },
+};
+
+static int
+dissect_iec61850_SEQUENCE_OF_Data(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        SEQUENCE_OF_Data_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_Data);
+
   return offset;
 }
 
@@ -2147,8 +2544,8 @@ static const ber_sequence_t Write_Request_sequence[] = {
 
 static int
 dissect_iec61850_Write_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Write_Request_sequence, hf_index, ett_iec61850_Write_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Write_Request_sequence, hf_index, ett_iec61850_Write_Request);
 
   return offset;
 }
@@ -2168,9 +2565,9 @@ static const ber_choice_t GetVariableAccessAttributes_Request_choice[] = {
 
 static int
 dissect_iec61850_GetVariableAccessAttributes_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 GetVariableAccessAttributes_Request_choice, hf_index, ett_iec61850_GetVariableAccessAttributes_Request,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   GetVariableAccessAttributes_Request_choice, hf_index, ett_iec61850_GetVariableAccessAttributes_Request,
+                                   NULL);
 
   return offset;
 }
@@ -2185,8 +2582,8 @@ static const ber_sequence_t DefineNamedVariable_Request_sequence[] = {
 
 static int
 dissect_iec61850_DefineNamedVariable_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DefineNamedVariable_Request_sequence, hf_index, ett_iec61850_DefineNamedVariable_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DefineNamedVariable_Request_sequence, hf_index, ett_iec61850_DefineNamedVariable_Request);
 
   return offset;
 }
@@ -2200,8 +2597,8 @@ static const ber_sequence_t DefineScatteredAccess_Request_sequence[] = {
 
 static int
 dissect_iec61850_DefineScatteredAccess_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DefineScatteredAccess_Request_sequence, hf_index, ett_iec61850_DefineScatteredAccess_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DefineScatteredAccess_Request_sequence, hf_index, ett_iec61850_DefineScatteredAccess_Request);
 
   return offset;
 }
@@ -2210,7 +2607,7 @@ dissect_iec61850_DefineScatteredAccess_Request(bool implicit_tag _U_, tvbuff_t *
 
 static int
 dissect_iec61850_GetScatteredAccessAttributes_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -2227,8 +2624,8 @@ static const value_string iec61850_T_scopeOfDelete_vals[] = {
 
 static int
 dissect_iec61850_T_scopeOfDelete(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -2240,8 +2637,8 @@ static const ber_sequence_t SEQUENCE_OF_ObjectName_sequence_of[1] = {
 
 static int
 dissect_iec61850_SEQUENCE_OF_ObjectName(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      SEQUENCE_OF_ObjectName_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_ObjectName);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        SEQUENCE_OF_ObjectName_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_ObjectName);
 
   return offset;
 }
@@ -2256,8 +2653,8 @@ static const ber_sequence_t DeleteVariableAccess_Request_sequence[] = {
 
 static int
 dissect_iec61850_DeleteVariableAccess_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DeleteVariableAccess_Request_sequence, hf_index, ett_iec61850_DeleteVariableAccess_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DeleteVariableAccess_Request_sequence, hf_index, ett_iec61850_DeleteVariableAccess_Request);
 
   return offset;
 }
@@ -2271,8 +2668,8 @@ static const ber_sequence_t T_listOfVariable_item_sequence[] = {
 
 static int
 dissect_iec61850_T_listOfVariable_item(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_listOfVariable_item_sequence, hf_index, ett_iec61850_T_listOfVariable_item);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_listOfVariable_item_sequence, hf_index, ett_iec61850_T_listOfVariable_item);
 
   return offset;
 }
@@ -2284,8 +2681,8 @@ static const ber_sequence_t T_listOfVariable_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfVariable(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfVariable_sequence_of, hf_index, ett_iec61850_T_listOfVariable);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfVariable_sequence_of, hf_index, ett_iec61850_T_listOfVariable);
 
   return offset;
 }
@@ -2299,8 +2696,8 @@ static const ber_sequence_t DefineNamedVariableList_Request_sequence[] = {
 
 static int
 dissect_iec61850_DefineNamedVariableList_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DefineNamedVariableList_Request_sequence, hf_index, ett_iec61850_DefineNamedVariableList_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DefineNamedVariableList_Request_sequence, hf_index, ett_iec61850_DefineNamedVariableList_Request);
 
   return offset;
 }
@@ -2309,7 +2706,7 @@ dissect_iec61850_DefineNamedVariableList_Request(bool implicit_tag _U_, tvbuff_t
 
 static int
 dissect_iec61850_GetNamedVariableListAttributes_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -2326,8 +2723,8 @@ static const value_string iec61850_T_scopeOfDelete_01_vals[] = {
 
 static int
 dissect_iec61850_T_scopeOfDelete_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -2342,8 +2739,8 @@ static const ber_sequence_t DeleteNamedVariableList_Request_sequence[] = {
 
 static int
 dissect_iec61850_DeleteNamedVariableList_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DeleteNamedVariableList_Request_sequence, hf_index, ett_iec61850_DeleteNamedVariableList_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DeleteNamedVariableList_Request_sequence, hf_index, ett_iec61850_DeleteNamedVariableList_Request);
 
   return offset;
 }
@@ -2357,8 +2754,8 @@ static const ber_sequence_t DefineNamedType_Request_sequence[] = {
 
 static int
 dissect_iec61850_DefineNamedType_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DefineNamedType_Request_sequence, hf_index, ett_iec61850_DefineNamedType_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DefineNamedType_Request_sequence, hf_index, ett_iec61850_DefineNamedType_Request);
 
   return offset;
 }
@@ -2367,7 +2764,7 @@ dissect_iec61850_DefineNamedType_Request(bool implicit_tag _U_, tvbuff_t *tvb _U
 
 static int
 dissect_iec61850_GetNamedTypeAttributes_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -2384,8 +2781,8 @@ static const value_string iec61850_T_scopeOfDelete_02_vals[] = {
 
 static int
 dissect_iec61850_T_scopeOfDelete_02(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -2400,8 +2797,8 @@ static const ber_sequence_t DeleteNamedType_Request_sequence[] = {
 
 static int
 dissect_iec61850_DeleteNamedType_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DeleteNamedType_Request_sequence, hf_index, ett_iec61850_DeleteNamedType_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DeleteNamedType_Request_sequence, hf_index, ett_iec61850_DeleteNamedType_Request);
 
   return offset;
 }
@@ -2413,8 +2810,8 @@ static const ber_sequence_t T_listOfPromptData_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfPromptData(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfPromptData_sequence_of, hf_index, ett_iec61850_T_listOfPromptData);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfPromptData_sequence_of, hf_index, ett_iec61850_T_listOfPromptData);
 
   return offset;
 }
@@ -2430,8 +2827,8 @@ static const ber_sequence_t Input_Request_sequence[] = {
 
 static int
 dissect_iec61850_Input_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Input_Request_sequence, hf_index, ett_iec61850_Input_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Input_Request_sequence, hf_index, ett_iec61850_Input_Request);
 
   return offset;
 }
@@ -2443,8 +2840,8 @@ static const ber_sequence_t T_listOfOutputData_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfOutputData(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfOutputData_sequence_of, hf_index, ett_iec61850_T_listOfOutputData);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfOutputData_sequence_of, hf_index, ett_iec61850_T_listOfOutputData);
 
   return offset;
 }
@@ -2458,8 +2855,8 @@ static const ber_sequence_t Output_Request_sequence[] = {
 
 static int
 dissect_iec61850_Output_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Output_Request_sequence, hf_index, ett_iec61850_Output_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Output_Request_sequence, hf_index, ett_iec61850_Output_Request);
 
   return offset;
 }
@@ -2468,7 +2865,7 @@ dissect_iec61850_Output_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int of
 
 static int
 dissect_iec61850_T_ap_title(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-	offset=dissect_acse_AP_title_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ap_title);
+    offset=dissect_acse_AP_title_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ap_title);
 
 
   return offset;
@@ -2478,7 +2875,7 @@ dissect_iec61850_T_ap_title(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 static int
 dissect_iec61850_T_ap_invocation_id(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-	offset=dissect_acse_AP_invocation_identifier_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ap_invocation_id);
+    offset=dissect_acse_AP_invocation_identifier_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ap_invocation_id);
 
 
   return offset;
@@ -2488,7 +2885,7 @@ dissect_iec61850_T_ap_invocation_id(bool implicit_tag _U_, tvbuff_t *tvb _U_, in
 
 static int
 dissect_iec61850_T_ae_qualifier(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-	offset=dissect_acse_AE_qualifier_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ae_qualifier);
+    offset=dissect_acse_AE_qualifier_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ae_qualifier);
 
 
   return offset;
@@ -2498,7 +2895,7 @@ dissect_iec61850_T_ae_qualifier(bool implicit_tag _U_, tvbuff_t *tvb _U_, int of
 
 static int
 dissect_iec61850_T_ae_invocation_id(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-	offset=dissect_acse_AE_invocation_identifier_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ae_invocation_id);
+    offset=dissect_acse_AE_invocation_identifier_stub(FALSE, tvb, offset, actx, tree, hf_iec61850_ae_invocation_id);
 
 
   return offset;
@@ -2515,8 +2912,8 @@ static const ber_sequence_t ApplicationReference_sequence[] = {
 
 static int
 dissect_iec61850_ApplicationReference(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   ApplicationReference_sequence, hf_index, ett_iec61850_ApplicationReference);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     ApplicationReference_sequence, hf_index, ett_iec61850_ApplicationReference);
 
   return offset;
 }
@@ -2536,8 +2933,8 @@ static const ber_sequence_t TakeControl_Request_sequence[] = {
 
 static int
 dissect_iec61850_TakeControl_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   TakeControl_Request_sequence, hf_index, ett_iec61850_TakeControl_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     TakeControl_Request_sequence, hf_index, ett_iec61850_TakeControl_Request);
 
   return offset;
 }
@@ -2551,8 +2948,8 @@ static const ber_sequence_t RelinquishControl_Request_sequence[] = {
 
 static int
 dissect_iec61850_RelinquishControl_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   RelinquishControl_Request_sequence, hf_index, ett_iec61850_RelinquishControl_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     RelinquishControl_Request_sequence, hf_index, ett_iec61850_RelinquishControl_Request);
 
   return offset;
 }
@@ -2561,8 +2958,8 @@ dissect_iec61850_RelinquishControl_Request(bool implicit_tag _U_, tvbuff_t *tvb 
 
 static int
 dissect_iec61850_Unsigned16(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -2576,8 +2973,8 @@ static const ber_sequence_t DefineSemaphore_Request_sequence[] = {
 
 static int
 dissect_iec61850_DefineSemaphore_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DefineSemaphore_Request_sequence, hf_index, ett_iec61850_DefineSemaphore_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DefineSemaphore_Request_sequence, hf_index, ett_iec61850_DefineSemaphore_Request);
 
   return offset;
 }
@@ -2586,7 +2983,7 @@ dissect_iec61850_DefineSemaphore_Request(bool implicit_tag _U_, tvbuff_t *tvb _U
 
 static int
 dissect_iec61850_DeleteSemaphore_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -2595,7 +2992,7 @@ dissect_iec61850_DeleteSemaphore_Request(bool implicit_tag _U_, tvbuff_t *tvb _U
 
 static int
 dissect_iec61850_ReportSemaphoreStatus_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -2609,8 +3006,8 @@ static const ber_sequence_t ReportPoolSemaphoreStatus_Request_sequence[] = {
 
 static int
 dissect_iec61850_ReportPoolSemaphoreStatus_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   ReportPoolSemaphoreStatus_Request_sequence, hf_index, ett_iec61850_ReportPoolSemaphoreStatus_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     ReportPoolSemaphoreStatus_Request_sequence, hf_index, ett_iec61850_ReportPoolSemaphoreStatus_Request);
 
   return offset;
 }
@@ -2626,8 +3023,8 @@ static const value_string iec61850_T_reportSemaphoreEntryStatus_Request_state_va
 
 static int
 dissect_iec61850_T_reportSemaphoreEntryStatus_Request_state(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -2642,8 +3039,8 @@ static const ber_sequence_t ReportSemaphoreEntryStatus_Request_sequence[] = {
 
 static int
 dissect_iec61850_ReportSemaphoreEntryStatus_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   ReportSemaphoreEntryStatus_Request_sequence, hf_index, ett_iec61850_ReportSemaphoreEntryStatus_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     ReportSemaphoreEntryStatus_Request_sequence, hf_index, ett_iec61850_ReportSemaphoreEntryStatus_Request);
 
   return offset;
 }
@@ -2655,8 +3052,8 @@ static const ber_sequence_t T_listOfCapabilities_01_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfCapabilities_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfCapabilities_01_sequence_of, hf_index, ett_iec61850_T_listOfCapabilities_01);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfCapabilities_01_sequence_of, hf_index, ett_iec61850_T_listOfCapabilities_01);
 
   return offset;
 }
@@ -2671,8 +3068,8 @@ static const ber_sequence_t InitiateDownloadSequence_Request_sequence[] = {
 
 static int
 dissect_iec61850_InitiateDownloadSequence_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   InitiateDownloadSequence_Request_sequence, hf_index, ett_iec61850_InitiateDownloadSequence_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     InitiateDownloadSequence_Request_sequence, hf_index, ett_iec61850_InitiateDownloadSequence_Request);
 
   return offset;
 }
@@ -2681,7 +3078,7 @@ dissect_iec61850_InitiateDownloadSequence_Request(bool implicit_tag _U_, tvbuff_
 
 static int
 dissect_iec61850_DownloadSegment_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Identifier(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Identifier(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -2699,8 +3096,8 @@ static const value_string iec61850_T_vmd_state_vals[] = {
 
 static int
 dissect_iec61850_T_vmd_state(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -2718,8 +3115,8 @@ static const value_string iec61850_T_application_reference_vals[] = {
 
 static int
 dissect_iec61850_T_application_reference(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -2739,8 +3136,12 @@ static const value_string iec61850_T_definition_vals[] = {
 
 static int
 dissect_iec61850_T_definition(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    int32_t branch_taken;
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  &branch_taken);
+
+    private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_definition_vals);
+
 
   return offset;
 }
@@ -2759,8 +3160,8 @@ static const value_string iec61850_T_resource_vals[] = {
 
 static int
 dissect_iec61850_T_resource(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -2779,8 +3180,12 @@ static const value_string iec61850_T_service_vals[] = {
 
 static int
 dissect_iec61850_T_service(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    int32_t branch_taken;
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  &branch_taken);
+
+    private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_service_vals);
+
 
   return offset;
 }
@@ -2797,8 +3202,8 @@ static const value_string iec61850_T_service_preempt_vals[] = {
 
 static int
 dissect_iec61850_T_service_preempt(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -2813,8 +3218,8 @@ static const value_string iec61850_T_time_resolution_vals[] = {
 
 static int
 dissect_iec61850_T_time_resolution(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -2832,8 +3237,12 @@ static const value_string iec61850_T_access_vals[] = {
 
 static int
 dissect_iec61850_T_access(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    int32_t branch_taken;
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  &branch_taken);
+
+    private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_access_vals);
+
 
   return offset;
 }
@@ -2854,8 +3263,12 @@ static const value_string iec61850_T_initiate_vals[] = {
 
 static int
 dissect_iec61850_T_initiate(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    int32_t branch_taken;
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  &branch_taken);
+
+    private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_initiate_vals);
+
 
   return offset;
 }
@@ -2870,8 +3283,11 @@ static const value_string iec61850_T_conclude_vals[] = {
 
 static int
 dissect_iec61850_T_conclude(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    int32_t branch_taken;
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  &branch_taken);
+
+    private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_conclude_vals);
 
   return offset;
 }
@@ -2887,8 +3303,8 @@ static const value_string iec61850_T_cancel_vals[] = {
 
 static int
 dissect_iec61850_T_cancel(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -2911,8 +3327,22 @@ static const value_string iec61850_T_file_vals[] = {
 
 static int
 dissect_iec61850_T_file(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    int32_t branch_taken;
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  &branch_taken);
+
+    private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_T_file_vals);
+
+
+  return offset;
+}
+
+
+
+static int
+dissect_iec61850_INTEGER(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -2954,9 +3384,9 @@ static const ber_choice_t T_errorClass_choice[] = {
 
 static int
 dissect_iec61850_T_errorClass(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_errorClass_choice, hf_index, ett_iec61850_T_errorClass,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_errorClass_choice, hf_index, ett_iec61850_T_errorClass,
+                                   NULL);
 
   return offset;
 }
@@ -2971,8 +3401,8 @@ static const value_string iec61850_ObtainFile_Error_vals[] = {
 
 static int
 dissect_iec61850_ObtainFile_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -2994,8 +3424,8 @@ static const value_string iec61850_ProgramInvocationState_vals[] = {
 
 static int
 dissect_iec61850_ProgramInvocationState(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -3004,7 +3434,7 @@ dissect_iec61850_ProgramInvocationState(bool implicit_tag _U_, tvbuff_t *tvb _U_
 
 static int
 dissect_iec61850_Start_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ProgramInvocationState(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ProgramInvocationState(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3013,7 +3443,7 @@ dissect_iec61850_Start_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offse
 
 static int
 dissect_iec61850_Stop_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ProgramInvocationState(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ProgramInvocationState(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3022,7 +3452,7 @@ dissect_iec61850_Stop_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 static int
 dissect_iec61850_Resume_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ProgramInvocationState(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ProgramInvocationState(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3031,7 +3461,7 @@ dissect_iec61850_Resume_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offs
 
 static int
 dissect_iec61850_Reset_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ProgramInvocationState(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ProgramInvocationState(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3040,7 +3470,7 @@ dissect_iec61850_Reset_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offse
 
 static int
 dissect_iec61850_DeleteVariableAccess_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3049,7 +3479,7 @@ dissect_iec61850_DeleteVariableAccess_Error(bool implicit_tag _U_, tvbuff_t *tvb
 
 static int
 dissect_iec61850_DeleteNamedVariableList_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3058,7 +3488,7 @@ dissect_iec61850_DeleteNamedVariableList_Error(bool implicit_tag _U_, tvbuff_t *
 
 static int
 dissect_iec61850_DeleteNamedType_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3067,7 +3497,7 @@ dissect_iec61850_DeleteNamedType_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_,
 
 static int
 dissect_iec61850_DefineEventEnrollment_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3082,8 +3512,8 @@ static const value_string iec61850_FileRename_Error_vals[] = {
 
 static int
 dissect_iec61850_FileRename_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -3092,7 +3522,7 @@ dissect_iec61850_FileRename_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 static int
 dissect_iec61850_DefineEventConditionList_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3101,7 +3531,7 @@ dissect_iec61850_DefineEventConditionList_Error(bool implicit_tag _U_, tvbuff_t 
 
 static int
 dissect_iec61850_AddEventConditionListReference_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3121,9 +3551,9 @@ static const ber_choice_t RemoveEventConditionListReference_Error_choice[] = {
 
 static int
 dissect_iec61850_RemoveEventConditionListReference_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 RemoveEventConditionListReference_Error_choice, hf_index, ett_iec61850_RemoveEventConditionListReference_Error,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   RemoveEventConditionListReference_Error_choice, hf_index, ett_iec61850_RemoveEventConditionListReference_Error,
+                                   NULL);
 
   return offset;
 }
@@ -3143,9 +3573,9 @@ static const ber_choice_t InitiateUnitControl_Error_choice[] = {
 
 static int
 dissect_iec61850_InitiateUnitControl_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 InitiateUnitControl_Error_choice, hf_index, ett_iec61850_InitiateUnitControl_Error,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   InitiateUnitControl_Error_choice, hf_index, ett_iec61850_InitiateUnitControl_Error,
+                                   NULL);
 
   return offset;
 }
@@ -3159,8 +3589,8 @@ static const ber_sequence_t StartUnitControl_Error_sequence[] = {
 
 static int
 dissect_iec61850_StartUnitControl_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   StartUnitControl_Error_sequence, hf_index, ett_iec61850_StartUnitControl_Error);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     StartUnitControl_Error_sequence, hf_index, ett_iec61850_StartUnitControl_Error);
 
   return offset;
 }
@@ -3174,8 +3604,8 @@ static const ber_sequence_t StopUnitControl_Error_sequence[] = {
 
 static int
 dissect_iec61850_StopUnitControl_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   StopUnitControl_Error_sequence, hf_index, ett_iec61850_StopUnitControl_Error);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     StopUnitControl_Error_sequence, hf_index, ett_iec61850_StopUnitControl_Error);
 
   return offset;
 }
@@ -3195,9 +3625,9 @@ static const ber_choice_t DeleteUnitControl_Error_choice[] = {
 
 static int
 dissect_iec61850_DeleteUnitControl_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 DeleteUnitControl_Error_choice, hf_index, ett_iec61850_DeleteUnitControl_Error,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   DeleteUnitControl_Error_choice, hf_index, ett_iec61850_DeleteUnitControl_Error,
+                                   NULL);
 
   return offset;
 }
@@ -3219,9 +3649,9 @@ static const ber_choice_t LoadUnitControlFromFile_Error_choice[] = {
 
 static int
 dissect_iec61850_LoadUnitControlFromFile_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 LoadUnitControlFromFile_Error_choice, hf_index, ett_iec61850_LoadUnitControlFromFile_Error,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   LoadUnitControlFromFile_Error_choice, hf_index, ett_iec61850_LoadUnitControlFromFile_Error,
+                                   NULL);
 
   return offset;
 }
@@ -3253,9 +3683,9 @@ static const ber_choice_t AdditionalService_Error_choice[] = {
 
 static int
 dissect_iec61850_AdditionalService_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 AdditionalService_Error_choice, hf_index, ett_iec61850_AdditionalService_Error,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   AdditionalService_Error_choice, hf_index, ett_iec61850_AdditionalService_Error,
+                                   NULL);
 
   return offset;
 }
@@ -3264,7 +3694,7 @@ dissect_iec61850_AdditionalService_Error(bool implicit_tag _U_, tvbuff_t *tvb _U
 
 static int
 dissect_iec61850_ChangeAccessControl_Error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3304,9 +3734,9 @@ static const ber_choice_t T_serviceSpecificInformation_choice[] = {
 
 static int
 dissect_iec61850_T_serviceSpecificInformation(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_serviceSpecificInformation_choice, hf_index, ett_iec61850_T_serviceSpecificInformation,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_serviceSpecificInformation_choice, hf_index, ett_iec61850_T_serviceSpecificInformation,
+                                   NULL);
 
   return offset;
 }
@@ -3322,8 +3752,8 @@ static const ber_sequence_t ServiceError_sequence[] = {
 
 static int
 dissect_iec61850_ServiceError(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   ServiceError_sequence, hf_index, ett_iec61850_ServiceError);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     ServiceError_sequence, hf_index, ett_iec61850_ServiceError);
 
   return offset;
 }
@@ -3337,8 +3767,8 @@ static const ber_sequence_t TerminateDownloadSequence_Request_sequence[] = {
 
 static int
 dissect_iec61850_TerminateDownloadSequence_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   TerminateDownloadSequence_Request_sequence, hf_index, ett_iec61850_TerminateDownloadSequence_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     TerminateDownloadSequence_Request_sequence, hf_index, ett_iec61850_TerminateDownloadSequence_Request);
 
   return offset;
 }
@@ -3347,7 +3777,7 @@ dissect_iec61850_TerminateDownloadSequence_Request(bool implicit_tag _U_, tvbuff
 
 static int
 dissect_iec61850_InitiateUploadSequence_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Identifier(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Identifier(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3356,7 +3786,7 @@ dissect_iec61850_InitiateUploadSequence_Request(bool implicit_tag _U_, tvbuff_t 
 
 static int
 dissect_iec61850_UploadSegment_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Integer32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Integer32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3365,7 +3795,7 @@ dissect_iec61850_UploadSegment_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_,
 
 static int
 dissect_iec61850_TerminateUploadSequence_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Integer32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Integer32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3377,8 +3807,8 @@ static const ber_sequence_t T_listOfCapabilities_03_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfCapabilities_03(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfCapabilities_03_sequence_of, hf_index, ett_iec61850_T_listOfCapabilities_03);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfCapabilities_03_sequence_of, hf_index, ett_iec61850_T_listOfCapabilities_03);
 
   return offset;
 }
@@ -3387,9 +3817,9 @@ dissect_iec61850_T_listOfCapabilities_03(bool implicit_tag _U_, tvbuff_t *tvb _U
 
 static int
 dissect_iec61850_GraphicString(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_GraphicString,
-                                            actx, tree, tvb, offset, hf_index,
-                                            NULL);
+    offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_GraphicString,
+                                              actx, tree, tvb, offset, hf_index,
+                                              NULL);
 
   return offset;
 }
@@ -3401,8 +3831,8 @@ static const ber_sequence_t FileName_sequence_of[1] = {
 
 static int
 dissect_iec61850_FileName(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      FileName_sequence_of, hf_index, ett_iec61850_FileName);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        FileName_sequence_of, hf_index, ett_iec61850_FileName);
 
   return offset;
 }
@@ -3418,8 +3848,8 @@ static const ber_sequence_t RequestDomainDownload_Request_sequence[] = {
 
 static int
 dissect_iec61850_RequestDomainDownload_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   RequestDomainDownload_Request_sequence, hf_index, ett_iec61850_RequestDomainDownload_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     RequestDomainDownload_Request_sequence, hf_index, ett_iec61850_RequestDomainDownload_Request);
 
   return offset;
 }
@@ -3433,8 +3863,8 @@ static const ber_sequence_t RequestDomainUpload_Request_sequence[] = {
 
 static int
 dissect_iec61850_RequestDomainUpload_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   RequestDomainUpload_Request_sequence, hf_index, ett_iec61850_RequestDomainUpload_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     RequestDomainUpload_Request_sequence, hf_index, ett_iec61850_RequestDomainUpload_Request);
 
   return offset;
 }
@@ -3446,8 +3876,8 @@ static const ber_sequence_t T_listOfCapabilities_04_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfCapabilities_04(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfCapabilities_04_sequence_of, hf_index, ett_iec61850_T_listOfCapabilities_04);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfCapabilities_04_sequence_of, hf_index, ett_iec61850_T_listOfCapabilities_04);
 
   return offset;
 }
@@ -3464,8 +3894,8 @@ static const ber_sequence_t LoadDomainContent_Request_sequence[] = {
 
 static int
 dissect_iec61850_LoadDomainContent_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   LoadDomainContent_Request_sequence, hf_index, ett_iec61850_LoadDomainContent_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     LoadDomainContent_Request_sequence, hf_index, ett_iec61850_LoadDomainContent_Request);
 
   return offset;
 }
@@ -3480,8 +3910,8 @@ static const ber_sequence_t StoreDomainContent_Request_sequence[] = {
 
 static int
 dissect_iec61850_StoreDomainContent_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   StoreDomainContent_Request_sequence, hf_index, ett_iec61850_StoreDomainContent_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     StoreDomainContent_Request_sequence, hf_index, ett_iec61850_StoreDomainContent_Request);
 
   return offset;
 }
@@ -3490,7 +3920,7 @@ dissect_iec61850_StoreDomainContent_Request(bool implicit_tag _U_, tvbuff_t *tvb
 
 static int
 dissect_iec61850_DeleteDomain_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Identifier(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Identifier(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3499,7 +3929,7 @@ dissect_iec61850_DeleteDomain_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, 
 
 static int
 dissect_iec61850_GetDomainAttributes_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Identifier(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Identifier(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3511,8 +3941,8 @@ static const ber_sequence_t SEQUENCE_OF_Identifier_sequence_of[1] = {
 
 static int
 dissect_iec61850_SEQUENCE_OF_Identifier(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      SEQUENCE_OF_Identifier_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_Identifier);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        SEQUENCE_OF_Identifier_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_Identifier);
 
   return offset;
 }
@@ -3528,8 +3958,8 @@ static const ber_sequence_t CreateProgramInvocation_Request_sequence[] = {
 
 static int
 dissect_iec61850_CreateProgramInvocation_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   CreateProgramInvocation_Request_sequence, hf_index, ett_iec61850_CreateProgramInvocation_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     CreateProgramInvocation_Request_sequence, hf_index, ett_iec61850_CreateProgramInvocation_Request);
 
   return offset;
 }
@@ -3538,7 +3968,7 @@ dissect_iec61850_CreateProgramInvocation_Request(bool implicit_tag _U_, tvbuff_t
 
 static int
 dissect_iec61850_DeleteProgramInvocation_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Identifier(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Identifier(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3558,9 +3988,9 @@ static const ber_choice_t T_executionArgument_choice[] = {
 
 static int
 dissect_iec61850_T_executionArgument(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_executionArgument_choice, hf_index, ett_iec61850_T_executionArgument,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_executionArgument_choice, hf_index, ett_iec61850_T_executionArgument,
+                                   NULL);
 
   return offset;
 }
@@ -3574,8 +4004,8 @@ static const ber_sequence_t Start_Request_sequence[] = {
 
 static int
 dissect_iec61850_Start_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Start_Request_sequence, hf_index, ett_iec61850_Start_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Start_Request_sequence, hf_index, ett_iec61850_Start_Request);
 
   return offset;
 }
@@ -3588,8 +4018,8 @@ static const ber_sequence_t Stop_Request_sequence[] = {
 
 static int
 dissect_iec61850_Stop_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Stop_Request_sequence, hf_index, ett_iec61850_Stop_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Stop_Request_sequence, hf_index, ett_iec61850_Stop_Request);
 
   return offset;
 }
@@ -3609,9 +4039,9 @@ static const ber_choice_t T_executionArgument_01_choice[] = {
 
 static int
 dissect_iec61850_T_executionArgument_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_executionArgument_01_choice, hf_index, ett_iec61850_T_executionArgument_01,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_executionArgument_01_choice, hf_index, ett_iec61850_T_executionArgument_01,
+                                   NULL);
 
   return offset;
 }
@@ -3625,8 +4055,8 @@ static const ber_sequence_t Resume_Request_sequence[] = {
 
 static int
 dissect_iec61850_Resume_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Resume_Request_sequence, hf_index, ett_iec61850_Resume_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Resume_Request_sequence, hf_index, ett_iec61850_Resume_Request);
 
   return offset;
 }
@@ -3639,8 +4069,8 @@ static const ber_sequence_t Reset_Request_sequence[] = {
 
 static int
 dissect_iec61850_Reset_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Reset_Request_sequence, hf_index, ett_iec61850_Reset_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Reset_Request_sequence, hf_index, ett_iec61850_Reset_Request);
 
   return offset;
 }
@@ -3653,8 +4083,8 @@ static const ber_sequence_t Kill_Request_sequence[] = {
 
 static int
 dissect_iec61850_Kill_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Kill_Request_sequence, hf_index, ett_iec61850_Kill_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Kill_Request_sequence, hf_index, ett_iec61850_Kill_Request);
 
   return offset;
 }
@@ -3663,7 +4093,7 @@ dissect_iec61850_Kill_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offs
 
 static int
 dissect_iec61850_GetProgramInvocationAttributes_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Identifier(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Identifier(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3678,8 +4108,8 @@ static const ber_sequence_t ObtainFile_Request_sequence[] = {
 
 static int
 dissect_iec61850_ObtainFile_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   ObtainFile_Request_sequence, hf_index, ett_iec61850_ObtainFile_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     ObtainFile_Request_sequence, hf_index, ett_iec61850_ObtainFile_Request);
 
   return offset;
 }
@@ -3694,8 +4124,8 @@ static const value_string iec61850_EC_Class_vals[] = {
 
 static int
 dissect_iec61850_EC_Class(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -3714,8 +4144,8 @@ static const ber_sequence_t DefineEventCondition_Request_sequence[] = {
 
 static int
 dissect_iec61850_DefineEventCondition_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DefineEventCondition_Request_sequence, hf_index, ett_iec61850_DefineEventCondition_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DefineEventCondition_Request_sequence, hf_index, ett_iec61850_DefineEventCondition_Request);
 
   return offset;
 }
@@ -3739,9 +4169,9 @@ static const ber_choice_t DeleteEventCondition_Request_choice[] = {
 
 static int
 dissect_iec61850_DeleteEventCondition_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 DeleteEventCondition_Request_choice, hf_index, ett_iec61850_DeleteEventCondition_Request,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   DeleteEventCondition_Request_choice, hf_index, ett_iec61850_DeleteEventCondition_Request,
+                                   NULL);
 
   return offset;
 }
@@ -3750,7 +4180,7 @@ dissect_iec61850_DeleteEventCondition_Request(bool implicit_tag _U_, tvbuff_t *t
 
 static int
 dissect_iec61850_GetEventConditionAttributes_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3759,7 +4189,7 @@ dissect_iec61850_GetEventConditionAttributes_Request(bool implicit_tag _U_, tvbu
 
 static int
 dissect_iec61850_ReportEventConditionStatus_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3776,8 +4206,8 @@ static const ber_sequence_t AlterEventConditionMonitoring_Request_sequence[] = {
 
 static int
 dissect_iec61850_AlterEventConditionMonitoring_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   AlterEventConditionMonitoring_Request_sequence, hf_index, ett_iec61850_AlterEventConditionMonitoring_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     AlterEventConditionMonitoring_Request_sequence, hf_index, ett_iec61850_AlterEventConditionMonitoring_Request);
 
   return offset;
 }
@@ -3791,8 +4221,8 @@ static const ber_sequence_t TriggerEvent_Request_sequence[] = {
 
 static int
 dissect_iec61850_TriggerEvent_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   TriggerEvent_Request_sequence, hf_index, ett_iec61850_TriggerEvent_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     TriggerEvent_Request_sequence, hf_index, ett_iec61850_TriggerEvent_Request);
 
   return offset;
 }
@@ -3806,8 +4236,8 @@ static const ber_sequence_t DefineEventAction_Request_sequence[] = {
 
 static int
 dissect_iec61850_DefineEventAction_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DefineEventAction_Request_sequence, hf_index, ett_iec61850_DefineEventAction_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DefineEventAction_Request_sequence, hf_index, ett_iec61850_DefineEventAction_Request);
 
   return offset;
 }
@@ -3831,9 +4261,9 @@ static const ber_choice_t DeleteEventAction_Request_choice[] = {
 
 static int
 dissect_iec61850_DeleteEventAction_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 DeleteEventAction_Request_choice, hf_index, ett_iec61850_DeleteEventAction_Request,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   DeleteEventAction_Request_choice, hf_index, ett_iec61850_DeleteEventAction_Request,
+                                   NULL);
 
   return offset;
 }
@@ -3842,7 +4272,7 @@ dissect_iec61850_DeleteEventAction_Request(bool implicit_tag _U_, tvbuff_t *tvb 
 
 static int
 dissect_iec61850_GetEventActionAttributes_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3851,7 +4281,7 @@ dissect_iec61850_GetEventActionAttributes_Request(bool implicit_tag _U_, tvbuff_
 
 static int
 dissect_iec61850_ReportEventActionStatus_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3868,8 +4298,8 @@ static const value_string iec61850_AlarmAckRule_vals[] = {
 
 static int
 dissect_iec61850_AlarmAckRule(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -3887,8 +4317,8 @@ static const ber_sequence_t DefineEventEnrollment_Request_sequence[] = {
 
 static int
 dissect_iec61850_DefineEventEnrollment_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DefineEventEnrollment_Request_sequence, hf_index, ett_iec61850_DefineEventEnrollment_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DefineEventEnrollment_Request_sequence, hf_index, ett_iec61850_DefineEventEnrollment_Request);
 
   return offset;
 }
@@ -3910,9 +4340,9 @@ static const ber_choice_t DeleteEventEnrollment_Request_choice[] = {
 
 static int
 dissect_iec61850_DeleteEventEnrollment_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 DeleteEventEnrollment_Request_choice, hf_index, ett_iec61850_DeleteEventEnrollment_Request,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   DeleteEventEnrollment_Request_choice, hf_index, ett_iec61850_DeleteEventEnrollment_Request,
+                                   NULL);
 
   return offset;
 }
@@ -3927,8 +4357,8 @@ static const ber_sequence_t AlterEventEnrollment_Request_sequence[] = {
 
 static int
 dissect_iec61850_AlterEventEnrollment_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   AlterEventEnrollment_Request_sequence, hf_index, ett_iec61850_AlterEventEnrollment_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     AlterEventEnrollment_Request_sequence, hf_index, ett_iec61850_AlterEventEnrollment_Request);
 
   return offset;
 }
@@ -3937,7 +4367,7 @@ dissect_iec61850_AlterEventEnrollment_Request(bool implicit_tag _U_, tvbuff_t *t
 
 static int
 dissect_iec61850_ReportEventEnrollmentStatus_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -3954,8 +4384,8 @@ static const value_string iec61850_T_scopeOfRequest_vals[] = {
 
 static int
 dissect_iec61850_T_scopeOfRequest(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -3973,8 +4403,8 @@ static const ber_sequence_t GetEventEnrollmentAttributes_Request_sequence[] = {
 
 static int
 dissect_iec61850_GetEventEnrollmentAttributes_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetEventEnrollmentAttributes_Request_sequence, hf_index, ett_iec61850_GetEventEnrollmentAttributes_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetEventEnrollmentAttributes_Request_sequence, hf_index, ett_iec61850_GetEventEnrollmentAttributes_Request);
 
   return offset;
 }
@@ -3990,8 +4420,8 @@ static const value_string iec61850_EC_State_vals[] = {
 
 static int
 dissect_iec61850_EC_State(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -4011,9 +4441,9 @@ static const ber_choice_t EventTime_choice[] = {
 
 static int
 dissect_iec61850_EventTime(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 EventTime_choice, hf_index, ett_iec61850_EventTime,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   EventTime_choice, hf_index, ett_iec61850_EventTime,
+                                   NULL);
 
   return offset;
 }
@@ -4028,8 +4458,8 @@ static const ber_sequence_t AcknowledgeEventNotification_Request_sequence[] = {
 
 static int
 dissect_iec61850_AcknowledgeEventNotification_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   AcknowledgeEventNotification_Request_sequence, hf_index, ett_iec61850_AcknowledgeEventNotification_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     AcknowledgeEventNotification_Request_sequence, hf_index, ett_iec61850_AcknowledgeEventNotification_Request);
 
   return offset;
 }
@@ -4045,8 +4475,8 @@ static const value_string iec61850_T_acknowledgmentFilter_vals[] = {
 
 static int
 dissect_iec61850_T_acknowledgmentFilter(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -4060,8 +4490,8 @@ static const ber_sequence_t T_severityFilter_sequence[] = {
 
 static int
 dissect_iec61850_T_severityFilter(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_severityFilter_sequence, hf_index, ett_iec61850_T_severityFilter);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_severityFilter_sequence, hf_index, ett_iec61850_T_severityFilter);
 
   return offset;
 }
@@ -4078,8 +4508,8 @@ static const ber_sequence_t GetAlarmSummary_Request_sequence[] = {
 
 static int
 dissect_iec61850_GetAlarmSummary_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetAlarmSummary_Request_sequence, hf_index, ett_iec61850_GetAlarmSummary_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetAlarmSummary_Request_sequence, hf_index, ett_iec61850_GetAlarmSummary_Request);
 
   return offset;
 }
@@ -4095,8 +4525,8 @@ static const value_string iec61850_T_acknowledgmentFilter_01_vals[] = {
 
 static int
 dissect_iec61850_T_acknowledgmentFilter_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -4110,8 +4540,8 @@ static const ber_sequence_t T_severityFilter_01_sequence[] = {
 
 static int
 dissect_iec61850_T_severityFilter_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_severityFilter_01_sequence, hf_index, ett_iec61850_T_severityFilter_01);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_severityFilter_01_sequence, hf_index, ett_iec61850_T_severityFilter_01);
 
   return offset;
 }
@@ -4128,8 +4558,8 @@ static const ber_sequence_t GetAlarmEnrollmentSummary_Request_sequence[] = {
 
 static int
 dissect_iec61850_GetAlarmEnrollmentSummary_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetAlarmEnrollmentSummary_Request_sequence, hf_index, ett_iec61850_GetAlarmEnrollmentSummary_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetAlarmEnrollmentSummary_Request_sequence, hf_index, ett_iec61850_GetAlarmEnrollmentSummary_Request);
 
   return offset;
 }
@@ -4149,9 +4579,9 @@ static const ber_choice_t T_rangeStartSpecification_choice[] = {
 
 static int
 dissect_iec61850_T_rangeStartSpecification(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_rangeStartSpecification_choice, hf_index, ett_iec61850_T_rangeStartSpecification,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_rangeStartSpecification_choice, hf_index, ett_iec61850_T_rangeStartSpecification,
+                                   NULL);
 
   return offset;
 }
@@ -4171,9 +4601,9 @@ static const ber_choice_t T_rangeStopSpecification_choice[] = {
 
 static int
 dissect_iec61850_T_rangeStopSpecification(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_rangeStopSpecification_choice, hf_index, ett_iec61850_T_rangeStopSpecification,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_rangeStopSpecification_choice, hf_index, ett_iec61850_T_rangeStopSpecification,
+                                   NULL);
 
   return offset;
 }
@@ -4185,8 +4615,8 @@ static const ber_sequence_t T_listOfVariables_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfVariables(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfVariables_sequence_of, hf_index, ett_iec61850_T_listOfVariables);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfVariables_sequence_of, hf_index, ett_iec61850_T_listOfVariables);
 
   return offset;
 }
@@ -4200,8 +4630,8 @@ static const ber_sequence_t T_entryToStartAfter_sequence[] = {
 
 static int
 dissect_iec61850_T_entryToStartAfter(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_entryToStartAfter_sequence, hf_index, ett_iec61850_T_entryToStartAfter);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_entryToStartAfter_sequence, hf_index, ett_iec61850_T_entryToStartAfter);
 
   return offset;
 }
@@ -4218,8 +4648,8 @@ static const ber_sequence_t ReadJournal_Request_sequence[] = {
 
 static int
 dissect_iec61850_ReadJournal_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   ReadJournal_Request_sequence, hf_index, ett_iec61850_ReadJournal_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     ReadJournal_Request_sequence, hf_index, ett_iec61850_ReadJournal_Request);
 
   return offset;
 }
@@ -4228,7 +4658,7 @@ dissect_iec61850_ReadJournal_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, i
 
 static int
 dissect_iec61850_JOU_Additional_Detail(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -4242,8 +4672,8 @@ static const ber_sequence_t T_event_sequence[] = {
 
 static int
 dissect_iec61850_T_event(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_event_sequence, hf_index, ett_iec61850_T_event);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_event_sequence, hf_index, ett_iec61850_T_event);
 
   return offset;
 }
@@ -4257,8 +4687,8 @@ static const ber_sequence_t T_listOfVariables_item_sequence[] = {
 
 static int
 dissect_iec61850_T_listOfVariables_item(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_listOfVariables_item_sequence, hf_index, ett_iec61850_T_listOfVariables_item);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_listOfVariables_item_sequence, hf_index, ett_iec61850_T_listOfVariables_item);
 
   return offset;
 }
@@ -4270,8 +4700,8 @@ static const ber_sequence_t T_listOfVariables_01_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfVariables_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfVariables_01_sequence_of, hf_index, ett_iec61850_T_listOfVariables_01);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfVariables_01_sequence_of, hf_index, ett_iec61850_T_listOfVariables_01);
 
   return offset;
 }
@@ -4285,8 +4715,8 @@ static const ber_sequence_t T_data_sequence[] = {
 
 static int
 dissect_iec61850_T_data(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_data_sequence, hf_index, ett_iec61850_T_data);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_data_sequence, hf_index, ett_iec61850_T_data);
 
   return offset;
 }
@@ -4306,9 +4736,9 @@ static const ber_choice_t T_entryForm_choice[] = {
 
 static int
 dissect_iec61850_T_entryForm(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_entryForm_choice, hf_index, ett_iec61850_T_entryForm,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_entryForm_choice, hf_index, ett_iec61850_T_entryForm,
+                                   NULL);
 
   return offset;
 }
@@ -4323,8 +4753,8 @@ static const ber_sequence_t EntryContent_sequence[] = {
 
 static int
 dissect_iec61850_EntryContent(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   EntryContent_sequence, hf_index, ett_iec61850_EntryContent);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     EntryContent_sequence, hf_index, ett_iec61850_EntryContent);
 
   return offset;
 }
@@ -4336,8 +4766,8 @@ static const ber_sequence_t SEQUENCE_OF_EntryContent_sequence_of[1] = {
 
 static int
 dissect_iec61850_SEQUENCE_OF_EntryContent(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      SEQUENCE_OF_EntryContent_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_EntryContent);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        SEQUENCE_OF_EntryContent_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_EntryContent);
 
   return offset;
 }
@@ -4351,8 +4781,8 @@ static const ber_sequence_t WriteJournal_Request_sequence[] = {
 
 static int
 dissect_iec61850_WriteJournal_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   WriteJournal_Request_sequence, hf_index, ett_iec61850_WriteJournal_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     WriteJournal_Request_sequence, hf_index, ett_iec61850_WriteJournal_Request);
 
   return offset;
 }
@@ -4366,8 +4796,8 @@ static const ber_sequence_t T_limitSpecification_sequence[] = {
 
 static int
 dissect_iec61850_T_limitSpecification(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_limitSpecification_sequence, hf_index, ett_iec61850_T_limitSpecification);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_limitSpecification_sequence, hf_index, ett_iec61850_T_limitSpecification);
 
   return offset;
 }
@@ -4381,8 +4811,8 @@ static const ber_sequence_t InitializeJournal_Request_sequence[] = {
 
 static int
 dissect_iec61850_InitializeJournal_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   InitializeJournal_Request_sequence, hf_index, ett_iec61850_InitializeJournal_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     InitializeJournal_Request_sequence, hf_index, ett_iec61850_InitializeJournal_Request);
 
   return offset;
 }
@@ -4391,7 +4821,7 @@ dissect_iec61850_InitializeJournal_Request(bool implicit_tag _U_, tvbuff_t *tvb 
 
 static int
 dissect_iec61850_ReportJournalStatus_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ObjectName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -4404,8 +4834,8 @@ static const ber_sequence_t CreateJournal_Request_sequence[] = {
 
 static int
 dissect_iec61850_CreateJournal_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   CreateJournal_Request_sequence, hf_index, ett_iec61850_CreateJournal_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     CreateJournal_Request_sequence, hf_index, ett_iec61850_CreateJournal_Request);
 
   return offset;
 }
@@ -4418,8 +4848,8 @@ static const ber_sequence_t DeleteJournal_Request_sequence[] = {
 
 static int
 dissect_iec61850_DeleteJournal_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DeleteJournal_Request_sequence, hf_index, ett_iec61850_DeleteJournal_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DeleteJournal_Request_sequence, hf_index, ett_iec61850_DeleteJournal_Request);
 
   return offset;
 }
@@ -4432,8 +4862,8 @@ static const ber_sequence_t GetCapabilityList_Request_sequence[] = {
 
 static int
 dissect_iec61850_GetCapabilityList_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetCapabilityList_Request_sequence, hf_index, ett_iec61850_GetCapabilityList_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetCapabilityList_Request_sequence, hf_index, ett_iec61850_GetCapabilityList_Request);
 
   return offset;
 }
@@ -4447,8 +4877,8 @@ static const ber_sequence_t FileOpen_Request_sequence[] = {
 
 static int
 dissect_iec61850_FileOpen_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   FileOpen_Request_sequence, hf_index, ett_iec61850_FileOpen_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     FileOpen_Request_sequence, hf_index, ett_iec61850_FileOpen_Request);
 
   return offset;
 }
@@ -4457,7 +4887,7 @@ dissect_iec61850_FileOpen_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 static int
 dissect_iec61850_FileRead_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Integer32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Integer32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -4466,7 +4896,7 @@ dissect_iec61850_FileRead_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 static int
 dissect_iec61850_FileClose_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Integer32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Integer32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -4480,8 +4910,8 @@ static const ber_sequence_t FileRename_Request_sequence[] = {
 
 static int
 dissect_iec61850_FileRename_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   FileRename_Request_sequence, hf_index, ett_iec61850_FileRename_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     FileRename_Request_sequence, hf_index, ett_iec61850_FileRename_Request);
 
   return offset;
 }
@@ -4490,7 +4920,7 @@ dissect_iec61850_FileRename_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, in
 
 static int
 dissect_iec61850_FileDelete_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_FileName(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_FileName(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -4504,8 +4934,8 @@ static const ber_sequence_t FileDirectory_Request_sequence[] = {
 
 static int
 dissect_iec61850_FileDirectory_Request(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   FileDirectory_Request_sequence, hf_index, ett_iec61850_FileDirectory_Request);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     FileDirectory_Request_sequence, hf_index, ett_iec61850_FileDirectory_Request);
 
   return offset;
 }
@@ -4677,14 +5107,14 @@ static const ber_choice_t ConfirmedServiceRequest_choice[] = {
 
 static int
 dissect_iec61850_ConfirmedServiceRequest(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-	gint branch_taken;
+    int32_t branch_taken;
 
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 ConfirmedServiceRequest_choice, hf_index, ett_iec61850_ConfirmedServiceRequest,
-                                 &branch_taken);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   ConfirmedServiceRequest_choice, hf_index, ett_iec61850_ConfirmedServiceRequest,
+                                   &branch_taken);
 
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->Service = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->Service = branch_taken;
 
 
   return offset;
@@ -4703,9 +5133,9 @@ static const ber_choice_t CS_Request_Detail_choice[] = {
 
 static int
 dissect_iec61850_CS_Request_Detail(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 CS_Request_Detail_choice, hf_index, ett_iec61850_CS_Request_Detail,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   CS_Request_Detail_choice, hf_index, ett_iec61850_CS_Request_Detail,
+                                   NULL);
 
   return offset;
 }
@@ -4721,8 +5151,8 @@ static const ber_sequence_t Confirmed_RequestPDU_sequence[] = {
 
 static int
 dissect_iec61850_Confirmed_RequestPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Confirmed_RequestPDU_sequence, hf_index, ett_iec61850_Confirmed_RequestPDU);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Confirmed_RequestPDU_sequence, hf_index, ett_iec61850_Confirmed_RequestPDU);
 
   return offset;
 }
@@ -4739,8 +5169,8 @@ static const value_string iec61850_T_vmdLogicalStatus_vals[] = {
 
 static int
 dissect_iec61850_T_vmdLogicalStatus(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -4757,8 +5187,8 @@ static const value_string iec61850_T_vmdPhysicalStatus_vals[] = {
 
 static int
 dissect_iec61850_T_vmdPhysicalStatus(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -4767,9 +5197,9 @@ dissect_iec61850_T_vmdPhysicalStatus(bool implicit_tag _U_, tvbuff_t *tvb _U_, i
 
 static int
 dissect_iec61850_BIT_STRING_SIZE_0_128(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
-                                    NULL, 0, hf_index, -1,
-                                    NULL);
+    offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
+                                      NULL, 0, hf_index, -1,
+                                      NULL);
 
   return offset;
 }
@@ -4784,8 +5214,8 @@ static const ber_sequence_t Status_Response_sequence[] = {
 
 static int
 dissect_iec61850_Status_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Status_Response_sequence, hf_index, ett_iec61850_Status_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Status_Response_sequence, hf_index, ett_iec61850_Status_Response);
 
   return offset;
 }
@@ -4799,8 +5229,8 @@ static const ber_sequence_t GetNameList_Response_sequence[] = {
 
 static int
 dissect_iec61850_GetNameList_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetNameList_Response_sequence, hf_index, ett_iec61850_GetNameList_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetNameList_Response_sequence, hf_index, ett_iec61850_GetNameList_Response);
 
   return offset;
 }
@@ -4812,8 +5242,8 @@ static const ber_sequence_t T_listOfAbstractSyntaxes_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfAbstractSyntaxes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfAbstractSyntaxes_sequence_of, hf_index, ett_iec61850_T_listOfAbstractSyntaxes);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfAbstractSyntaxes_sequence_of, hf_index, ett_iec61850_T_listOfAbstractSyntaxes);
 
   return offset;
 }
@@ -4829,8 +5259,8 @@ static const ber_sequence_t Identify_Response_sequence[] = {
 
 static int
 dissect_iec61850_Identify_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Identify_Response_sequence, hf_index, ett_iec61850_Identify_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Identify_Response_sequence, hf_index, ett_iec61850_Identify_Response);
 
   return offset;
 }
@@ -4839,7 +5269,7 @@ dissect_iec61850_Identify_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int
 
 static int
 dissect_iec61850_Rename_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -4864,8 +5294,15 @@ static const value_string iec61850_DataAccessError_vals[] = {
 
 static int
 dissect_iec61850_DataAccessError(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    int32_t branch_taken;
+
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  &branch_taken);
+
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->DataAccessError = branch_taken;
+    private_data_add_moreCinfo_enum(actx, branch_taken, iec61850_DataAccessError_vals);
+
 
   return offset;
 }
@@ -4885,9 +5322,15 @@ static const ber_choice_t AccessResult_choice[] = {
 
 static int
 dissect_iec61850_AccessResult(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 AccessResult_choice, hf_index, ett_iec61850_AccessResult,
-                                 NULL);
+    int32_t branch_taken;
+
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   AccessResult_choice, hf_index, ett_iec61850_AccessResult,
+                                   &branch_taken);
+
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->Success = branch_taken;
+
 
   return offset;
 }
@@ -4899,8 +5342,8 @@ static const ber_sequence_t SEQUENCE_OF_AccessResult_sequence_of[1] = {
 
 static int
 dissect_iec61850_SEQUENCE_OF_AccessResult(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      SEQUENCE_OF_AccessResult_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_AccessResult);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        SEQUENCE_OF_AccessResult_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_AccessResult);
 
   return offset;
 }
@@ -4914,8 +5357,8 @@ static const ber_sequence_t Read_Response_sequence[] = {
 
 static int
 dissect_iec61850_Read_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Read_Response_sequence, hf_index, ett_iec61850_Read_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Read_Response_sequence, hf_index, ett_iec61850_Read_Response);
 
   return offset;
 }
@@ -4935,9 +5378,15 @@ static const ber_choice_t Write_Response_item_choice[] = {
 
 static int
 dissect_iec61850_Write_Response_item(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 Write_Response_item_choice, hf_index, ett_iec61850_Write_Response_item,
-                                 NULL);
+    int32_t branch_taken;
+
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   Write_Response_item_choice, hf_index, ett_iec61850_Write_Response_item,
+                                   &branch_taken);
+
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->Success = branch_taken;
+
 
   return offset;
 }
@@ -4949,8 +5398,8 @@ static const ber_sequence_t Write_Response_sequence_of[1] = {
 
 static int
 dissect_iec61850_Write_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      Write_Response_sequence_of, hf_index, ett_iec61850_Write_Response);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        Write_Response_sequence_of, hf_index, ett_iec61850_Write_Response);
 
   return offset;
 }
@@ -4965,8 +5414,8 @@ static const ber_sequence_t GetVariableAccessAttributes_Response_sequence[] = {
 
 static int
 dissect_iec61850_GetVariableAccessAttributes_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetVariableAccessAttributes_Response_sequence, hf_index, ett_iec61850_GetVariableAccessAttributes_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetVariableAccessAttributes_Response_sequence, hf_index, ett_iec61850_GetVariableAccessAttributes_Response);
 
   return offset;
 }
@@ -4975,7 +5424,7 @@ dissect_iec61850_GetVariableAccessAttributes_Response(bool implicit_tag _U_, tvb
 
 static int
 dissect_iec61850_DefineNamedVariable_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -4984,7 +5433,7 @@ dissect_iec61850_DefineNamedVariable_Response(bool implicit_tag _U_, tvbuff_t *t
 
 static int
 dissect_iec61850_DefineScatteredAccess_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -4998,8 +5447,8 @@ static const ber_sequence_t GetScatteredAccessAttributes_Response_sequence[] = {
 
 static int
 dissect_iec61850_GetScatteredAccessAttributes_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetScatteredAccessAttributes_Response_sequence, hf_index, ett_iec61850_GetScatteredAccessAttributes_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetScatteredAccessAttributes_Response_sequence, hf_index, ett_iec61850_GetScatteredAccessAttributes_Response);
 
   return offset;
 }
@@ -5013,8 +5462,8 @@ static const ber_sequence_t DeleteVariableAccess_Response_sequence[] = {
 
 static int
 dissect_iec61850_DeleteVariableAccess_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DeleteVariableAccess_Response_sequence, hf_index, ett_iec61850_DeleteVariableAccess_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DeleteVariableAccess_Response_sequence, hf_index, ett_iec61850_DeleteVariableAccess_Response);
 
   return offset;
 }
@@ -5023,7 +5472,7 @@ dissect_iec61850_DeleteVariableAccess_Response(bool implicit_tag _U_, tvbuff_t *
 
 static int
 dissect_iec61850_DefineNamedVariableList_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5037,8 +5486,8 @@ static const ber_sequence_t T_listOfVariable_item_01_sequence[] = {
 
 static int
 dissect_iec61850_T_listOfVariable_item_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_listOfVariable_item_01_sequence, hf_index, ett_iec61850_T_listOfVariable_item_01);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_listOfVariable_item_01_sequence, hf_index, ett_iec61850_T_listOfVariable_item_01);
 
   return offset;
 }
@@ -5050,8 +5499,8 @@ static const ber_sequence_t T_listOfVariable_01_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfVariable_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfVariable_01_sequence_of, hf_index, ett_iec61850_T_listOfVariable_01);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfVariable_01_sequence_of, hf_index, ett_iec61850_T_listOfVariable_01);
 
   return offset;
 }
@@ -5065,8 +5514,8 @@ static const ber_sequence_t GetNamedVariableListAttributes_Response_sequence[] =
 
 static int
 dissect_iec61850_GetNamedVariableListAttributes_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetNamedVariableListAttributes_Response_sequence, hf_index, ett_iec61850_GetNamedVariableListAttributes_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetNamedVariableListAttributes_Response_sequence, hf_index, ett_iec61850_GetNamedVariableListAttributes_Response);
 
   return offset;
 }
@@ -5080,8 +5529,8 @@ static const ber_sequence_t DeleteNamedVariableList_Response_sequence[] = {
 
 static int
 dissect_iec61850_DeleteNamedVariableList_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DeleteNamedVariableList_Response_sequence, hf_index, ett_iec61850_DeleteNamedVariableList_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DeleteNamedVariableList_Response_sequence, hf_index, ett_iec61850_DeleteNamedVariableList_Response);
 
   return offset;
 }
@@ -5090,7 +5539,7 @@ dissect_iec61850_DeleteNamedVariableList_Response(bool implicit_tag _U_, tvbuff_
 
 static int
 dissect_iec61850_DefineNamedType_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5104,8 +5553,8 @@ static const ber_sequence_t GetNamedTypeAttributes_Response_sequence[] = {
 
 static int
 dissect_iec61850_GetNamedTypeAttributes_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetNamedTypeAttributes_Response_sequence, hf_index, ett_iec61850_GetNamedTypeAttributes_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetNamedTypeAttributes_Response_sequence, hf_index, ett_iec61850_GetNamedTypeAttributes_Response);
 
   return offset;
 }
@@ -5119,8 +5568,8 @@ static const ber_sequence_t DeleteNamedType_Response_sequence[] = {
 
 static int
 dissect_iec61850_DeleteNamedType_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DeleteNamedType_Response_sequence, hf_index, ett_iec61850_DeleteNamedType_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DeleteNamedType_Response_sequence, hf_index, ett_iec61850_DeleteNamedType_Response);
 
   return offset;
 }
@@ -5129,9 +5578,9 @@ dissect_iec61850_DeleteNamedType_Response(bool implicit_tag _U_, tvbuff_t *tvb _
 
 static int
 dissect_iec61850_Input_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_VisibleString,
-                                            actx, tree, tvb, offset, hf_index,
-                                            NULL);
+    offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_VisibleString,
+                                              actx, tree, tvb, offset, hf_index,
+                                              NULL);
 
   return offset;
 }
@@ -5140,7 +5589,7 @@ dissect_iec61850_Input_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int of
 
 static int
 dissect_iec61850_Output_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5160,9 +5609,9 @@ static const ber_choice_t TakeControl_Response_choice[] = {
 
 static int
 dissect_iec61850_TakeControl_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 TakeControl_Response_choice, hf_index, ett_iec61850_TakeControl_Response,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   TakeControl_Response_choice, hf_index, ett_iec61850_TakeControl_Response,
+                                   NULL);
 
   return offset;
 }
@@ -5171,7 +5620,7 @@ dissect_iec61850_TakeControl_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, 
 
 static int
 dissect_iec61850_RelinquishControl_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5180,7 +5629,7 @@ dissect_iec61850_RelinquishControl_Response(bool implicit_tag _U_, tvbuff_t *tvb
 
 static int
 dissect_iec61850_DefineSemaphore_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5189,7 +5638,7 @@ dissect_iec61850_DefineSemaphore_Response(bool implicit_tag _U_, tvbuff_t *tvb _
 
 static int
 dissect_iec61850_DeleteSemaphore_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5204,8 +5653,8 @@ static const value_string iec61850_T_class_vals[] = {
 
 static int
 dissect_iec61850_T_class(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -5222,8 +5671,8 @@ static const ber_sequence_t ReportSemaphoreStatus_Response_sequence[] = {
 
 static int
 dissect_iec61850_ReportSemaphoreStatus_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   ReportSemaphoreStatus_Response_sequence, hf_index, ett_iec61850_ReportSemaphoreStatus_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     ReportSemaphoreStatus_Response_sequence, hf_index, ett_iec61850_ReportSemaphoreStatus_Response);
 
   return offset;
 }
@@ -5245,9 +5694,9 @@ static const ber_choice_t T_listOfNamedTokens_item_choice[] = {
 
 static int
 dissect_iec61850_T_listOfNamedTokens_item(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_listOfNamedTokens_item_choice, hf_index, ett_iec61850_T_listOfNamedTokens_item,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_listOfNamedTokens_item_choice, hf_index, ett_iec61850_T_listOfNamedTokens_item,
+                                   NULL);
 
   return offset;
 }
@@ -5259,8 +5708,8 @@ static const ber_sequence_t T_listOfNamedTokens_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfNamedTokens(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfNamedTokens_sequence_of, hf_index, ett_iec61850_T_listOfNamedTokens);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfNamedTokens_sequence_of, hf_index, ett_iec61850_T_listOfNamedTokens);
 
   return offset;
 }
@@ -5274,8 +5723,8 @@ static const ber_sequence_t ReportPoolSemaphoreStatus_Response_sequence[] = {
 
 static int
 dissect_iec61850_ReportPoolSemaphoreStatus_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   ReportPoolSemaphoreStatus_Response_sequence, hf_index, ett_iec61850_ReportPoolSemaphoreStatus_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     ReportPoolSemaphoreStatus_Response_sequence, hf_index, ett_iec61850_ReportPoolSemaphoreStatus_Response);
 
   return offset;
 }
@@ -5290,8 +5739,8 @@ static const value_string iec61850_T_entryClass_vals[] = {
 
 static int
 dissect_iec61850_T_entryClass(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -5311,8 +5760,8 @@ static const ber_sequence_t SemaphoreEntry_sequence[] = {
 
 static int
 dissect_iec61850_SemaphoreEntry(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   SemaphoreEntry_sequence, hf_index, ett_iec61850_SemaphoreEntry);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     SemaphoreEntry_sequence, hf_index, ett_iec61850_SemaphoreEntry);
 
   return offset;
 }
@@ -5324,8 +5773,8 @@ static const ber_sequence_t SEQUENCE_OF_SemaphoreEntry_sequence_of[1] = {
 
 static int
 dissect_iec61850_SEQUENCE_OF_SemaphoreEntry(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      SEQUENCE_OF_SemaphoreEntry_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_SemaphoreEntry);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        SEQUENCE_OF_SemaphoreEntry_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_SemaphoreEntry);
 
   return offset;
 }
@@ -5339,8 +5788,8 @@ static const ber_sequence_t ReportSemaphoreEntryStatus_Response_sequence[] = {
 
 static int
 dissect_iec61850_ReportSemaphoreEntryStatus_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   ReportSemaphoreEntryStatus_Response_sequence, hf_index, ett_iec61850_ReportSemaphoreEntryStatus_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     ReportSemaphoreEntryStatus_Response_sequence, hf_index, ett_iec61850_ReportSemaphoreEntryStatus_Response);
 
   return offset;
 }
@@ -5349,7 +5798,7 @@ dissect_iec61850_ReportSemaphoreEntryStatus_Response(bool implicit_tag _U_, tvbu
 
 static int
 dissect_iec61850_InitiateDownloadSequence_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5369,9 +5818,9 @@ static const ber_choice_t T_loadData_choice[] = {
 
 static int
 dissect_iec61850_T_loadData(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_loadData_choice, hf_index, ett_iec61850_T_loadData,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_loadData_choice, hf_index, ett_iec61850_T_loadData,
+                                   NULL);
 
   return offset;
 }
@@ -5385,8 +5834,8 @@ static const ber_sequence_t DownloadSegment_Response_sequence[] = {
 
 static int
 dissect_iec61850_DownloadSegment_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DownloadSegment_Response_sequence, hf_index, ett_iec61850_DownloadSegment_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DownloadSegment_Response_sequence, hf_index, ett_iec61850_DownloadSegment_Response);
 
   return offset;
 }
@@ -5395,7 +5844,7 @@ dissect_iec61850_DownloadSegment_Response(bool implicit_tag _U_, tvbuff_t *tvb _
 
 static int
 dissect_iec61850_TerminateDownloadSequence_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5407,8 +5856,8 @@ static const ber_sequence_t T_listOfCapabilities_02_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfCapabilities_02(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfCapabilities_02_sequence_of, hf_index, ett_iec61850_T_listOfCapabilities_02);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfCapabilities_02_sequence_of, hf_index, ett_iec61850_T_listOfCapabilities_02);
 
   return offset;
 }
@@ -5422,8 +5871,8 @@ static const ber_sequence_t InitiateUploadSequence_Response_sequence[] = {
 
 static int
 dissect_iec61850_InitiateUploadSequence_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   InitiateUploadSequence_Response_sequence, hf_index, ett_iec61850_InitiateUploadSequence_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     InitiateUploadSequence_Response_sequence, hf_index, ett_iec61850_InitiateUploadSequence_Response);
 
   return offset;
 }
@@ -5443,9 +5892,9 @@ static const ber_choice_t T_loadData_01_choice[] = {
 
 static int
 dissect_iec61850_T_loadData_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_loadData_01_choice, hf_index, ett_iec61850_T_loadData_01,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_loadData_01_choice, hf_index, ett_iec61850_T_loadData_01,
+                                   NULL);
 
   return offset;
 }
@@ -5459,8 +5908,8 @@ static const ber_sequence_t UploadSegment_Response_sequence[] = {
 
 static int
 dissect_iec61850_UploadSegment_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   UploadSegment_Response_sequence, hf_index, ett_iec61850_UploadSegment_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     UploadSegment_Response_sequence, hf_index, ett_iec61850_UploadSegment_Response);
 
   return offset;
 }
@@ -5469,7 +5918,7 @@ dissect_iec61850_UploadSegment_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_
 
 static int
 dissect_iec61850_TerminateUploadSequence_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5478,7 +5927,7 @@ dissect_iec61850_TerminateUploadSequence_Response(bool implicit_tag _U_, tvbuff_
 
 static int
 dissect_iec61850_RequestDomainDownload_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5487,7 +5936,7 @@ dissect_iec61850_RequestDomainDownload_Response(bool implicit_tag _U_, tvbuff_t 
 
 static int
 dissect_iec61850_RequestDomainUpload_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5496,7 +5945,7 @@ dissect_iec61850_RequestDomainUpload_Response(bool implicit_tag _U_, tvbuff_t *t
 
 static int
 dissect_iec61850_LoadDomainContent_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5505,7 +5954,7 @@ dissect_iec61850_LoadDomainContent_Response(bool implicit_tag _U_, tvbuff_t *tvb
 
 static int
 dissect_iec61850_StoreDomainContent_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5514,7 +5963,7 @@ dissect_iec61850_StoreDomainContent_Response(bool implicit_tag _U_, tvbuff_t *tv
 
 static int
 dissect_iec61850_DeleteDomain_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5526,8 +5975,8 @@ static const ber_sequence_t T_listOfCapabilities_05_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfCapabilities_05(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfCapabilities_05_sequence_of, hf_index, ett_iec61850_T_listOfCapabilities_05);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfCapabilities_05_sequence_of, hf_index, ett_iec61850_T_listOfCapabilities_05);
 
   return offset;
 }
@@ -5555,8 +6004,8 @@ static const value_string iec61850_DomainState_vals[] = {
 
 static int
 dissect_iec61850_DomainState(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -5565,8 +6014,8 @@ dissect_iec61850_DomainState(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offse
 
 static int
 dissect_iec61850_Integer8(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -5584,8 +6033,8 @@ static const ber_sequence_t GetDomainAttributes_Response_sequence[] = {
 
 static int
 dissect_iec61850_GetDomainAttributes_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetDomainAttributes_Response_sequence, hf_index, ett_iec61850_GetDomainAttributes_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetDomainAttributes_Response_sequence, hf_index, ett_iec61850_GetDomainAttributes_Response);
 
   return offset;
 }
@@ -5594,7 +6043,7 @@ dissect_iec61850_GetDomainAttributes_Response(bool implicit_tag _U_, tvbuff_t *t
 
 static int
 dissect_iec61850_CreateProgramInvocation_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5603,7 +6052,7 @@ dissect_iec61850_CreateProgramInvocation_Response(bool implicit_tag _U_, tvbuff_
 
 static int
 dissect_iec61850_DeleteProgramInvocation_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5612,7 +6061,7 @@ dissect_iec61850_DeleteProgramInvocation_Response(bool implicit_tag _U_, tvbuff_
 
 static int
 dissect_iec61850_Start_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5621,7 +6070,7 @@ dissect_iec61850_Start_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int of
 
 static int
 dissect_iec61850_Stop_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5630,7 +6079,7 @@ dissect_iec61850_Stop_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int off
 
 static int
 dissect_iec61850_Resume_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5639,7 +6088,7 @@ dissect_iec61850_Resume_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int o
 
 static int
 dissect_iec61850_Reset_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5648,7 +6097,7 @@ dissect_iec61850_Reset_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int of
 
 static int
 dissect_iec61850_Kill_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5668,9 +6117,9 @@ static const ber_choice_t T_executionArgument_02_choice[] = {
 
 static int
 dissect_iec61850_T_executionArgument_02(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_executionArgument_02_choice, hf_index, ett_iec61850_T_executionArgument_02,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_executionArgument_02_choice, hf_index, ett_iec61850_T_executionArgument_02,
+                                   NULL);
 
   return offset;
 }
@@ -5689,8 +6138,8 @@ static const ber_sequence_t GetProgramInvocationAttributes_Response_sequence[] =
 
 static int
 dissect_iec61850_GetProgramInvocationAttributes_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetProgramInvocationAttributes_Response_sequence, hf_index, ett_iec61850_GetProgramInvocationAttributes_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetProgramInvocationAttributes_Response_sequence, hf_index, ett_iec61850_GetProgramInvocationAttributes_Response);
 
   return offset;
 }
@@ -5699,7 +6148,7 @@ dissect_iec61850_GetProgramInvocationAttributes_Response(bool implicit_tag _U_, 
 
 static int
 dissect_iec61850_ObtainFile_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5708,7 +6157,7 @@ dissect_iec61850_ObtainFile_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, i
 
 static int
 dissect_iec61850_GeneralizedTime(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_GeneralizedTime(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_GeneralizedTime(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5722,8 +6171,8 @@ static const ber_sequence_t FileAttributes_sequence[] = {
 
 static int
 dissect_iec61850_FileAttributes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   FileAttributes_sequence, hf_index, ett_iec61850_FileAttributes);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     FileAttributes_sequence, hf_index, ett_iec61850_FileAttributes);
 
   return offset;
 }
@@ -5737,8 +6186,8 @@ static const ber_sequence_t FileOpen_Response_sequence[] = {
 
 static int
 dissect_iec61850_FileOpen_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   FileOpen_Response_sequence, hf_index, ett_iec61850_FileOpen_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     FileOpen_Response_sequence, hf_index, ett_iec61850_FileOpen_Response);
 
   return offset;
 }
@@ -5747,7 +6196,7 @@ dissect_iec61850_FileOpen_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int
 
 static int
 dissect_iec61850_DefineEventCondition_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5756,7 +6205,7 @@ dissect_iec61850_DefineEventCondition_Response(bool implicit_tag _U_, tvbuff_t *
 
 static int
 dissect_iec61850_DeleteEventCondition_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -5776,9 +6225,9 @@ static const ber_choice_t T_monitoredVariable_choice[] = {
 
 static int
 dissect_iec61850_T_monitoredVariable(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_monitoredVariable_choice, hf_index, ett_iec61850_T_monitoredVariable,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_monitoredVariable_choice, hf_index, ett_iec61850_T_monitoredVariable,
+                                   NULL);
 
   return offset;
 }
@@ -5797,8 +6246,8 @@ static const ber_sequence_t GetEventConditionAttributes_Response_sequence[] = {
 
 static int
 dissect_iec61850_GetEventConditionAttributes_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetEventConditionAttributes_Response_sequence, hf_index, ett_iec61850_GetEventConditionAttributes_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetEventConditionAttributes_Response_sequence, hf_index, ett_iec61850_GetEventConditionAttributes_Response);
 
   return offset;
 }
@@ -5815,8 +6264,8 @@ static const ber_sequence_t ReportEventConditionStatus_Response_sequence[] = {
 
 static int
 dissect_iec61850_ReportEventConditionStatus_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   ReportEventConditionStatus_Response_sequence, hf_index, ett_iec61850_ReportEventConditionStatus_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     ReportEventConditionStatus_Response_sequence, hf_index, ett_iec61850_ReportEventConditionStatus_Response);
 
   return offset;
 }
@@ -5825,7 +6274,7 @@ dissect_iec61850_ReportEventConditionStatus_Response(bool implicit_tag _U_, tvbu
 
 static int
 dissect_iec61850_AlterEventConditionMonitoring_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5834,7 +6283,7 @@ dissect_iec61850_AlterEventConditionMonitoring_Response(bool implicit_tag _U_, t
 
 static int
 dissect_iec61850_TriggerEvent_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5843,7 +6292,7 @@ dissect_iec61850_TriggerEvent_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_,
 
 static int
 dissect_iec61850_DefineEventAction_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5852,7 +6301,7 @@ dissect_iec61850_DefineEventAction_Response(bool implicit_tag _U_, tvbuff_t *tvb
 
 static int
 dissect_iec61850_DeleteEventAction_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -5866,8 +6315,8 @@ static const ber_sequence_t GetEventActionAttributes_Response_sequence[] = {
 
 static int
 dissect_iec61850_GetEventActionAttributes_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetEventActionAttributes_Response_sequence, hf_index, ett_iec61850_GetEventActionAttributes_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetEventActionAttributes_Response_sequence, hf_index, ett_iec61850_GetEventActionAttributes_Response);
 
   return offset;
 }
@@ -5876,7 +6325,7 @@ dissect_iec61850_GetEventActionAttributes_Response(bool implicit_tag _U_, tvbuff
 
 static int
 dissect_iec61850_ReportEventActionStatus_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -5885,7 +6334,7 @@ dissect_iec61850_ReportEventActionStatus_Response(bool implicit_tag _U_, tvbuff_
 
 static int
 dissect_iec61850_DefineEventEnrollment_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -5894,7 +6343,7 @@ dissect_iec61850_DefineEventEnrollment_Response(bool implicit_tag _U_, tvbuff_t 
 
 static int
 dissect_iec61850_DeleteEventEnrollment_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -5915,8 +6364,8 @@ static const value_string iec61850_EE_State_vals[] = {
 
 static int
 dissect_iec61850_EE_State(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -5936,9 +6385,9 @@ static const ber_choice_t T_currentState_choice[] = {
 
 static int
 dissect_iec61850_T_currentState(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_currentState_choice, hf_index, ett_iec61850_T_currentState,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_currentState_choice, hf_index, ett_iec61850_T_currentState,
+                                   NULL);
 
   return offset;
 }
@@ -5952,8 +6401,8 @@ static const ber_sequence_t AlterEventEnrollment_Response_sequence[] = {
 
 static int
 dissect_iec61850_AlterEventEnrollment_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   AlterEventEnrollment_Response_sequence, hf_index, ett_iec61850_AlterEventEnrollment_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     AlterEventEnrollment_Response_sequence, hf_index, ett_iec61850_AlterEventEnrollment_Response);
 
   return offset;
 }
@@ -5968,8 +6417,8 @@ static const value_string iec61850_EE_Duration_vals[] = {
 
 static int
 dissect_iec61850_EE_Duration(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -5986,8 +6435,8 @@ static const ber_sequence_t ReportEventEnrollmentStatus_Response_sequence[] = {
 
 static int
 dissect_iec61850_ReportEventEnrollmentStatus_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   ReportEventEnrollmentStatus_Response_sequence, hf_index, ett_iec61850_ReportEventEnrollmentStatus_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     ReportEventEnrollmentStatus_Response_sequence, hf_index, ett_iec61850_ReportEventEnrollmentStatus_Response);
 
   return offset;
 }
@@ -6007,9 +6456,9 @@ static const ber_choice_t T_eventConditionName_choice[] = {
 
 static int
 dissect_iec61850_T_eventConditionName(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_eventConditionName_choice, hf_index, ett_iec61850_T_eventConditionName,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_eventConditionName_choice, hf_index, ett_iec61850_T_eventConditionName,
+                                   NULL);
 
   return offset;
 }
@@ -6029,9 +6478,9 @@ static const ber_choice_t T_eventActionName_choice[] = {
 
 static int
 dissect_iec61850_T_eventActionName(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_eventActionName_choice, hf_index, ett_iec61850_T_eventActionName,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_eventActionName_choice, hf_index, ett_iec61850_T_eventActionName,
+                                   NULL);
 
   return offset;
 }
@@ -6046,8 +6495,8 @@ static const value_string iec61850_EE_Class_vals[] = {
 
 static int
 dissect_iec61850_EE_Class(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -6068,8 +6517,8 @@ static const ber_sequence_t EventEnrollment_sequence[] = {
 
 static int
 dissect_iec61850_EventEnrollment(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   EventEnrollment_sequence, hf_index, ett_iec61850_EventEnrollment);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     EventEnrollment_sequence, hf_index, ett_iec61850_EventEnrollment);
 
   return offset;
 }
@@ -6081,8 +6530,8 @@ static const ber_sequence_t SEQUENCE_OF_EventEnrollment_sequence_of[1] = {
 
 static int
 dissect_iec61850_SEQUENCE_OF_EventEnrollment(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      SEQUENCE_OF_EventEnrollment_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_EventEnrollment);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        SEQUENCE_OF_EventEnrollment_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_EventEnrollment);
 
   return offset;
 }
@@ -6096,8 +6545,8 @@ static const ber_sequence_t GetEventEnrollmentAttributes_Response_sequence[] = {
 
 static int
 dissect_iec61850_GetEventEnrollmentAttributes_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetEventEnrollmentAttributes_Response_sequence, hf_index, ett_iec61850_GetEventEnrollmentAttributes_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetEventEnrollmentAttributes_Response_sequence, hf_index, ett_iec61850_GetEventEnrollmentAttributes_Response);
 
   return offset;
 }
@@ -6106,7 +6555,7 @@ dissect_iec61850_GetEventEnrollmentAttributes_Response(bool implicit_tag _U_, tv
 
 static int
 dissect_iec61850_AcknowledgeEventNotification_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -6123,8 +6572,8 @@ static const value_string iec61850_T_unacknowledgedState_vals[] = {
 
 static int
 dissect_iec61850_T_unacknowledgedState(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -6142,8 +6591,8 @@ static const ber_sequence_t AlarmSummary_sequence[] = {
 
 static int
 dissect_iec61850_AlarmSummary(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   AlarmSummary_sequence, hf_index, ett_iec61850_AlarmSummary);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     AlarmSummary_sequence, hf_index, ett_iec61850_AlarmSummary);
 
   return offset;
 }
@@ -6155,8 +6604,8 @@ static const ber_sequence_t SEQUENCE_OF_AlarmSummary_sequence_of[1] = {
 
 static int
 dissect_iec61850_SEQUENCE_OF_AlarmSummary(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      SEQUENCE_OF_AlarmSummary_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_AlarmSummary);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        SEQUENCE_OF_AlarmSummary_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_AlarmSummary);
 
   return offset;
 }
@@ -6170,8 +6619,8 @@ static const ber_sequence_t GetAlarmSummary_Response_sequence[] = {
 
 static int
 dissect_iec61850_GetAlarmSummary_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetAlarmSummary_Response_sequence, hf_index, ett_iec61850_GetAlarmSummary_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetAlarmSummary_Response_sequence, hf_index, ett_iec61850_GetAlarmSummary_Response);
 
   return offset;
 }
@@ -6194,8 +6643,8 @@ static const ber_sequence_t AlarmEnrollmentSummary_sequence[] = {
 
 static int
 dissect_iec61850_AlarmEnrollmentSummary(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   AlarmEnrollmentSummary_sequence, hf_index, ett_iec61850_AlarmEnrollmentSummary);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     AlarmEnrollmentSummary_sequence, hf_index, ett_iec61850_AlarmEnrollmentSummary);
 
   return offset;
 }
@@ -6207,8 +6656,8 @@ static const ber_sequence_t SEQUENCE_OF_AlarmEnrollmentSummary_sequence_of[1] = 
 
 static int
 dissect_iec61850_SEQUENCE_OF_AlarmEnrollmentSummary(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      SEQUENCE_OF_AlarmEnrollmentSummary_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_AlarmEnrollmentSummary);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        SEQUENCE_OF_AlarmEnrollmentSummary_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_AlarmEnrollmentSummary);
 
   return offset;
 }
@@ -6222,8 +6671,8 @@ static const ber_sequence_t GetAlarmEnrollmentSummary_Response_sequence[] = {
 
 static int
 dissect_iec61850_GetAlarmEnrollmentSummary_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetAlarmEnrollmentSummary_Response_sequence, hf_index, ett_iec61850_GetAlarmEnrollmentSummary_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetAlarmEnrollmentSummary_Response_sequence, hf_index, ett_iec61850_GetAlarmEnrollmentSummary_Response);
 
   return offset;
 }
@@ -6238,8 +6687,8 @@ static const ber_sequence_t JournalEntry_sequence[] = {
 
 static int
 dissect_iec61850_JournalEntry(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   JournalEntry_sequence, hf_index, ett_iec61850_JournalEntry);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     JournalEntry_sequence, hf_index, ett_iec61850_JournalEntry);
 
   return offset;
 }
@@ -6251,8 +6700,8 @@ static const ber_sequence_t SEQUENCE_OF_JournalEntry_sequence_of[1] = {
 
 static int
 dissect_iec61850_SEQUENCE_OF_JournalEntry(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      SEQUENCE_OF_JournalEntry_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_JournalEntry);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        SEQUENCE_OF_JournalEntry_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_JournalEntry);
 
   return offset;
 }
@@ -6266,8 +6715,8 @@ static const ber_sequence_t ReadJournal_Response_sequence[] = {
 
 static int
 dissect_iec61850_ReadJournal_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   ReadJournal_Response_sequence, hf_index, ett_iec61850_ReadJournal_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     ReadJournal_Response_sequence, hf_index, ett_iec61850_ReadJournal_Response);
 
   return offset;
 }
@@ -6276,7 +6725,7 @@ dissect_iec61850_ReadJournal_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, 
 
 static int
 dissect_iec61850_WriteJournal_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -6285,7 +6734,7 @@ dissect_iec61850_WriteJournal_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_,
 
 static int
 dissect_iec61850_InitializeJournal_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -6299,8 +6748,8 @@ static const ber_sequence_t ReportJournalStatus_Response_sequence[] = {
 
 static int
 dissect_iec61850_ReportJournalStatus_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   ReportJournalStatus_Response_sequence, hf_index, ett_iec61850_ReportJournalStatus_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     ReportJournalStatus_Response_sequence, hf_index, ett_iec61850_ReportJournalStatus_Response);
 
   return offset;
 }
@@ -6309,7 +6758,7 @@ dissect_iec61850_ReportJournalStatus_Response(bool implicit_tag _U_, tvbuff_t *t
 
 static int
 dissect_iec61850_CreateJournal_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -6318,7 +6767,7 @@ dissect_iec61850_CreateJournal_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_
 
 static int
 dissect_iec61850_DeleteJournal_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -6330,8 +6779,8 @@ static const ber_sequence_t T_listOfCapabilities_sequence_of[1] = {
 
 static int
 dissect_iec61850_T_listOfCapabilities(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      T_listOfCapabilities_sequence_of, hf_index, ett_iec61850_T_listOfCapabilities);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        T_listOfCapabilities_sequence_of, hf_index, ett_iec61850_T_listOfCapabilities);
 
   return offset;
 }
@@ -6345,8 +6794,8 @@ static const ber_sequence_t GetCapabilityList_Response_sequence[] = {
 
 static int
 dissect_iec61850_GetCapabilityList_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   GetCapabilityList_Response_sequence, hf_index, ett_iec61850_GetCapabilityList_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     GetCapabilityList_Response_sequence, hf_index, ett_iec61850_GetCapabilityList_Response);
 
   return offset;
 }
@@ -6360,8 +6809,8 @@ static const ber_sequence_t FileRead_Response_sequence[] = {
 
 static int
 dissect_iec61850_FileRead_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   FileRead_Response_sequence, hf_index, ett_iec61850_FileRead_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     FileRead_Response_sequence, hf_index, ett_iec61850_FileRead_Response);
 
   return offset;
 }
@@ -6370,7 +6819,7 @@ dissect_iec61850_FileRead_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int
 
 static int
 dissect_iec61850_FileClose_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -6379,7 +6828,7 @@ dissect_iec61850_FileClose_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, in
 
 static int
 dissect_iec61850_FileRename_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -6388,7 +6837,7 @@ dissect_iec61850_FileRename_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, i
 
 static int
 dissect_iec61850_FileDelete_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -6402,8 +6851,8 @@ static const ber_sequence_t DirectoryEntry_sequence[] = {
 
 static int
 dissect_iec61850_DirectoryEntry(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   DirectoryEntry_sequence, hf_index, ett_iec61850_DirectoryEntry);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     DirectoryEntry_sequence, hf_index, ett_iec61850_DirectoryEntry);
 
   return offset;
 }
@@ -6415,8 +6864,8 @@ static const ber_sequence_t SEQUENCE_OF_DirectoryEntry_sequence_of[1] = {
 
 static int
 dissect_iec61850_SEQUENCE_OF_DirectoryEntry(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
-                                      SEQUENCE_OF_DirectoryEntry_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_DirectoryEntry);
+    offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
+                                        SEQUENCE_OF_DirectoryEntry_sequence_of, hf_index, ett_iec61850_SEQUENCE_OF_DirectoryEntry);
 
   return offset;
 }
@@ -6430,8 +6879,8 @@ static const ber_sequence_t FileDirectory_Response_sequence[] = {
 
 static int
 dissect_iec61850_FileDirectory_Response(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   FileDirectory_Response_sequence, hf_index, ett_iec61850_FileDirectory_Response);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     FileDirectory_Response_sequence, hf_index, ett_iec61850_FileDirectory_Response);
 
   return offset;
 }
@@ -6603,14 +7052,14 @@ static const ber_choice_t ConfirmedServiceResponse_choice[] = {
 
 static int
 dissect_iec61850_ConfirmedServiceResponse(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-	gint branch_taken;
+    int32_t branch_taken;
 
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 ConfirmedServiceResponse_choice, hf_index, ett_iec61850_ConfirmedServiceResponse,
-                                 &branch_taken);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   ConfirmedServiceResponse_choice, hf_index, ett_iec61850_ConfirmedServiceResponse,
+                                   &branch_taken);
 
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->Service = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->Service = branch_taken;
 
 
   return offset;
@@ -6626,8 +7075,8 @@ static const ber_sequence_t Confirmed_ResponsePDU_sequence[] = {
 
 static int
 dissect_iec61850_Confirmed_ResponsePDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Confirmed_ResponsePDU_sequence, hf_index, ett_iec61850_Confirmed_ResponsePDU);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Confirmed_ResponsePDU_sequence, hf_index, ett_iec61850_Confirmed_ResponsePDU);
 
   return offset;
 }
@@ -6642,8 +7091,8 @@ static const ber_sequence_t Confirmed_ErrorPDU_sequence[] = {
 
 static int
 dissect_iec61850_Confirmed_ErrorPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Confirmed_ErrorPDU_sequence, hf_index, ett_iec61850_Confirmed_ErrorPDU);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Confirmed_ErrorPDU_sequence, hf_index, ett_iec61850_Confirmed_ErrorPDU);
 
   return offset;
 }
@@ -6657,8 +7106,8 @@ static const ber_sequence_t InformationReport_sequence[] = {
 
 static int
 dissect_iec61850_InformationReport(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   InformationReport_sequence, hf_index, ett_iec61850_InformationReport);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     InformationReport_sequence, hf_index, ett_iec61850_InformationReport);
 
   return offset;
 }
@@ -6667,7 +7116,7 @@ dissect_iec61850_InformationReport(bool implicit_tag _U_, tvbuff_t *tvb _U_, int
 
 static int
 dissect_iec61850_UnsolicitedStatus(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Status_Response(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Status_Response(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -6687,9 +7136,9 @@ static const ber_choice_t T_eventConditionName_01_choice[] = {
 
 static int
 dissect_iec61850_T_eventConditionName_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_eventConditionName_01_choice, hf_index, ett_iec61850_T_eventConditionName_01,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_eventConditionName_01_choice, hf_index, ett_iec61850_T_eventConditionName_01,
+                                   NULL);
 
   return offset;
 }
@@ -6709,9 +7158,9 @@ static const ber_choice_t T_eventActionResult_choice[] = {
 
 static int
 dissect_iec61850_T_eventActionResult(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_eventActionResult_choice, hf_index, ett_iec61850_T_eventActionResult,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_eventActionResult_choice, hf_index, ett_iec61850_T_eventActionResult,
+                                   NULL);
 
   return offset;
 }
@@ -6725,8 +7174,8 @@ static const ber_sequence_t T_actionResult_sequence[] = {
 
 static int
 dissect_iec61850_T_actionResult(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   T_actionResult_sequence, hf_index, ett_iec61850_T_actionResult);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     T_actionResult_sequence, hf_index, ett_iec61850_T_actionResult);
 
   return offset;
 }
@@ -6746,8 +7195,8 @@ static const ber_sequence_t EventNotification_sequence[] = {
 
 static int
 dissect_iec61850_EventNotification(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   EventNotification_sequence, hf_index, ett_iec61850_EventNotification);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     EventNotification_sequence, hf_index, ett_iec61850_EventNotification);
 
   return offset;
 }
@@ -6769,14 +7218,14 @@ static const ber_choice_t UnconfirmedService_choice[] = {
 
 static int
 dissect_iec61850_UnconfirmedService(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-	gint branch_taken;
+    int32_t branch_taken;
 
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 UnconfirmedService_choice, hf_index, ett_iec61850_UnconfirmedService,
-                                 &branch_taken);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   UnconfirmedService_choice, hf_index, ett_iec61850_UnconfirmedService,
+                                   &branch_taken);
 
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->Service = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->Service = branch_taken;
 
 
   return offset;
@@ -6791,8 +7240,8 @@ static const ber_sequence_t Unconfirmed_PDU_sequence[] = {
 
 static int
 dissect_iec61850_Unconfirmed_PDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Unconfirmed_PDU_sequence, hf_index, ett_iec61850_Unconfirmed_PDU);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Unconfirmed_PDU_sequence, hf_index, ett_iec61850_Unconfirmed_PDU);
 
   return offset;
 }
@@ -6814,8 +7263,8 @@ static const value_string iec61850_T_confirmed_requestPDU_vals[] = {
 
 static int
 dissect_iec61850_T_confirmed_requestPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -6834,8 +7283,8 @@ static const value_string iec61850_T_confirmed_responsePDU_vals[] = {
 
 static int
 dissect_iec61850_T_confirmed_responsePDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -6853,8 +7302,8 @@ static const value_string iec61850_T_confirmed_errorPDU_vals[] = {
 
 static int
 dissect_iec61850_T_confirmed_errorPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -6872,8 +7321,8 @@ static const value_string iec61850_T_unconfirmedPDU_vals[] = {
 
 static int
 dissect_iec61850_T_unconfirmedPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -6889,8 +7338,8 @@ static const value_string iec61850_T_pdu_error_vals[] = {
 
 static int
 dissect_iec61850_T_pdu_error(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -6905,8 +7354,8 @@ static const value_string iec61850_T_cancel_requestPDU_vals[] = {
 
 static int
 dissect_iec61850_T_cancel_requestPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -6921,8 +7370,8 @@ static const value_string iec61850_T_cancel_responsePDU_vals[] = {
 
 static int
 dissect_iec61850_T_cancel_responsePDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -6939,8 +7388,8 @@ static const value_string iec61850_T_cancel_errorPDU_vals[] = {
 
 static int
 dissect_iec61850_T_cancel_errorPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -6955,8 +7404,8 @@ static const value_string iec61850_T_conclude_requestPDU_vals[] = {
 
 static int
 dissect_iec61850_T_conclude_requestPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -6971,8 +7420,8 @@ static const value_string iec61850_T_conclude_responsePDU_vals[] = {
 
 static int
 dissect_iec61850_T_conclude_responsePDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -6988,8 +7437,8 @@ static const value_string iec61850_T_conclude_errorPDU_vals[] = {
 
 static int
 dissect_iec61850_T_conclude_errorPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -7027,9 +7476,9 @@ static const ber_choice_t T_rejectReason_choice[] = {
 
 static int
 dissect_iec61850_T_rejectReason(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 T_rejectReason_choice, hf_index, ett_iec61850_T_rejectReason,
-                                 NULL);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   T_rejectReason_choice, hf_index, ett_iec61850_T_rejectReason,
+                                   NULL);
 
   return offset;
 }
@@ -7043,8 +7492,8 @@ static const ber_sequence_t RejectPDU_sequence[] = {
 
 static int
 dissect_iec61850_RejectPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   RejectPDU_sequence, hf_index, ett_iec61850_RejectPDU);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     RejectPDU_sequence, hf_index, ett_iec61850_RejectPDU);
 
   return offset;
 }
@@ -7053,7 +7502,7 @@ dissect_iec61850_RejectPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset 
 
 static int
 dissect_iec61850_Cancel_RequestPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -7062,7 +7511,7 @@ dissect_iec61850_Cancel_RequestPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int
 
 static int
 dissect_iec61850_Cancel_ResponsePDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_Unsigned32(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -7076,8 +7525,8 @@ static const ber_sequence_t Cancel_ErrorPDU_sequence[] = {
 
 static int
 dissect_iec61850_Cancel_ErrorPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Cancel_ErrorPDU_sequence, hf_index, ett_iec61850_Cancel_ErrorPDU);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Cancel_ErrorPDU_sequence, hf_index, ett_iec61850_Cancel_ErrorPDU);
 
   return offset;
 }
@@ -7086,8 +7535,8 @@ dissect_iec61850_Cancel_ErrorPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int o
 
 static int
 dissect_iec61850_Integer16(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
-                                                NULL);
+    offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
+                                                  NULL);
 
   return offset;
 }
@@ -7110,9 +7559,9 @@ static int * const ParameterSupportOptions_bits[] = {
 
 static int
 dissect_iec61850_ParameterSupportOptions(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
-                                    ParameterSupportOptions_bits, 11, hf_index, ett_iec61850_ParameterSupportOptions,
-                                    NULL);
+    offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
+                                      ParameterSupportOptions_bits, 11, hf_index, ett_iec61850_ParameterSupportOptions,
+                                      NULL);
 
   return offset;
 }
@@ -7209,9 +7658,9 @@ static int * const ServiceSupportOptions_bits[] = {
 
 static int
 dissect_iec61850_ServiceSupportOptions(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
-                                    ServiceSupportOptions_bits, 85, hf_index, ett_iec61850_ServiceSupportOptions,
-                                    NULL);
+    offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
+                                      ServiceSupportOptions_bits, 85, hf_index, ett_iec61850_ServiceSupportOptions,
+                                      NULL);
 
   return offset;
 }
@@ -7226,8 +7675,8 @@ static const ber_sequence_t InitRequestDetail_sequence[] = {
 
 static int
 dissect_iec61850_InitRequestDetail(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   InitRequestDetail_sequence, hf_index, ett_iec61850_InitRequestDetail);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     InitRequestDetail_sequence, hf_index, ett_iec61850_InitRequestDetail);
 
   return offset;
 }
@@ -7244,8 +7693,8 @@ static const ber_sequence_t Initiate_RequestPDU_sequence[] = {
 
 static int
 dissect_iec61850_Initiate_RequestPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Initiate_RequestPDU_sequence, hf_index, ett_iec61850_Initiate_RequestPDU);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Initiate_RequestPDU_sequence, hf_index, ett_iec61850_Initiate_RequestPDU);
 
   return offset;
 }
@@ -7260,8 +7709,8 @@ static const ber_sequence_t InitResponseDetail_sequence[] = {
 
 static int
 dissect_iec61850_InitResponseDetail(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   InitResponseDetail_sequence, hf_index, ett_iec61850_InitResponseDetail);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     InitResponseDetail_sequence, hf_index, ett_iec61850_InitResponseDetail);
 
   return offset;
 }
@@ -7278,8 +7727,8 @@ static const ber_sequence_t Initiate_ResponsePDU_sequence[] = {
 
 static int
 dissect_iec61850_Initiate_ResponsePDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
-                                   Initiate_ResponsePDU_sequence, hf_index, ett_iec61850_Initiate_ResponsePDU);
+    offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
+                                     Initiate_ResponsePDU_sequence, hf_index, ett_iec61850_Initiate_ResponsePDU);
 
   return offset;
 }
@@ -7288,7 +7737,7 @@ dissect_iec61850_Initiate_ResponsePDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, 
 
 static int
 dissect_iec61850_Initiate_ErrorPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ServiceError(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ServiceError(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -7297,7 +7746,7 @@ dissect_iec61850_Initiate_ErrorPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int
 
 static int
 dissect_iec61850_Conclude_RequestPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -7306,7 +7755,7 @@ dissect_iec61850_Conclude_RequestPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, i
 
 static int
 dissect_iec61850_Conclude_ResponsePDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
+    offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
 }
@@ -7315,7 +7764,7 @@ dissect_iec61850_Conclude_ResponsePDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, 
 
 static int
 dissect_iec61850_Conclude_ErrorPDU(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_iec61850_ServiceError(implicit_tag, tvb, offset, actx, tree, hf_index);
+    offset = dissect_iec61850_ServiceError(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
 }
@@ -7359,14 +7808,14 @@ static const ber_choice_t MMSpdu_choice[] = {
 
 static int
 dissect_iec61850_MMSpdu(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-	gint branch_taken;
+    int32_t branch_taken;
 
-  offset = dissect_ber_choice(actx, tree, tvb, offset,
-                                 MMSpdu_choice, hf_index, ett_iec61850_MMSpdu,
-                                 &branch_taken);
+    offset = dissect_ber_choice(actx, tree, tvb, offset,
+                                   MMSpdu_choice, hf_index, ett_iec61850_MMSpdu,
+                                   &branch_taken);
 
-	iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
-	private_data->MMSpdu = branch_taken;
+    iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(actx);
+    private_data->MMSpdu = branch_taken;
 
 
   return offset;
@@ -7376,69 +7825,86 @@ dissect_iec61850_MMSpdu(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_
 /*
 * Dissect iec61850 PDUs inside a PPDU.
 */
-static int
+static int32_t
 dissect_iec61850(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, void* data _U_)
 {
-	int offset = 0;
-	int old_offset;
-	int decoded = 0;
+    int32_t offset = 0;
+    int32_t old_offset;
+    int32_t decoded = 0;
+    int32_t error = 0;
+    asn1_ctx_t asn1_ctx;
 
-	proto_item *item=NULL;
-	proto_tree *mms_tree=NULL;
+    proto_item *mms_item=NULL;
+    proto_tree *mms_tree=NULL;
 
-	asn1_ctx_t asn1_ctx;
-	asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
+    ws_assert(tvb);
+    ws_assert(pinfo);
 
-	
-	col_clear(pinfo->cinfo, COL_INFO);
+    /* only dissect MMS, and return immediately */
+    if(use_iec61850_mapping == FALSE)
+    {
+        dissector_handle_t mms_dissector = find_dissector( "mms" );
+        ws_assert(mms_dissector);
+        call_dissector(mms_dissector, tvb, pinfo, parent_tree);
+        return tvb_captured_length(tvb);
+    }
 
-	if(parent_tree){
-		item = proto_tree_add_item(parent_tree, proto_mms, tvb, 0, -1, ENC_NA);
-		mms_tree = proto_item_add_subtree(item, ettmms);
-	}
+    asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
 
-	while (tvb_reported_length_remaining(tvb, offset) > 0){
-		old_offset=offset;
-		offset=dissect_iec61850_MMSpdu(FALSE, tvb, offset, &asn1_ctx , mms_tree, -1);
-		if(offset == old_offset){
-			proto_tree_add_expert(mms_tree, pinfo, &ei_mms_zero_pdu, tvb, offset, -1);
-			break;
-		}
-	}
-	//if mms is parsed succesfull, try to map to iec61850 pdu's
-	decoded = map_iec61850_packet(tvb, pinfo, &asn1_ctx, parent_tree, mms_tree, proto_iec61850);
+    col_clear(pinfo->cinfo, COL_INFO);
 
+    if(parent_tree)
+    {
+        mms_item = proto_tree_add_item(parent_tree, proto_mms, tvb, 0, -1, ENC_NA);
+        mms_tree = proto_item_add_subtree(mms_item, ettmms);
+    }
 
-	if(decoded == 0)// not an iec61850 PDU
-	{
-		iec61850_private_data_t *private_data = (iec61850_private_data_t*)iec61850_get_private_data(&asn1_ctx);
-		col_set_str(pinfo->cinfo, COL_PROTOCOL, "MMS");
-		if( (private_data->MMSpdu!=-1) && iec61850_MMSpdu_vals[private_data->MMSpdu].strptr ){
-			
-			if (iec61850_has_private_data(&asn1_ctx))
-				col_append_fstr(asn1_ctx.pinfo->cinfo, COL_INFO, "%s%s%s",
-					private_data_get_preCinfo(&asn1_ctx), iec61850_MMSpdu_vals[private_data->MMSpdu].strptr, private_data_get_moreCinfo(&asn1_ctx));
-			else
-				col_append_fstr(asn1_ctx.pinfo->cinfo, COL_INFO, "%s",
-					iec61850_MMSpdu_vals[private_data->MMSpdu].strptr);
-		}
-	}
-	else // an iec61850 PDU
-	{
-		col_set_str(pinfo->cinfo, COL_PROTOCOL, "IEC-61850");
-	}
+    while (tvb_reported_length_remaining(tvb, offset) > 0)
+    {
+        old_offset=offset;
+        /* parse mms similar to mms disector to retrieve all relevant values for mapping, and store in private data */
+        offset=dissect_iec61850_MMSpdu(FALSE, tvb, offset, &asn1_ctx , mms_tree, -1);
+        if(offset == old_offset)
+        {
+            proto_tree_add_expert(mms_tree, pinfo, &ei_mms_zero_pdu, tvb, offset, -1);
+            error = 1;
+            break;
+        }
+    }
+    if(error == 0)/* if mms is parsed without issue, try to map to iec61850 pdu's */
+    {
+        decoded = map_iec61850_packet(tvb, pinfo, &asn1_ctx, parent_tree, mms_tree, proto_iec61850);
+    }
+    if(decoded == 1)/* if we decoded an IEC-61850 PDU succesfull */
+    {
+        col_set_str(pinfo->cinfo, COL_PROTOCOL, "IEC-61850");
+    }
+    else /*  not an IEC-61850 PDU, so remove IEC-61850 data from this packet, and dissect as mms */
+    {
+        dissector_handle_t mms_dissector = find_dissector( "mms" );
+        ws_assert(mms_dissector);
 
-	return tvb_captured_length(tvb);
+        proto_item_set_hidden(mms_item); /* hide the iec61850 mms layer, as the mms disector will add its own*/
+        col_clear(pinfo->cinfo, COL_INFO);
+        call_dissector(mms_dissector, tvb, pinfo, parent_tree);
+    }
+
+    return tvb_captured_length(tvb);
 }
 
 
 /*--- proto_register_iec61850 -------------------------------------------*/
-void proto_register_iec61850(void) {
+void proto_register_iec61850(void) 
+{
 
-	/* List of fields */
-	static hf_register_info hf[] =
-	{
-		//generated items
+    /* List of fields */
+    static hf_register_info hf[] =
+    {
+        { &hf_iec61850_MMSpdu,
+            { "MMSpdu", "iec61850.mmspdu",
+            FT_UINT32, BASE_DEC, VALS(iec61850_MMSpdu_vals), 0,
+            NULL, HFILL }},
+        /*generated items */
     { &hf_iec61850_confirmed_RequestPDU,
       { "confirmed-RequestPDU", "iec61850.confirmed_RequestPDU_element",
         FT_NONE, BASE_NONE, NULL, 0,
@@ -9030,7 +9496,7 @@ void proto_register_iec61850(void) {
     { &hf_iec61850_array_01,
       { "array", "iec61850.array",
         FT_UINT32, BASE_DEC, NULL, 0,
-        "SEQUENCE_OF_Data", HFILL }},
+        "T_array_01", HFILL }},
     { &hf_iec61850_array_item,
       { "Data", "iec61850.Data",
         FT_UINT32, BASE_DEC, VALS(iec61850_Data_vals), 0,
@@ -9038,7 +9504,7 @@ void proto_register_iec61850(void) {
     { &hf_iec61850_structure_01,
       { "structure", "iec61850.structure",
         FT_UINT32, BASE_DEC, NULL, 0,
-        "SEQUENCE_OF_Data", HFILL }},
+        "T_structure_01", HFILL }},
     { &hf_iec61850_structure_item,
       { "Data", "iec61850.Data",
         FT_UINT32, BASE_DEC, VALS(iec61850_Data_vals), 0,
@@ -9050,7 +9516,7 @@ void proto_register_iec61850(void) {
     { &hf_iec61850_data_bit_string,
       { "bit-string", "iec61850.data_bit-string",
         FT_BYTES, BASE_NONE, NULL, 0,
-        NULL, HFILL }},
+        "T_data_bit_string", HFILL }},
     { &hf_iec61850_integer_01,
       { "integer", "iec61850.integer",
         FT_INT32, BASE_DEC, NULL, 0,
@@ -9058,7 +9524,7 @@ void proto_register_iec61850(void) {
     { &hf_iec61850_unsigned_01,
       { "unsigned", "iec61850.unsigned",
         FT_INT32, BASE_DEC, NULL, 0,
-        "INTEGER", HFILL }},
+        NULL, HFILL }},
     { &hf_iec61850_floating_point,
       { "floating-point", "iec61850.floating_point",
         FT_BYTES, BASE_NONE, NULL, 0,
@@ -9066,11 +9532,11 @@ void proto_register_iec61850(void) {
     { &hf_iec61850_data_octet_string,
       { "octet-string", "iec61850.data.octet-string",
         FT_BYTES, BASE_NONE, NULL, 0,
-        NULL, HFILL }},
+        "T_data_octet_string", HFILL }},
     { &hf_iec61850_data_visible_string,
       { "visible-string", "iec61850.data.visible-string",
         FT_STRING, BASE_NONE, NULL, 0,
-        "VisibleString", HFILL }},
+        "T_data_visible_string", HFILL }},
     { &hf_iec61850_data_binary_time,
       { "binary-time", "iec61850.data.binary-time",
         FT_STRING, BASE_NONE, NULL, 0,
@@ -9078,7 +9544,7 @@ void proto_register_iec61850(void) {
     { &hf_iec61850_bcd_01,
       { "bcd", "iec61850.bcd",
         FT_INT32, BASE_DEC, NULL, 0,
-        "INTEGER", HFILL }},
+        NULL, HFILL }},
     { &hf_iec61850_booleanArray,
       { "booleanArray", "iec61850.booleanArray",
         FT_BYTES, BASE_NONE, NULL, 0,
@@ -10171,11 +10637,11 @@ void proto_register_iec61850(void) {
       { "any-to-deleted", "iec61850.Transitions.any.to.deleted",
         FT_BOOLEAN, 8, NULL, 0x02,
         NULL, HFILL }},
-	};
+    };
 
-	/* List of subtrees */
-	static gint *ett_mms[] = {
-		&ettmms,
+    /* List of subtrees */
+    static int32_t *ett_mms[] = {
+        &ettmms,
     &ett_iec61850_MMSpdu,
     &ett_iec61850_Confirmed_RequestPDU,
     &ett_iec61850_SEQUENCE_OF_Modifier,
@@ -10294,6 +10760,8 @@ void proto_register_iec61850(void) {
     &ett_iec61850_DeleteNamedType_Response,
     &ett_iec61850_AccessResult,
     &ett_iec61850_Data,
+    &ett_iec61850_T_array_01,
+    &ett_iec61850_T_structure_01,
     &ett_iec61850_VariableAccessSpecification,
     &ett_iec61850_T_listOfVariable_02,
     &ett_iec61850_T_listOfVariable_item_02,
@@ -10391,88 +10859,51 @@ void proto_register_iec61850(void) {
     &ett_iec61850_SEQUENCE_OF_DirectoryEntry,
     &ett_iec61850_DirectoryEntry,
     &ett_iec61850_FileAttributes,
-	};
+    };
 
-	static ei_register_info ei_mms[] = {
-		{ &ei_iec61850_mal_timeofday_encoding, { "iec61850.malformed.timeofday_encoding", PI_MALFORMED, PI_WARN, "BER Error: malformed TimeOfDay encoding", EXPFILL }},
-		{ &ei_iec61850_mal_utctime_encoding, { "iec61850.malformed.utctime", PI_MALFORMED, PI_WARN, "BER Error: malformed IEC61850 UTCTime encoding", EXPFILL }},
-		{ &ei_mms_zero_pdu, { "iec61850.zero_pdu", PI_PROTOCOL, PI_ERROR, "Internal error, zero-byte iec61850 PDU", EXPFILL }},
-	};
+    static ei_register_info ei_mms[] = {
+        { &ei_iec61850_mal_timeofday_encoding, { "iec61850.malformed.timeofday_encoding", PI_MALFORMED, PI_WARN, "BER Error: malformed TimeOfDay encoding", EXPFILL }},
+        { &ei_iec61850_mal_utctime_encoding, { "iec61850.malformed.utctime", PI_MALFORMED, PI_WARN, "BER Error: malformed IEC61850 UTCTime encoding", EXPFILL }},
+        { &ei_mms_zero_pdu, { "iec61850.zero_pdu", PI_PROTOCOL, PI_ERROR, "Internal error, zero-byte iec61850 PDU", EXPFILL }},
+    };
 
-	expert_module_t* expert_mms;
+    expert_module_t* expert_mms;
+    module_t * iec61850_module;
 
-	/* Register mms protocol */
-	proto_mms = proto_register_protocol(PNAME_MMS, PSNAME_MMS, PFNAME_MMS);
-	/* Register fields and subtrees */
-	proto_register_field_array(proto_mms, hf, array_length(hf));
-	proto_register_subtree_array(ett_mms, array_length(ett_mms));
-	expert_mms = expert_register_protocol(proto_mms);
-	expert_register_field_array(expert_mms, ei_mms, array_length(ei_mms));
+    /* Register mms protocol */
+    proto_mms = proto_register_protocol(PNAME_MMS, PSNAME_MMS, PFNAME_MMS);
+    /* Register fields and subtrees */
+    proto_register_field_array(proto_mms, hf, array_length(hf));
+    proto_register_subtree_array(ett_mms, array_length(ett_mms));
+    expert_mms = expert_register_protocol(proto_mms);
+    expert_register_field_array(expert_mms, ei_mms, array_length(ei_mms));
 
-	/* Register iec-61850 protocol */
-	proto_iec61850 = proto_register_protocol(PNAME, PSNAME, PFNAME);
-	/* Register fields and subtrees */
-	register_iec61850_mappings(proto_iec61850);
-	//proto_register_field_array(protoiec61850, hf, array_length(hf));
-	
-	//disector register
-	register_dissector("iec61850", dissect_iec61850, proto_iec61850);
+    /* Register iec-61850 protocol */
+    proto_iec61850 = proto_register_protocol(PNAME, PSNAME, PFNAME);
+    /* Register fields and subtrees */
+    register_iec61850_mappings(proto_iec61850, hf);
+
+    /* disector register */
+    register_dissector("iec61850", dissect_iec61850, proto_iec61850);
+
+    /* setting to enable/disable the IEC-61850 mapping on MMS */
+    iec61850_module = prefs_register_protocol(proto_iec61850, proto_update_iec61850_settings);
+
+    prefs_register_bool_preference(iec61850_module, "use_iec61850_mapping",
+                         "Use IEC-61850 mapping to decode MMS stream",
+                         "Enables or disables the layer that maps IEC-61850 on top of MMS",
+                         &use_iec61850_mapping);
 }
 
-
-static gboolean
-dissect_iec61850_heur(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, void *data _U_)
-{
-	/* must check that this really is an iec61850 packet */
-	int offset = 0;
-	guint32 length = 0 ;
-	guint32 oct;
-	gint idx = 0 ;
-
-	gint8 tmp_class;
-	bool tmp_pc;
-	gint32 tmp_tag;
-
-		/* first, check do we have at least 2 bytes (pdu) */
-	if (!tvb_bytes_exist(tvb, 0, 2))
-		return FALSE;	/* no */
-
-	/* can we recognize IEC61850 PDU ? Return FALSE if  not */
-	/*   get IEC61850 PDU type */
-	offset = get_ber_identifier(tvb, offset, &tmp_class, &tmp_pc, &tmp_tag);
-
-	/* check IEC61850 type */
-
-	/* Class should be constructed */
-	if (tmp_class!=BER_CLASS_CON)
-		return FALSE;
-
-	/* see if the tag is a valid IEC61850 PDU */
-	try_val_to_str_idx(tmp_tag, iec61850_MMSpdu_vals, &idx);
-	if  (idx == -1) {
-	 	return FALSE;  /* no, it isn't an IEC61850 PDU */
-	}
-
-	/* check IEC61850 length  */
-	oct = tvb_get_guint8(tvb, offset)& 0x7F;
-	if (oct==0)
-		/* IEC61850 requires length after tag so not IEC61850 if indefinite length*/
-		return FALSE;
-
-	offset = get_ber_length(tvb, offset, &length, NULL);
-	/* do we have enough bytes? */
-	if (!tvb_bytes_exist(tvb, offset, length))
-		return FALSE;
-
-	dissect_iec61850(tvb, pinfo, parent_tree, data);
-	return TRUE;
-}
 
 /*--- proto_reg_handoff_iec61850 --- */
-void proto_reg_handoff_iec61850(void) {
-	register_ber_oid_dissector("1.0.9506.2.3", dissect_iec61850, proto_iec61850,"IEC61850");
-	register_ber_oid_dissector("1.0.9506.2.1", dissect_iec61850, proto_iec61850,"iec61850-abstract-syntax-version1(1)");
-	heur_dissector_add("cotp", dissect_iec61850_heur, "IEC61850 over COTP", "iec61850_cotp", proto_iec61850, HEURISTIC_ENABLE);
-	heur_dissector_add("cotp_is", dissect_iec61850_heur, "IEC61850 over COTP (inactive subset)", "iec61850_cotp_is", proto_iec61850, HEURISTIC_ENABLE);
+void proto_reg_handoff_iec61850(void) 
+{
+    register_ber_oid_dissector("1.0.9506.2.3", dissect_iec61850, proto_iec61850,"IEC61850");
+    register_ber_oid_dissector("1.0.9506.2.1", dissect_iec61850, proto_iec61850,"iec61850-abstract-syntax-version1(1)");
 }
 
+static void proto_update_iec61850_settings(void)
+{
+
+}

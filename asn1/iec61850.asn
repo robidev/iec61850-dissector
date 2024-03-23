@@ -789,7 +789,7 @@ GetNameList-Request ::= SEQUENCE
 		{
 		objectClass		[0] IMPLICIT INTEGER
 			{
-			nammedVariable		(0),
+			namedVariable		(0),
 			scatteredAccess		(1),
 			namedVariableList	(2),
 			namedType		(3),
