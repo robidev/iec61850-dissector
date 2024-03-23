@@ -1120,7 +1120,7 @@ private_data_add_moreCinfo_enum(asn1_ctx_t *actx, int32_t value, const value_str
 	(void) g_strlcat(private_data->moreCinfo, " ", IEC61850_BUFFER_SIZE_MORE);
 }
 
-static int32_t is_text(u_int8_t * str)
+int32_t iec61850_octetstring_is_text(u_int8_t * str)
 {
 	int32_t i;
 	if(g_str_is_ascii(str))
@@ -1158,7 +1158,7 @@ private_data_add_moreCinfo_ostr(asn1_ctx_t *actx,tvbuff_t * tvb, int32_t offset)
 		}
 		(void) g_strlcat(private_data->moreCinfo, "'", IEC61850_BUFFER_SIZE_MORE);
 
-		if(is_text(ostr) == TRUE)
+		if(iec61850_octetstring_is_text(ostr) == TRUE)
 		{
 			(void) g_strlcat(private_data->moreCinfo, "( ", IEC61850_BUFFER_SIZE_MORE);
 			(void) g_strlcat(private_data->moreCinfo, ostr, IEC61850_BUFFER_SIZE_MORE);

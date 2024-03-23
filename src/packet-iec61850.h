@@ -55,14 +55,15 @@ u_int8_t* iec61850_private_data_get_moreCinfo(asn1_ctx_t *actx);
 
 /* Create a text string of zeros and ones, based on an array of bytes. Returns the number of '1' bits */
 u_int32_t iec61850_print_bytes(wmem_strbuf_t *strbuf, const u_int8_t *bitstring, size_t bytelen, u_int32_t padding);
-
+/* Check if an octet array of bytes contains text, and no characters that cause issues in the dissector tree */
+int32_t iec61850_octetstring_is_text(u_int8_t * str);
 
 
 /*--- Included file: packet-iec61850-exp.h ---*/
 #line 1 "./wireshark_dissector/asn1/packet-iec61850-exp.h"
 
 /*--- End of included file: packet-iec61850-exp.h ---*/
-#line 53 "./wireshark_dissector/asn1/packet-iec61850-template.h"
+#line 54 "./wireshark_dissector/asn1/packet-iec61850-template.h"
 
 #endif  /* PACKET_IEC61850_H */
 

@@ -49,10 +49,10 @@ struct _tree_data {
 	int32_t listOfAccessResult;
 	int32_t listOfVariable;
 	u_int8_t *listOfVariable_array;
-	u_int32_t itemIndex;
+	int32_t itemIndex;
+	int32_t elements;
 	u_int16_t optflds;
 	u_int32_t inclusion;
-	u_int32_t elements;
 	u_int32_t structureSize;
 } typedef tree_data;
 
@@ -168,9 +168,23 @@ static int32_t hf_iec61850_data_reference = -1;
 static int32_t hf_iec61850_values = -1;
 static int32_t hf_iec61850_ReasonCode = -1;
 static int32_t hf_iec61850_bit_string = -1;
+
 static int32_t hf_iec61850_LastAppError = -1;
 static int32_t hf_iec61850_CmdTerm = -1;
-
+static int32_t hf_iec61850_CtlObj = -1;
+static int32_t hf_iec61850_ctlVal = -1;
+static int32_t hf_iec61850_operTm = -1;
+static int32_t hf_iec61850_Origin = -1;
+static int32_t hf_iec61850_Origin_orcat = -1;
+static int32_t hf_iec61850_Origin_orident = -1;
+static int32_t hf_iec61850_ctlNum = -1;
+static int32_t hf_iec61850_T = -1;
+static int32_t hf_iec61850_Test = -1;
+static int32_t hf_iec61850_Check = -1;
+static int32_t hf_iec61850_CtlError = -1;
+static int32_t hf_iec61850_CtlError_value = -1;
+static int32_t hf_iec61850_AddCause = -1;
+static int32_t hf_iec61850_AddCause_value = -1;
 
 static int32_t ett_iec61850 = -1;
 
@@ -514,25 +528,10 @@ static int32_t RPT_optFlds_lookup[] = {
 	0x0100,	/* 8 conf-rev */
 	0x00c0	/* 9 segmentation */
 };
-/*
-static int32_t * const CmdTerm_pos_fields[] = {
-	&hf_iec61850_CtlObj,
-	&hf_iec61850_ctlVal,
-	&hf_iec61850_operTm, /* optional 
-	&hf_iec61850_Origin,
-	&hf_iec61850_Origin_orcat,
-	&hf_iec61850_Origin_orident,
-	&hf_iec61850_ctlNum,
-	&hf_iec61850_T,
-	&hf_iec61850_Test,
-	&hf_iec61850_Check,
-	NULL
-};
 
-static int32_t * const CmdTerm_neg_fields[] = {
-	&hf_iec61850_CtlObj,
+static int32_t * const CmdTerm_fields[] = {
 	&hf_iec61850_ctlVal,
-	&hf_iec61850_operTm, /* optional 
+	&hf_iec61850_operTm, /* optional */
 	&hf_iec61850_Origin,
 	&hf_iec61850_Origin_orcat,
 	&hf_iec61850_Origin_orident,
@@ -540,7 +539,6 @@ static int32_t * const CmdTerm_neg_fields[] = {
 	&hf_iec61850_T,
 	&hf_iec61850_Test,
 	&hf_iec61850_Check,
-	&hf_iec61850_AddCause,
 	NULL
 };
 
@@ -554,7 +552,7 @@ static int32_t * const LastAppError_fields[] = {
 	&hf_iec61850_AddCause,
 	NULL
 };
-*/
+
 static void proto_tree_print_tree(proto_node *node, void * data)
 {
 	proto_tree *tree;
@@ -620,7 +618,7 @@ static void proto_tree_print_tree(proto_node *node, void * data)
 					if(pdata->listOfVariable > 0)
 					{
 						pdata->listOfVariable_array = wmem_alloc0(pdata->actx->pinfo->pool, sizeof(u_int8_t * )*pdata->listOfVariable);
-						pdata->elements = 0;
+						pdata->elements = -1;
 					}
 				}
 				if(g_str_equal(pdata->request,"RPT")) /* REPORT */
@@ -705,27 +703,31 @@ static void proto_tree_print_tree(proto_node *node, void * data)
 				if(g_str_equal(pdata->request,"CmdTerm")) /* CMDTERM*/
 				{
 					if(pdata->listOfVariable && g_str_equal(fi->hfinfo->name,"name") && pdata->elements < pdata->listOfVariable)
-					{
-						pdata->listOfVariable_array[pdata->elements] = fi->value.value.uinteger;
+					{ /* check name variable to determine if we have a CmdTerm, Addcause or Both */
 						pdata->elements = (pdata->elements + 1) % pdata->listOfVariable;
+						pdata->listOfVariable_array[pdata->elements] = fi->value.value.uinteger;
 					}
 					if(pdata->listOfAccessResult && g_str_equal(fi->hfinfo->name,"AccessResult") && pdata->elements < pdata->listOfVariable)
 					{
+						/* wrap around the elements counter as list of varialbe should contain the amount of elements */
+						/* by incrementing it, while it was at the last element, we wrap*/
+						pdata->elements = (pdata->elements + 1) % pdata->listOfVariable;
+						
+						/* check AccessResult to determine if we should write a header for a CmdTerm or Addcause structure */
 						if(pdata->listOfVariable_array[pdata->elements] == 0)
 						{
 							/* lastapperror */
 							item = proto_tree_add_item(tree, hf_iec61850_LastAppError,tvb, offset, fi->length,  0);
-							pdata->itemIndex = 0;
+							pdata->itemIndex = -1; /* start condition */
 							pdata->structureSize = 0;
 						}
 						if(pdata->listOfVariable_array[pdata->elements] == 1)
 						{
 							/* CmdTerm */
 							item = proto_tree_add_item(tree, hf_iec61850_CmdTerm,tvb, offset, fi->length,  0);
-							pdata->itemIndex = 0;
+							pdata->itemIndex = -1; /* start condition */
 							pdata->structureSize = 0;
 						}
-						pdata->elements = (pdata->elements + 1) % pdata->listOfVariable;
 						break;
 					}
 					if(pdata->listOfAccessResult && 
@@ -737,7 +739,7 @@ static void proto_tree_print_tree(proto_node *node, void * data)
 					if(pdata->listOfAccessResult && 
 						g_str_equal(fi->hfinfo->name,"structure") && 
 						pdata->elements < pdata->listOfVariable &&
-						pdata->itemIndex == 0)
+						pdata->itemIndex == -1)/* start condition */
 					{
 						pdata->structureSize = fi->value.value.uinteger;
 						break;
@@ -748,13 +750,21 @@ static void proto_tree_print_tree(proto_node *node, void * data)
 					{
 						if( pdata->listOfVariable_array[pdata->elements] == 0)
 						{
+							pdata->itemIndex = (pdata->itemIndex +1) % 7; /* lastapperr*/
+							item = proto_tree_add_item(tree, *LastAppError_fields[pdata->itemIndex] ,tvb, offset, fi->length,  0);
 							/* lastapperror fields*/
-							pdata->itemIndex = (pdata->itemIndex +1) % 7; /* or 8 if opertm is in lastapperr*/
+							break;
 						}
 						if( pdata->listOfVariable_array[pdata->elements] == 1)
 						{
+							pdata->itemIndex = (pdata->itemIndex +1) % 9; /* 9 if opertm is in oper*/
+							if(pdata->structureSize != 7 && pdata->itemIndex == 1) /* if the structsize is 7, we assume opertm is included, else we skip*/
+							{
+								pdata->itemIndex = (pdata->itemIndex +1) % 9; /* skip opertm*/
+							}
+							item = proto_tree_add_item(tree, *CmdTerm_fields[pdata->itemIndex] ,tvb, offset, fi->length,  0);
 							/* CmdTerm fields */
-							pdata->itemIndex = (pdata->itemIndex +1) % 8; /* or 9 if opertm is in oper*/
+							break;
 						}
 					}
 				}
@@ -812,6 +822,37 @@ static void proto_tree_print_tree(proto_node *node, void * data)
 					{
 						dissect_ber_integer(1, pdata->actx, tree, tvb, offset, hf_iec61850_dir, NULL);
 						break;						
+					}
+					if(g_str_equal(pdata->request,"CmdTerm") && pdata->listOfAccessResult)
+					{
+						 /*listOfVariable_array[pdata->elements] == Addcause */
+						if(pdata->listOfVariable_array[pdata->elements] == 0)
+						{
+							if(pdata->itemIndex == 1) /* and itemIndex == Error */
+							{
+								dissect_ber_integer(0, pdata->actx, tree, tvb, offset-2, hf_iec61850_CtlError_value, NULL);
+								break;
+							}
+							if(pdata->itemIndex == 3) /* and itemIndex == Orcat */
+							{
+								dissect_ber_integer(0, pdata->actx, tree, tvb, offset-2, hf_iec61850_orCat, NULL);
+								break;
+							}
+							if(pdata->itemIndex == 6) /* and itemIndex == AddCasue */
+							{
+								dissect_ber_integer(0, pdata->actx, tree, tvb, offset-2, hf_iec61850_AddCause_value, NULL);
+								break;
+							}
+						}
+						if(pdata->listOfVariable_array[pdata->elements] == 1)
+						{
+							/*listOfVariable_array[pdata->elements] == CmdTerm */
+							if(pdata->itemIndex == 3) /* and itemIndex == Orcat */
+							{
+								dissect_ber_integer(0, pdata->actx, tree, tvb, offset-2, hf_iec61850_orCat, NULL);
+								break;
+							}	
+						}
 					}
 				}
 				/* default case for integer */
@@ -885,6 +926,15 @@ static void proto_tree_print_tree(proto_node *node, void * data)
 						item = proto_tree_add_string(tree, hf_iec61850_bit_string,tvb, offset, fi->length, wmem_strbuf_get_str(strbuf));
 						break;
 					}
+					if(g_str_equal(pdata->request,"CmdTerm") && pdata->listOfAccessResult)
+					{
+						 /*listOfVariable_array[pdata->elements] == CmdTerm and itemIndex == Check */
+						if(pdata->listOfVariable_array[pdata->elements] == 1 && pdata->itemIndex == 8)
+						{
+							proto_tree_add_bitmask_list(tree, tvb, offset, 1, Check_bits, BIG_ENDIAN);
+							break;
+						}
+					}
 				}
 				if(g_str_equal(fi->hfinfo->name, "floating-point"))
 				{
@@ -892,7 +942,25 @@ static void proto_tree_print_tree(proto_node *node, void * data)
 					break;
 				}
 
-				proto_tree_add_bytes(tree, fi->hfinfo->id,tvb, offset, fi->value.value.bytes->len, fi->value.value.bytes->data);//,"%s",wmem_strbuf_get_str(strbuf));
+				item = proto_tree_add_bytes(tree, fi->hfinfo->id,tvb, offset, fi->value.value.bytes->len, fi->value.value.bytes->data);
+				if(g_str_equal(fi->hfinfo->name, "octet-string"))
+				{
+					if(g_str_equal(pdata->request,"CmdTerm") && pdata->listOfAccessResult)
+					{
+						 /*listOfVariable_array[pdata->elements] == Addcause or CmdTerm and itemIndex == OrIdent */
+						if( (pdata->listOfVariable_array[pdata->elements] == 0 && pdata->itemIndex == 4) || 
+							(pdata->listOfVariable_array[pdata->elements] == 1 && pdata->itemIndex == 4) )
+						{
+							u_int8_t * ostr = wmem_alloc0(pdata->actx->pinfo->pool,fi->value.value.bytes->len+1);/* make zero terminated string */ 
+							memcpy(ostr, fi->value.value.bytes->data, fi->value.value.bytes->len);
+							if(iec61850_octetstring_is_text(ostr))
+							{
+								proto_item_append_text(item, " (%s)", ostr);
+							}
+							break;
+						}
+					}
+				}
 				break;
 			}
 			default:
@@ -941,6 +1009,7 @@ static int32_t dissect_iec61850_mmstree(proto_tree *subtree, tvbuff_t *tvb, asn1
 	data.itemIndex = 0;
 	data.optflds = 0;
 	data.inclusion = 0;
+	data.elements = 0;
 
 	proto_tree_children_foreach(g_mms_tree, proto_tree_print_tree, &data);			
 	return 0;
@@ -2702,7 +2771,63 @@ hf_iec61850_BinaryStepC
 		{ "Command Termination entry", "iec61850.cmdterm",
 			FT_NONE, BASE_NONE, NULL, 0,
 			NULL, HFILL }},
-
+		{ &hf_iec61850_CtlObj,
+		{ "CtlObj", "iec61850.ctlobj",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		{ &hf_iec61850_ctlVal,
+		{ "ctlVal", "iec61850.ctlval",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		{ &hf_iec61850_operTm,
+		{ "OperTime", "iec61850.opertime",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		{ &hf_iec61850_Origin,
+		{ "Origin", "iec61850.origin",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		{ &hf_iec61850_Origin_orcat,
+		{ "Origin Catagory", "iec61850.orcat",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		{ &hf_iec61850_Origin_orident,
+		{ "Origin Identifier", "iec61850.orident",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		{ &hf_iec61850_ctlNum,
+		{ "ctlNum", "iec61850.ctlnum",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		{ &hf_iec61850_T,
+		{ "Timestamp", "iec61850.timestamp",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		{ &hf_iec61850_Test,
+		{ "Test", "iec61850.test",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		{ &hf_iec61850_Check,
+		{ "Check", "iec61850.check",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		{ &hf_iec61850_CtlError,
+		{ "CtlError", "iec61850.ctlerror",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		{ &hf_iec61850_CtlError_value,
+		{ "Error", "iec61850.ctlerrorval",
+			FT_INT32, BASE_DEC, VALS(enum_operate_Error), 0,
+			NULL, HFILL }},
+		{ &hf_iec61850_AddCause,
+		{ "AddCause", "iec61850.addcause",
+			FT_NONE, BASE_NONE, NULL, 0,
+			NULL, HFILL }},
+		{ &hf_iec61850_AddCause_value,
+		{ "AddCause value", "iec61850.addcauseval",
+			FT_INT32, BASE_DEC, VALS(enum_AddCause), 0,
+			NULL, HFILL }},
+		
     };
 
 	/* List of subtrees */
