@@ -28,18 +28,18 @@
 
 #include <wsutil/wslog.h>
 
-struct _iec61850_key_req {
+typedef struct _iec61850_key_req {
 	u_int32_t conversation;
 	u_int32_t invokeID;
-} typedef iec61850_key_req;
+} iec61850_key_req;
 
-struct _iec61850_value_req {
+typedef struct _iec61850_value_req {
 	u_int8_t * serviceName;
 	int32_t hf_name;
 	void * data;
-} typedef iec61850_value_req;
+} iec61850_value_req;
 
-struct _tree_data {
+typedef struct _tree_data {
 	u_int32_t level;
 	proto_tree *tree;
 	tvbuff_t *tvb;
@@ -54,7 +54,7 @@ struct _tree_data {
 	u_int16_t optflds;
 	u_int32_t inclusion;
 	u_int32_t structureSize;
-} typedef tree_data;
+} tree_data;
 
 static wmem_map_t *iec61850_request_hash = NULL;
 static proto_tree * g_mms_tree = NULL;
