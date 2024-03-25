@@ -4,6 +4,8 @@ IEC-61850 is a mapping on top of MMS that uses a subset of MMS PDU's for its pur
 
 While an MMS dissector, which IEC-61850 maps onto already exists, this MMS dissector lacks a lot of IEC-61850  specific context. For example, an unconfirmed-PDU in MMS, may in IEC-61850 be a Report, CommandTermination or Addcause. Each of these messages in turn may contain fields with specific meaning in the context of the protocol-mapping(e.g. first entry shall be ReportID, second field defines included optional fields that in turn define the field-names of subsequent entries). This type of information is quite hard to decode from the pure MMS packet, and therefore this dissector is created to assist with the IEC-61850 context-specific encoding.  
 
+![picture of iec61850-dissector in action](iec61850-dissector.png)  
+
 # Using
 
 The dissector can be obtained by downloading the .so or dll from the github releases section for your version of wireshark. I provided compiled versions for wireshark 3.6 (provided by Ubuntu 22.04 LTS apt package) and wireshark 4.2 and 4.3 compiled on Fedora 39. Additionally, a compiled version on windows 10 is provided for wireshark 4.2 (latest stable version as of writing). Alternatively, you can compile your own, by checking out the respective 3.6, 4.2 or 4.3 branch, put it in the plugins/epan folder, and add plugins/epan/iec61850-dissector to the plugin section in CMakeLists.txt before compiling the complete source by following the instructions in the wireshark documentation.  
