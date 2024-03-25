@@ -47,13 +47,8 @@ This build means you build the complete wireshark source, while the dissector is
 dependencies  
 `$ sudo apt install git build-essential cmake` 
 
-<<<<<<< HEAD
-clone source
-`$ git clone --branch 3.6 https://github.com/wireshark/wireshark.git`
-=======
 clone source  
 `$ git clone --branch 4.3 https://github.com/wireshark/wireshark.git`
->>>>>>> 7dff145 (updated readme)
 
 install dependencies  
 `$ cd wireshark`  
@@ -82,15 +77,9 @@ This means building the plugin stand-alone. This has only been tested on Ubuntu 
 dependencies  
 `$ sudo apt install git build-essential cmake wireshark wireshark-dev` 
 
-<<<<<<< HEAD
-clone source
-`$ git clone --branch 3.6 https://github.com/robidev/iec61850-dissector.git`
-please ensure there are no spaces in the build path! this will give errors when running cmake and make in the next steps!
-=======
 clone source  
 `$ git clone --branch 3.6 https://github.com/robidev/iec61850-dissector.git`
 please ensure there are no spaces in the build path! this will give errors when running cmake and make in the next steps!  
->>>>>>> 7dff145 (updated readme)
 
 build plugin  
 ```
